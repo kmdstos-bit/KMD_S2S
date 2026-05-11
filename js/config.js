@@ -1,10 +1,10 @@
 const CONFIG = {
     // GitHub Pages repository info
-    repoOwner: 'YOUR_USERNAME',
-    repoName: 'YOUR_REPO_NAME',
+    repoOwner: 'alecjong-lab',
+    repoName: 'ECMWF-S2S4AFRICA',
     
     // Base URL for data
-    dataBaseUrl: 'https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO_NAME/main/data',
+    dataBaseUrl: 'https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/website/data',
     
     // Africa bounding box
     mapBounds: {
