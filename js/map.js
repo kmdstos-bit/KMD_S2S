@@ -192,48 +192,64 @@ class WeatherMap {
         }).addTo(this.leafletMap);
     }
     
-    async loadAndDisplayWeather(initDate, variable, week) {
+   async loadAndDisplayWeather(initDate, variable, week) {
     try {
+        console.log('=== LOADING WEATHER DATA ===');
+        console.log('InitDate:', initDate);
+        console.log('Variable:', variable);
+        console.log('Week:', week);
+        
         document.getElementById('loading').classList.add('active');
         
+        // Remove previous layer
         if (this.currentLayer) {
             this.leafletMap.removeLayer(this.currentLayer);
             this.currentLayer = null;
         }
         
+        // Load the data
         const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
-        const rasterData = this.dataLoader.parseWeatherData(data);
+        console.log('Data received:', data);
         
-        // Create the layer
+        // Parse the data
+        let rasterData;
+        try {
+            rasterData = this.dataLoader.parseWeatherData(data);
+            console.log('Data parsed successfully');
+        } catch (parseError) {
+            console.error('Parse error:', parseError);
+            console.error('Data that failed to parse:', data);
+            throw new Error(`Parse error: ${parseError.message}`);
+        }
+        
+        // Create and add layer
         this.currentLayer = this.createImageOverlay(rasterData, variable);
-        this.currentLayer.addTo(this.leafletMap);
         
-        // Add popup with week info
-        const weekLabel = data.metadata.week_label || `Week ${week}`;
-        const validDates = data.metadata.valid_dates || '';
+        if (this.currentLayer) {
+            this.currentLayer.addTo(this.leafletMap);
+            
+            // Add popup with info
+            const weekLabel = data.metadata ? data.metadata.week_label : `Week ${week}`;
+            this.currentLayer.bindPopup(`<b>${CONFIG.variables[variable].label}</b><br>${weekLabel}`);
+            
+            // Update legend
+            this.updateLegend(variable);
+            
+            // Fit bounds
+            this.leafletMap.fitBounds([
+                [rasterData.latMin, rasterData.lonMin],
+                [rasterData.latMax, rasterData.lonMax]
+            ]);
+        }
         
-        this.currentLayer.bindPopup(`
-            <b>${CONFIG.variables[variable].label}</b><br>
-            ${weekLabel}<br>
-            <small>${validDates}</small><br>
-            <small>Init: ${initDate}</small>
-        `);
-        
-        // Update legend
-        this.updateLegend(variable);
-        
-        // Fit bounds
-        this.leafletMap.fitBounds([
-            [rasterData.latMin, rasterData.lonMin],
-            [rasterData.latMax, rasterData.lonMax]
-        ]);
-        
+        console.log('✅ Map updated successfully');
         document.getElementById('loading').classList.remove('active');
         
     } catch (error) {
-        console.error('Error loading weather data:', error);
+        console.error('❌ Error in loadAndDisplayWeather:', error);
+        console.error('Error stack:', error.stack);
         document.getElementById('loading').classList.remove('active');
-        throw error;
+        alert('Failed to load weather data.\n\nError: ' + error.message + '\n\nCheck browser console (F12) for details.');
     }
 }
     
