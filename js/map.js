@@ -36,38 +36,45 @@ class WeatherMap {
             opacity: 0.7
         }).addTo(this.leafletMap);
     }
-    
-    async loadAndDisplayWeather(initDate, variable, timestep) {
-        try {
-            // Show loading indicator
-            document.getElementById('loading').classList.add('active');
-            
-            // Remove previous layer if exists
-            if (this.currentLayer) {
-                this.leafletMap.removeLayer(this.currentLayer);
-                this.currentLayer = null;
-            }
-            
-            // Load data
-            const data = await this.dataLoader.loadWeatherData(initDate, variable, timestep);
-            const rasterData = this.dataLoader.parseWeatherData(data);
-            
-            // Create and add layer
-            this.currentLayer = this.createWeatherLayer(rasterData, variable);
-            this.currentLayer.addTo(this.leafletMap);
-            
-            // Update legend
-            this.updateLegend(variable);
-            
-            // Hide loading indicator
-            document.getElementById('loading').classList.remove('active');
-            
-        } catch (error) {
-            console.error('Error loading weather data:', error);
-            document.getElementById('loading').classList.remove('active');
-            alert('Failed to load weather data. Please try again.');
+
+    // In the loadAndDisplayWeather method:
+async loadAndDisplayWeather(initDate, variable, timestep) {
+    try {
+        document.getElementById('loading').classList.add('active');
+        
+        // Remove previous layer if exists
+        if (this.currentLayer) {
+            this.leafletMap.removeLayer(this.currentLayer);
+            this.currentLayer = null;
         }
+        
+        // Load data
+        const data = await this.dataLoader.loadWeatherData(initDate, variable, timestep);
+        console.log('Raw data loaded:', data);
+        
+        // Parse the data
+        const rasterData = this.dataLoader.parseWeatherData(data);
+        console.log('Parsed raster data:', rasterData);
+        
+        // Create and add layer
+        this.currentLayer = this.createWeatherLayer(rasterData, variable);
+        
+        if (this.currentLayer) {
+            this.currentLayer.addTo(this.leafletMap);
+            this.updateLegend(variable);
+        } else {
+            throw new Error('Failed to create weather layer');
+        }
+        
+        document.getElementById('loading').classList.remove('active');
+        
+    } catch (error) {
+        console.error('Error loading weather data:', error);
+        document.getElementById('loading').classList.remove('active');
+        alert('Failed to load weather data. Please try again.\n\nError: ' + error.message);
     }
+}
+    
     
     createWeatherLayer(rasterData, variable) {
         const varConfig = CONFIG.variables[variable];
