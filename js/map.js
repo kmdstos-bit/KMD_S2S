@@ -192,41 +192,50 @@ class WeatherMap {
         }).addTo(this.leafletMap);
     }
     
-    async loadAndDisplayWeather(initDate, variable, timestep) {
-        try {
-            document.getElementById('loading').classList.add('active');
-            
-            // Remove previous layer if exists
-            if (this.currentLayer) {
-                this.leafletMap.removeLayer(this.currentLayer);
-                this.currentLayer = null;
-            }
-            
-            // Load data
-            const data = await this.dataLoader.loadWeatherData(initDate, variable, timestep);
-            const rasterData = this.dataLoader.parseWeatherData(data);
-            
-            // Create and add layer
-            this.currentLayer = this.createCanvasLayer(rasterData, variable);
-            this.currentLayer.addTo(this.leafletMap);
-            
-            // Update legend
-            this.updateLegend(variable);
-            
-            // Fit bounds to data
-            this.leafletMap.fitBounds([
-                [rasterData.latMin, rasterData.lonMin],
-                [rasterData.latMax, rasterData.lonMax]
-            ]);
-            
-            document.getElementById('loading').classList.remove('active');
-            
-        } catch (error) {
-            console.error('Error loading weather data:', error);
-            document.getElementById('loading').classList.remove('active');
-            alert('Failed to load weather data: ' + error.message);
+    async loadAndDisplayWeather(initDate, variable, week) {
+    try {
+        document.getElementById('loading').classList.add('active');
+        
+        if (this.currentLayer) {
+            this.leafletMap.removeLayer(this.currentLayer);
+            this.currentLayer = null;
         }
+        
+        const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
+        const rasterData = this.dataLoader.parseWeatherData(data);
+        
+        // Create the layer
+        this.currentLayer = this.createImageOverlay(rasterData, variable);
+        this.currentLayer.addTo(this.leafletMap);
+        
+        // Add popup with week info
+        const weekLabel = data.metadata.week_label || `Week ${week}`;
+        const validDates = data.metadata.valid_dates || '';
+        
+        this.currentLayer.bindPopup(`
+            <b>${CONFIG.variables[variable].label}</b><br>
+            ${weekLabel}<br>
+            <small>${validDates}</small><br>
+            <small>Init: ${initDate}</small>
+        `);
+        
+        // Update legend
+        this.updateLegend(variable);
+        
+        // Fit bounds
+        this.leafletMap.fitBounds([
+            [rasterData.latMin, rasterData.lonMin],
+            [rasterData.latMax, rasterData.lonMax]
+        ]);
+        
+        document.getElementById('loading').classList.remove('active');
+        
+    } catch (error) {
+        console.error('Error loading weather data:', error);
+        document.getElementById('loading').classList.remove('active');
+        throw error;
     }
+}
     
     createCanvasLayer(rasterData, variable) {
         const varConfig = CONFIG.variables[variable];
@@ -243,7 +252,7 @@ class WeatherMap {
         return this.createImageOverlay(rasterData, variable, colorScale, bounds);
     }
     
-    
+
     createImageOverlay(rasterData, variable, colorScale, bounds) {
         // Create an off-screen canvas to render the data
         const canvas = document.createElement('canvas');

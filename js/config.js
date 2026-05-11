@@ -1,9 +1,10 @@
 const CONFIG = {
-    // GitHub Pages repository info
+    // Your GitHub details
     repoOwner: 'alecjong-lab',
     repoName: 'ECMWF-S2S4AFRICA',
+    branchName: 'website',
     
-    // Base URL for data
+    // Data URL (now points to weekly data)
     dataBaseUrl: 'https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/website/data/',
     
     // Africa bounding box
@@ -14,49 +15,62 @@ const CONFIG = {
         east: 55
     },
     
+    // Data type
+    dataType: 'weekly',  // 'weekly' or 'forecast'
+    
+    // Available weeks
+    weeks: [1, 2, 3, 4, 5, 6],
+    
+    // Week labels
+    weekLabels: {
+        1: 'Week 1',
+        2: 'Week 2', 
+        3: 'Week 3',
+        4: 'Week 4',
+        5: 'Week 5',
+        6: 'Week 6'
+    },
+    
     // Available variables with metadata
     variables: {
         temp: {
-            label: 'Temperature (°C)',
+            label: 'Weekly Mean Temperature',
             unit: '°C',
             colorScheme: 'temperature',
-            min: -40,
-            max: 50
+            min: -10,
+            max: 45
         },
         precip: {
-            label: 'Precipitation (mm)',
+            label: 'Weekly Total Precipitation',
             unit: 'mm',
             colorScheme: 'precipitation',
             min: 0,
-            max: 100
+            max: 200
         },
-        wind: {
-            label: 'Wind Speed (m/s)',
+        wind_speed: {
+            label: 'Weekly Mean Wind Speed',
             unit: 'm/s',
             colorScheme: 'wind',
             min: 0,
-            max: 30
+            max: 15
         },
         rh: {
-            label: 'Relative Humidity (%)',
+            label: 'Weekly Mean Relative Humidity',
             unit: '%',
             colorScheme: 'humidity',
-            min: 0,
+            min: 20,
             max: 100
         },
         mslp: {
-            label: 'Mean Sea Level Pressure (hPa)',
+            label: 'Weekly Mean Sea Level Pressure',
             unit: 'hPa',
             colorScheme: 'pressure',
-            min: 950,
-            max: 1050
+            min: 995,
+            max: 1025
         }
     },
     
-    // Timesteps in hours
-    timesteps: [0, 3, 6, 9, 12, 18, 24, 30, 36, 42, 48, 60, 72, 84, 96, 108, 120],
-    
-    // Map configuration
+    // Map defaults
     mapDefaults: {
         center: [0, 20],
         zoom: 4,

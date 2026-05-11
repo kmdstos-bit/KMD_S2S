@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate sample weather data for testing the web application."""
+"""Generate sample weekly weather data for testing."""
 
 import numpy as np
 import json
@@ -7,64 +7,71 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
-def generate_test_data():
-    """Generate synthetic weather data for testing."""
+def generate_weekly_test_data():
+    """Generate synthetic weekly weather data."""
     
-    output_dir = Path("../data/weather")
+    output_dir = Path("../data/weekly")
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Grid parameters for Africa
-    lat = np.arange(-40, 40.25, 0.25)
-    lon = np.arange(-25, 55.25, 0.25)
+    lat = np.arange(-40, 40.25, 0.5)  # Lower resolution for smaller files
+    lon = np.arange(-25, 55.25, 0.5)
     
-    # Generate dates (last 3 days)
-    test_dates = [f'{(datetime.now() - timedelta(days=i)).year}-{(datetime.now() - timedelta(days=i)).month}-{(datetime.now() - timedelta(days=i)).day}'
-                  for i in range(3)]
+    # Generate dates (last 4 weekly initializations)
+    # Weekly forecasts typically start on Mondays or specific days
+    today = datetime.now()
+    # Find last Monday
+    last_monday = today - timedelta(days=today.weekday())
+    test_dates = [(last_monday - timedelta(weeks=i)).strftime('%Y%m%d') 
+                  for i in range(4)]
     
     # Variables to generate
     variables = {
         'temp': {
-            'label': 'Temperature',
+            'label': 'Weekly Mean Temperature',
             'unit': '°C',
             'min': -10, 'max': 45,
-            'pattern': 'latitudinal'  # Hotter near equator
+            'pattern': 'latitudinal'
         },
         'precip': {
-            'label': 'Precipitation',
+            'label': 'Weekly Total Precipitation',
             'unit': 'mm',
-            'min': 0, 'max': 50,
-            'pattern': 'tropical'  # More rain in tropics
+            'min': 0, 'max': 200,
+            'pattern': 'tropical'
         },
         'wind_speed': {
-            'label': 'Wind Speed',
+            'label': 'Weekly Mean Wind Speed',
             'unit': 'm/s',
-            'min': 0, 'max': 20,
+            'min': 0, 'max': 15,
             'pattern': 'random'
         },
         'rh': {
-            'label': 'Relative Humidity',
+            'label': 'Weekly Mean Relative Humidity',
             'unit': '%',
             'min': 20, 'max': 100,
-            'pattern': 'coastal'  # More humid near coasts
+            'pattern': 'coastal'
         },
         'mslp': {
-            'label': 'Mean Sea Level Pressure',
+            'label': 'Weekly Mean Sea Level Pressure',
             'unit': 'hPa',
-            'min': 990, 'max': 1030,
+            'min': 995, 'max': 1025,
             'pattern': 'pressure_systems'
         }
     }
     
-    forecast_hours = [0, 3, 6, 9, 12, 18, 24, 36, 48]
+    # Week numbers (1-6)
+    weeks = list(range(1, 7))
     
     catalog = {
         'last_updated': datetime.utcnow().isoformat() + 'Z',
         'dates': test_dates,
-        'data': {}
+        'data': {},
+        'type': 'weekly',
+        'weeks': weeks
     }
     
     for date_str in test_dates:
-        print(f"Generating test data for {date_str}")
+        print(f"Generating weekly test data for {date_str}")
         catalog['data'][date_str] = {}
         
         for var_name, var_info in variables.items():
@@ -73,13 +80,13 @@ def generate_test_data():
             var_dir = output_dir / date_str / var_name
             var_dir.mkdir(parents=True, exist_ok=True)
             
-            timesteps = []
-            for fhour in forecast_hours:
-                # Generate synthetic data based on pattern
-                values = generate_pattern(
+            weeks_saved = []
+            for week in weeks:
+                # Generate synthetic data with weekly patterns
+                values = generate_weekly_pattern(
                     lat, lon, var_info['pattern'],
                     var_info['min'], var_info['max'],
-                    fhour
+                    week
                 )
                 
                 # Create JSON structure
@@ -89,12 +96,14 @@ def generate_test_data():
                         "label": var_info['label'],
                         "unit": var_info['unit'],
                         "init_date": date_str,
-                        "forecast_hour": fhour,
+                        "week": week,
+                        "week_label": f"Week {week}",
+                        "valid_dates": f"{get_week_dates(date_str, week)}",
                         "timestamp": datetime.utcnow().isoformat() + 'Z'
                     },
                     "grid": {
-                        "lat": [float(lat[0]), float(lat[-1]), 0.25],
-                        "lon": [float(lon[0]), float(lon[-1]), 0.25],
+                        "lat": [float(lat[0]), float(lat[-1]), 0.5],
+                        "lon": [float(lon[0]), float(lon[-1]), 0.5],
                         "nlat": len(lat),
                         "nlon": len(lon)
                     },
@@ -102,20 +111,19 @@ def generate_test_data():
                 }
                 
                 # Save file
-                filename = f"{var_name}_{date_str}_f{fhour:03d}.json"
+                filename = f"{var_name}_{date_str}_w{week:02d}.json"
                 filepath = var_dir / filename
                 
                 with open(filepath, 'w') as f:
                     json.dump(json_data, f, separators=(',', ':'))
                 
-                timesteps.append(fhour)
+                weeks_saved.append(week)
                 
                 file_size = filepath.stat().st_size / 1024
                 print(f"    Saved: {filename} ({file_size:.1f} KB)")
             
             catalog['data'][date_str][var_name] = {
-                'timesteps': timesteps,
-                'count': len(timesteps)
+                'weeks': weeks_saved
             }
     
     # Save catalog
@@ -123,57 +131,50 @@ def generate_test_data():
     with open(catalog_path, 'w') as f:
         json.dump(catalog, f, indent=2)
     
-    print(f"\n✅ Test data generated in {output_dir}")
-    print(f"   Catalog saved: {catalog_path}")
-    
+    print(f"\n✅ Weekly test data generated in {output_dir}")
     return catalog
 
 
-def generate_pattern(lat, lon, pattern, vmin, vmax, fhour):
-    """Generate synthetic weather patterns."""
+def get_week_dates(init_date_str, week_num):
+    """Get the date range for a specific week."""
+    init_date = datetime.strptime(init_date_str, '%Y%m%d')
+    start_date = init_date + timedelta(weeks=week_num - 1)
+    end_date = start_date + timedelta(days=6)
+    
+    return f"{start_date.strftime('%d %b')} - {end_date.strftime('%d %b %Y')}"
+
+
+def generate_weekly_pattern(lat, lon, pattern, vmin, vmax, week):
+    """Generate synthetic weather patterns that vary by week."""
     
     nlat, nlon = len(lat), len(lon)
     values = np.zeros((nlat, nlon))
     
+    # Base pattern
     if pattern == 'latitudinal':
-        # Temperature decreases with latitude
         lat_2d = lat[:, np.newaxis].repeat(nlon, axis=1)
         values = 30 - 0.8 * np.abs(lat_2d)
-        # Add some noise
-        values += np.random.normal(0, 2, (nlat, nlon))
-        # Add diurnal variation based on forecast hour
-        hour_of_day = (int(datetime.now().strftime('%H')) + fhour) % 24
-        if 6 <= hour_of_day <= 18:
-            values += 5 * np.sin(np.pi * (hour_of_day - 6) / 12)
+        # Seasonal variation by week
+        values += week * 0.5  # Warming trend
         
     elif pattern == 'tropical':
-        # More precipitation near equator
         lat_2d = lat[:, np.newaxis].repeat(nlon, axis=1)
-        values = vmax * np.exp(-lat_2d**2 / 200) * np.random.random((nlat, nlon))
-        # Some areas of heavy rain
-        for _ in range(np.random.randint(3, 8)):
-            center_lat = np.random.uniform(-10, 15)
-            center_lon = np.random.uniform(10, 50)
-            radius = np.random.uniform(3, 8)
-            dist = np.sqrt((lat_2d - center_lat)**2 + 
-                          (lon[np.newaxis, :] - center_lon)**2)
-            values += vmax * np.exp(-dist**2 / (2 * radius**2))
+        values = vmax * np.exp(-lat_2d**2 / 200) * (0.5 + 0.1 * week)
+        # More rain in later weeks (seasonal progression)
         
     elif pattern == 'coastal':
-        # Higher humidity near coasts
-        values = vmin + (vmax - vmin) * np.random.random((nlat, nlon))
-        # Add coastal effect (simplified)
+        values = vmin + (vmax - vmin) * 0.5 * np.random.random((nlat, nlon))
         lat_2d = lat[:, np.newaxis].repeat(nlon, axis=1)
         lon_2d = lon[np.newaxis, :].repeat(nlat, axis=0)
         coast_effect = (np.abs(lon_2d + 15) < 5) | (np.abs(lon_2d - 35) < 5)
-        values[coast_effect] += 15
+        values[coast_effect] += 15 + week
         
     elif pattern == 'pressure_systems':
-        # Generate high and low pressure systems
         values = 1013 + np.random.normal(0, 5, (nlat, nlon))
-        for _ in range(np.random.randint(2, 5)):
-            center_lat = np.random.uniform(-30, 30)
-            center_lon = np.random.uniform(-10, 45)
+        # Shifting pressure systems by week
+        for i in range(2):
+            center_lat = np.random.uniform(-30, 30) + week * 2
+            center_lon = np.random.uniform(-10, 45) + week
             is_high = np.random.choice([True, False])
             strength = np.random.uniform(5, 15)
             radius = np.random.uniform(5, 15)
@@ -183,23 +184,21 @@ def generate_pattern(lat, lon, pattern, vmin, vmax, fhour):
             dist = np.sqrt((lat_2d - center_lat)**2 + (lon_2d - center_lon)**2)
             values += (strength if is_high else -strength) * \
                      np.exp(-dist**2 / (2 * radius**2))
-        
-    else:  # random
+    else:
         values = np.random.uniform(vmin, vmax, (nlat, nlon))
+    
+    # Add weekly variation
+    values += np.random.normal(0, 2, (nlat, nlon))
     
     # Clip to valid range
     values = np.clip(values, vmin, vmax)
-    
-    # Round appropriately
     values = np.round(values, 1)
-    
-    # Replace NaN with None for JSON
     values = np.where(np.isnan(values), None, values)
     
     return values.tolist()
 
 
 if __name__ == "__main__":
-    print("🎲 Generating test data for weather viewer...")
-    generate_test_data()
-    print("\n✨ Test data generation complete!")
+    print("🎲 Generating weekly test data for weather viewer...")
+    generate_weekly_test_data()
+    print("\n✨ Weekly test data generation complete!")
