@@ -7,7 +7,7 @@ class DataLoader {
     async loadCatalog() {
         try {
             const response = await fetch(`${CONFIG.dataBaseUrl}/catalog.json`);
-            if (!response.ok) throw new Error(`Failed to load ${CONFIG.dataBaseUrl}/catalog.json`);
+            if (!response.ok) throw new Error(`Failed to load burdiiiiiiiiiiiiiiii ${CONFIG.dataBaseUrl}/catalog.json`);
             this.catalog = await response.json();
             return this.catalog;
         } catch (error) {
