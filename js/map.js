@@ -211,46 +211,27 @@ class WeatherMap {
         const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
         console.log('Data received:', data);
         
-        // Parse the data
-        let rasterData;
-        try {
-            rasterData = this.dataLoader.parseWeatherData(data);
-            console.log('Data parsed successfully');
-        } catch (parseError) {
-            console.error('Parse error:', parseError);
-            console.error('Data that failed to parse:', data);
-            throw new Error(`Parse error: ${parseError.message}`);
-        }
+        const rasterData = this.dataLoader.parseWeatherData(data);
         
-        // Create and add layer
-        this.currentLayer = this.createImageOverlay(rasterData, variable);
+        this.currentLayer = this.createCanvasLayer(rasterData, variable);
+        this.currentLayer.addTo(this.leafletMap);
+         // Update legend
+        this.updateLegend(variable);
+            
+        // Fit bounds to data
+        this.leafletMap.fitBounds([
+            [rasterData.latMin, rasterData.lonMin],
+            [rasterData.latMax, rasterData.lonMax]
+        ]);
         
-        if (this.currentLayer) {
-            this.currentLayer.addTo(this.leafletMap);
-            
-            // Add popup with info
-            const weekLabel = data.metadata ? data.metadata.week_label : `Week ${week}`;
-            this.currentLayer.bindPopup(`<b>${CONFIG.variables[variable].label}</b><br>${weekLabel}`);
-            
-            // Update legend
-            this.updateLegend(variable);
-            
-            // Fit bounds
-            this.leafletMap.fitBounds([
-                [rasterData.latMin, rasterData.lonMin],
-                [rasterData.latMax, rasterData.lonMax]
-            ]);
-        }
-        
-        console.log('✅ Map updated successfully');
         document.getElementById('loading').classList.remove('active');
+            
+        } catch (error) {
+            console.error('Error loading weather data:', error);
+            document.getElementById('loading').classList.remove('active');
+            alert('Failed to load weather data: ' + error.message);
         
-    } catch (error) {
-        console.error('❌ Error in loadAndDisplayWeather:', error);
-        console.error('Error stack:', error.stack);
-        document.getElementById('loading').classList.remove('active');
-        alert('Failed to load weather data.\n\nError: ' + error.message + '\n\nCheck browser console (F12) for details.');
-    }
+    } 
 }
     
     createCanvasLayer(rasterData, variable) {

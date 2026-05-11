@@ -246,7 +246,7 @@ class UIController {
     }
     
     updateTimestamp() {
-        fetch(`${CONFIG.dataBaseUrl}/catalog.json?t=${Date.now()}`)
+        fetch(`${CONFIG.dataBaseUrl}/weekly/catalog.json?t=${Date.now()}`)
             .then(response => response.json())
             .then(data => {
                 if (data.last_updated) {
