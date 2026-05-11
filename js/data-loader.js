@@ -88,7 +88,7 @@ class DataLoader {
     
     async loadCatalog() {
         try {
-            const url = `${CONFIG.dataBaseUrl}/catalog.json`;
+            const url = `${CONFIG.dataBaseUrl}/weather/catalog.json`;
             console.log('Loading catalog from:', url);
             
             const response = await fetch(url);

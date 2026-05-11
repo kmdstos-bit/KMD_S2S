@@ -4,7 +4,7 @@ const CONFIG = {
     repoName: 'ECMWF-S2S4AFRICA',
     
     // Base URL for data
-    dataBaseUrl: 'https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/website/data/weather/',
+    dataBaseUrl: 'https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/website/data/',
     
     // Africa bounding box
     mapBounds: {
