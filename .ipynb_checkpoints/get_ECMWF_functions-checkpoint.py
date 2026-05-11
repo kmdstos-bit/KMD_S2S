@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import cfgrib
-import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import cartopy.crs as ccrs
@@ -18,14 +17,9 @@ from scipy.ndimage import gaussian_filter
 from scipy.ndimage import grey_opening, grey_closing
 from IPython.display import clear_output
 from matplotlib.colors import LinearSegmentedColormap
-import subprocess
-import requests
 
 colors = ["white","wheat","lightgreen", "green","lightblue", "blue","yellow","orange", "red","purple"]
 cmap = LinearSegmentedColormap.from_list("wgbrp", colors)
-
-colors = ["red","yellow","blue"]
-cmap_traffic = LinearSegmentedColormap.from_list("wgbrp", colors)
 
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -37,17 +31,6 @@ lat1=-15
 lat2=-29.5
 lon1=11
 lon2=29
-
-def windspeed(ds,u_name,v_name):
-    """
-    function to calculate windspeed from and add to a xarray dataset containing u and v components
-    """
-    ds_speed=xr.merge([ds,np.sqrt(ds[u_name]**2+ds[v_name]**2).to_dataset(name='speed')])
-    for wind in [u_name,v_name]:
-        ds_speed[wind].attrs=ds[wind].attrs
-    ds_speed['speed'].attrs=ds[wind].attrs
-    ds_speed.speed.attrs['GRIB_name']='wind speed'
-    return ds_speed
 
 def open_forecast(date_str,name):
     pf_daily_var=xr.open_dataset(f"data/{date_str}/ECMWF_s2s_pf_{name}_forecast_42days_7N-32E-6S-43E.grib",engine='cfgrib')
@@ -331,53 +314,22 @@ def acum_to_instant(data):
     return diff_data
 
 def day_mean_6h_accum(temp_data,variable):
-    #function to calculate the day maximmum or mimimum of 6 hour temperature variables
-    if 'mx2t6' in temp_data.keys():
-        if int(len(np.atleast_1d(temp_data.step.values))/4)>1: 
-            arrr=[]
-            for i in range(int(len(temp_data.step)/4)):
-                brudi=temp_data[variable].isel(step=slice(0+i*4,4*(i+1))).max(dim='step')
-                brudi=brudi.assign_coords(step=temp_data.isel(step=4*(i+1)-1).step)
-                arrr.append(brudi)
-            temp_day_max=xr.concat(arrr,dim='step')
-            if len(variable)>1:
-                for i in variable:
-                    temp_day_max[i].attrs=temp_data[i].attrs.copy()
-            else:
-                temp_day_max.attrs=temp_data[variable].attrs.copy()
+    #function to calculate the day mean of 6 hour temperature variables
+    if int(len(np.atleast_1d(temp_data.step.values))/4)>1: 
+        arrr=[]
+        for i in range(int(len(temp_data.step)/4)):
+            brudi=temp_data[variable].isel(step=slice(0+i*4,4*(i+1))).max(dim='step')
+            brudi=brudi.assign_coords(step=temp_data.isel(step=4*(i+1)-1).step)
+            arrr.append(brudi)
+        temp_day=xr.concat(arrr,dim='step')
+        if len(variable)>1:
+            for i in variable:
+                temp_day[i].attrs=temp_data[i].attrs.copy()
         else:
-            raise ValueError(f'⚠️The dataset contains less than 1 day of data⚠️')
-        
-    if 'mn2t6' in temp_data.keys():
-        if int(len(np.atleast_1d(temp_data.step.values))/4)>1: 
-            arrr=[]
-            for i in range(int(len(temp_data.step)/4)):
-                brudi=temp_data[variable].isel(step=slice(0+i*4,4*(i+1))).min(dim='step')
-                brudi=brudi.assign_coords(step=temp_data.isel(step=4*(i+1)-1).step)
-                arrr.append(brudi)
-            temp_day_min=xr.concat(arrr,dim='step')
-            if len(variable)>1:
-                for i in variable:
-                    temp_day_min[i].attrs=temp_data[i].attrs.copy()
-            else:
-                temp_day_min.attrs=temp_data[variable].attrs.copy()
-        else:
-            raise ValueError(f'⚠️The dataset contains less than 1 day of data⚠️')
-        
-    has_max = 'mx2t6' in temp_data
-    has_min = 'mn2t6' in temp_data
-
-    if has_max and has_min:
-        temp_day = xr.merge([temp_day_max.mx2t6,
-                            temp_day_min.mn2t6])
+            temp_day.attrs=temp_data[variable].attrs.copy()
         return temp_day
-
-    elif has_max:
-        return temp_day_max.mx2t6.to_dataset()
-
-    elif has_min:
-        return temp_day_min.mn2t6.to_dataset()
-
+    else:
+        raise ValueError(f'⚠️The dataset contains less than 1 day of data⚠️')
         
 def week_mean(ds):
     #"calculate weekly mean"
@@ -417,7 +369,6 @@ def diff_ds(ds,weeks):
         ds_list.append(diff)
     ds_diff=xr.concat(ds_list,dim='step')
     ds_diff.attrs=ds.attrs.copy()
-    ds_diff.attrs['GRIB_name']='Weekly Change in Total Precipitation'
     return ds_diff
 
 def get_check_box_value(checkboxes, name):
@@ -440,6 +391,7 @@ def generate_date_range(year, month,day):
     day=int(day)
     # Return the date range string
     return f"{year}-{month_number:02d}-{day:02d}"
+
 
 def edit_base_request(request,param,step,name,ensemble_mean=True):
     #update the base request with the things clicked on the button
@@ -639,9 +591,7 @@ def ensemble_mean(ds,dim='number'):
                     ens_mean[var].attrs = ds[var].attrs.copy()
     return ens_mean
 
-def open_mclimate(daily_all_vars,folder_path=f'{os.getcwd()}/m-climate/',var="T_pr"):
-
-    folder_path=f"{folder_path}/{var}/"
+def open_mclimate(daily_all_vars,folder_path=f'{os.getcwd()}/m-climate/T_pr/'):
     # List all files
     files = os.listdir(folder_path)
     
@@ -673,64 +623,12 @@ def open_mclimate(daily_all_vars,folder_path=f'{os.getcwd()}/m-climate/',var="T_
     
     # Get the closest file
     closest_file = file_list[closest_index]
-
+    
     print(f"Model climatology starting on: {closest_file[10:20]}")
     
     #open climatology
     file= closest_file
     m_climate = xr.open_dataset(folder_path+file, engine="netcdf4",decode_timedelta=True)
-    
-    return m_climate.sortby('latitude',ascending=False)
-
-def list_github_folder(var,repo="alecjong-lab/ECMWF-S2S4AFRICA"):
-    url = f"https://api.github.com/repos/{repo}/contents/m-climate/{var}"
-    response = requests.get(url)
-    files = [item["name"] for item in response.json()]
-    return files
-
-def open_mclimate_colab(daily_all_vars,folder_path=f'{os.getcwd()}/m-climate/',var="T_pr"):
-
-    # List all files
-    files = list_github_folder(var)
-    
-    # Define a regex pattern to extract dates (assuming 'yiping_cd_YYYY-MM-DD.nc' format)
-    pattern = re.compile(r"m-climate_(\d{4})-(\d{2})-(\d{2})\.nc")
-    
-    # Extract month and day, ignoring year
-    file_dates = []
-    file_list = []
-    
-    for file in files:
-        match = pattern.search(file)
-        if match:
-            month, day = int(match.group(2)), int(match.group(3))
-            # Normalize all dates to the year 2000
-            date_obj = datetime(2000, month, day)
-            file_dates.append(date_obj)
-            file_list.append(file)  # Keep track of valid files
-    
-    # Convert file_dates to NumPy datetime64 for easier comparison
-    file_dates_np = np.array(file_dates, dtype="datetime64")
-    
-    # Specify the target date (only considering month and day)
-    target_date = daily_all_vars.time.values # Example target date
-    target_date_md = datetime(2000, target_date.astype("M8[D]").astype(object).month, target_date.astype("M8[D]").astype(object).day)
-    
-    # Find the index of the closest date
-    closest_index = np.argmin(np.abs(file_dates_np - np.datetime64(target_date_md)))
-    
-    # Get the closest file
-    closest_file = file_list[closest_index]
-    
-    os.makedirs(folder_path,exist_ok=True)
-    url = f"https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/main/m-climate/{var}/{closest_file}"
-
-    if not os.path.exists(f"{folder_path}/{closest_file}"):
-        subprocess.run(["wget", "-q", url, "-O", f"{folder_path}/{closest_file}"])
-    print(f"Model climatology starting on: {closest_file[10:20]}")
-    
-    #open climatology
-    m_climate = xr.open_dataset(f"{folder_path}/{closest_file}", engine="netcdf4",decode_timedelta=True)
     
     return m_climate.sortby('latitude',ascending=False)
 
@@ -851,6 +749,7 @@ def make_wind_df(ds, lon, lat, start_date, end_date,normed=False, norm_axis=None
     wind_df = wind_df.melt(id_vars=['strength'], var_name='direction', value_name='frequency')
     
     return wind_df
+
 
 def matplotlib_windrose(ds, lon, lat, start_date, end_date, fig,axis,i,num_partitions=4):
     """
@@ -1030,10 +929,8 @@ def plot_variable(ds,variable,forecast_timestep,vmax,vmin,cmap,cities=cities,ax=
              
     return contour,lines
 
-def panel_plot_variable(ds,variable,forecast_timestep,cmap,cities=cities,vmax=None,vmin=None,units=None,change=False,add_contour=None,contourlevels=None,contourcmap=None,contourwidths=None,fontsize=16,level=None):
+def panel_plot_variable(ds,variable,forecast_timestep,cmap,cities=cities,vmax=None,vmin=None,units=None,change=False,add_contour=None,contourlevels=None,contourcmap=None,contourwidths=None,fontsize=16):
     ds=ds.sel(longitude=slice(lon1,lon2),latitude=slice(lat1,lat2))
-    if level is not None:
-        ds = ds.sel(level=level)
     #take ensemble mean before plotting if needed
     if 'number' in ds.dims:
         ds=ensemble_mean(ds)
@@ -1095,7 +992,7 @@ def panel_plot_variable(ds,variable,forecast_timestep,cmap,cities=cities,vmax=No
     fig.tight_layout() 
     cbar_ax = fig.add_axes([0.15, -0.04 , 0.7, 0.01+ 0.02/nrows])  # [left, bottom, width, height]
     cbar = fig.colorbar(contour, cax=cbar_ax, orientation='horizontal',fraction=5)
-    cbar.set_label(ds[variable].GRIB_name+f' [{units}]')
+    cbar.set_label(ds[variable].GRIB_name+f'[{units}]')
 
     #manage the location of the colorbar
     if lines!=None:
@@ -1115,122 +1012,7 @@ def panel_plot_variable(ds,variable,forecast_timestep,cmap,cities=cities,vmax=No
         cbar2 = fig.colorbar(lines, cax=cax2, orientation='horizontal')
         cbar2.set_label(add_contour.attrs['GRIB_name']+f"[{add_contour.attrs['units']}]")
     return fig
-
-def quiver_plot_variable(ds,name_u,name_v,forecast_timestep,cmap='virdis',level=None,fontsize=13,scale=40):
-    ds=ds.sel(longitude=slice(lon1,lon2),latitude=slice(lat1,lat2))
-    if level is not None:
-        ds = ds.sel(level=level)
-
-    # take ensemble mean before plotting if needed
-    if 'number' in ds.dims:
-        ds=ensemble_mean(ds)
-        #if isinstance(add_contour, (xr.DataArray, xr.Dataset)):
-        #    add_contour=ensemble_mean(add_contour)
         
-    ds=lon_convert(ds)
-
-    #if only a single step is selected, make sure rest of code still works
-    if 'step' not in ds.dims and 'step' in ds.coords:
-        ds = ds.expand_dims(step=[ds.step.values])
-    
-    #logic to check if there is only one forcast step or if there are more
-    steps = np.atleast_1d(forecast_timestep)  # Converts single value to an array
-    #logic to check how many columns should be made
-    num_steps = len(steps)
-    ncols = min(4, num_steps)  # Maximum 4 columns
-    nrows = int(np.ceil(num_steps / ncols))  # Compute needed rows
-    #logic to determine aspect ratio of chosen lat lon box and then adjust figsize accordingly
-    lat_min, lat_max = lon1, lon2
-    lon_min, lon_max = lat2, lat1
-
-    #calculate the figure size so that the chosen lat lon area does not change the look of the plot
-    single_width, single_height = compute_figsize_from_extent(
-        lon_min, lon_max, lat_min, lat_max
-    )
-
-    fig_width = single_width * ncols 
-    fig_height = single_height * nrows
-    fig, axes = plt.subplots(nrows, ncols, figsize=(fig_width, fig_height),sharex=True,sharey=True,subplot_kw={'projection': ccrs.PlateCarree()})
-    axes = np.array(axes).reshape(nrows, ncols)  # Ensure axes is 2D
-    axes = axes.flatten()  # Flatten for easy iteration
-
-    speeds=ds.speed
-    vmax=speeds.max()
-    vmin=speeds.min()
-
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-
-    if vmax>0 and vmin<0:
-        ranges=[np.abs(vmax),np.abs(vmin)]
-        limit_index=np.argmax(ranges)
-        vmax=ranges[limit_index]
-        vmin=-ranges[limit_index]
-            
-    for i, step in enumerate(np.atleast_1d(forecast_timestep)):
-        ax = axes[i]
-
-        # plotting magic
-        if step == np.atleast_1d(ds.step)[0]:
-            start_time=ds.time
-            end_time=(ds.time+step)
-        else:
-            dt=ds.step.values[1]-ds.step.values[0]
-            start_time=ds.time+step-dt
-            end_time=ds.time+step
-
-        ax.set_title(f"{str(start_time.values)[:16]} until {str(end_time.values)[:16]}", fontsize=int(fontsize*0.8))
-            
-        ds_step = ds.sel(step=step)
-        speed = speeds.sel(step=step)
-
-        gl = ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0, linestyle='--')
-        gl.top_labels = False
-        gl.right_labels = False
-        ax.coastlines()
-        ax.add_feature(cfeature.BORDERS)
-        ax.set_extent([lon1, lon2, lat1, lat2], ccrs.PlateCarree())
-        q=ax.pcolormesh(ds_step["longitude"], ds_step["latitude"],speed,transform=ccrs.PlateCarree(),cmap=cmap,vmin=vmin,vmax=vmax)
-        quiv=ax.quiver(ds_step["longitude"], ds_step["latitude"], ds_step[name_u], ds_step[name_v], transform=ccrs.PlateCarree(), norm=norm,scale=scale,regrid_shape=10)
-
-    #fig.tight_layout() 
-    for j in range(num_steps, len(axes)):
-        axes[j].set_visible(False) #delete extra empty plots
-
-    last_ax = fig.axes[num_steps-1]  # or whichever subplot you want to align with
-    pos = last_ax.get_position()  # returns Bbox in figure coordinates
-
-    # Place ax_key just to the right of it
-    pad = 0.01  # gap between subplot and key
-    key_width = 0.08
-
-    ax_key = fig.add_axes([
-        pos.x1 + pad,           # left edge: just right of last subplot
-        pos.y0,                 # bottom: aligned with last subplot
-        key_width,              # width
-        pos.height * 0.3        # height: fraction of subplot height
-    ])
-
-    ax_key.axis("off")
-
-    if scale==40:
-        qk  = matplotlib.quiver.QuiverKey(quiv, X=1.15, Y=0.55, U=5,  label='5 m/s',  coordinates='axes', labelpos='E')
-        qk2 = matplotlib.quiver.QuiverKey(quiv, X=1.27, Y=0.45, U=10, label='10 m/s', coordinates='axes', labelpos='E')
-    else:
-        qk  = matplotlib.quiver.QuiverKey(quiv, X=1.40, Y=0.55, U=5,  label='5 m/s',  coordinates='axes', labelpos='E')
-        qk2 = matplotlib.quiver.QuiverKey(quiv, X=1.52, Y=0.45, U=10, label='10 m/s', coordinates='axes', labelpos='E')
-    ax_key.add_artist(qk)
-    ax_key.add_artist(qk2)
-
-    #manage the location of the colorbar
-    cbar_ax = fig.add_axes([0.15, 0.05 , 0.7, 0.01+ 0.02/nrows])  # [left, bottom, width, height]
-    cbar = fig.colorbar(q, cax=cbar_ax, orientation='horizontal',fraction=10)
-    title="Wind speed (m s**1)"
-    if 'Anomaly' in ds[name_v].GRIB_name:
-        title='Wind speed anomaly (m s**1)'
-    cbar.set_label(title)
-
-    return fig
-
 def spagetti_plot(ds,variable,lat,lon):
     data=ds[variable].sel(latitude=lat,longitude=lon,method='nearest')
     time=data.time+data.step
@@ -1253,6 +1035,7 @@ def spagetti_plot(ds,variable,lat,lon):
 
     plt.tight_layout()
     
+
 def get_exceedance_percentage(ds,variable, threshold, comparison='None', dim="number"):
     """
     Returns the percentage of ensemble members (along `dim`) that meet a given condition.
@@ -1293,8 +1076,9 @@ def get_exceedance_percentage(ds,variable, threshold, comparison='None', dim="nu
 
     return percentage.to_dataset()  
 
-def chance_to_exceed_mclimate(ds,quantile,m_climate,var='tp'):
+def chance_to_exceed_mclimate(ds,quantile,m_climate):
     hold=[]    
+    var='tp'
     for i,forecast_timestep in enumerate(ds.step.values):
         m_climate_interp = m_climate.isel(time=i).isel(quantile=quantile)
         comparison = ds[var].sel(step=forecast_timestep)>m_climate_interp[var]
@@ -1327,13 +1111,14 @@ def anomaly_from_mclimate(ds,quantile,m_climate,var='tp'):
     anom_clim=anom_clim.assign_coords(time=ds.time)
     return anom_clim
 
-def tercile_from_mclimate(ds,category_choice,m_climate,var='tp'):
+def tercile_from_mclimate(ds,var,category_choice,m_climate):
+    ds = ds.sel(longitude=m_climate.longitude, method="nearest")    
     hold=[]
 
     for i,forecast_timestep in enumerate(ds.step.values):
         
-        lowerbound = m_climate.isel(time=i).isel(quantile=33)[var]
-        higherbound = m_climate.isel(time=i).isel(quantile=67)[var]
+        lowerbound = m_climate.isel(time=i).isel(quantile=33).tp
+        higherbound = m_climate.isel(time=i).isel(quantile=67).tp
     
         forecast=ds[var].sel(step=forecast_timestep)
     
@@ -1363,21 +1148,26 @@ def tercile_from_mclimate(ds,category_choice,m_climate,var='tp'):
     tercile_clim=tercile_clim.assign_coords(time=ds.time)
     return tercile_clim
 
-def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
+def meteogram_double(ds,m_climate,lat,lon):
     wh=ds.sel(longitude=lon,latitude=lat,method="nearest")
-    data2=m_climate.sel(longitude=lon,latitude=lat,method="nearest")[var].isel(time=slice(0,len(wh.step.values)))
-    data = wh[var]
-    # Compute ensemble meanSS
-    time_steps = np.arange(0,len(wh.step.values))
+    
+    data2=m_climate.sel(longitude=lon,latitude=lat,method="nearest").tp.isel(time=slice(0,len(wh.step.values))).values.T
+    data = wh.tp.values.T
+    # Compute ensemble mean
+    ensemble_mean = np.mean(data, axis=0)
+    if len(wh.step.values)<=6:
+        time_steps = np.arange(0,len(wh.step.values))
+    else:
+        time_steps = np.arange(0,6)
+        ensemble_mean=ensemble_mean[0:6]
 
     # Transpose the data to get a list of arrays for each time step
-    data_list = [data.isel(step=i) for i in range(len(time_steps))]  # Each time step has an array
-    climate_list= [data2.isel(time=i) for i in range(len(time_steps))]
+    data_list = [data[:, i] for i in range(len(time_steps))]  # Each time step has an array
     
     # Create the figure
     fig, ax = plt.subplots(figsize=(10, 5))
-    #create innner boxes forecast
-    # # Compute custom percentiles
+
+    # Compute custom percentiles
     def custom_box_stats(values):
         """Returns a dictionary with ECMWF-style boxplot percentiles."""
         return {
@@ -1389,7 +1179,7 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
             "fliers": []  # No outliers
         }
         # Create boxplot statistics for each time step
-    box_stats = [custom_box_stats(data_list[i]) for i in range(len(time_steps))]
+    box_stats = [custom_box_stats(data[:, i]) for i in range(len(time_steps))]
 
     # Custom box plot using ECMWF-style percentiles
     adjusted_positions = np.arange(len(time_steps)) - 0.2
@@ -1399,9 +1189,8 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
            whiskerprops=dict(color="black", linewidth=1),  # Whiskers
            capprops=dict(color="gray", linewidth=1,alpha=0))  # Caps
 
-    #create innner boxes climate
-
-    box_stats = [custom_box_stats(climate_list[i]) for i in range(len(time_steps))]
+        # Create boxplot statistics for each time step
+    box_stats = [custom_box_stats(data2[:, i]) for i in range(len(time_steps))]
 
     # Custom box plot using ECMWF-style percentiles
     adjusted_positions = np.arange(len(time_steps)) + 0.2
@@ -1411,8 +1200,6 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
            whiskerprops=dict(color="black", linewidth=1),  # Whiskers
            capprops=dict(color="gray", linewidth=1,alpha=0))  # Caps
     
-    #create outer boxes forecast
-
     # Compute custom percentiles
     def custom_box_stats(values):
         """Returns a dictionary with ECMWF-style boxplot percentiles."""
@@ -1426,8 +1213,7 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
         }
     
     # Create boxplot statistics for each time step
-    box_stats = [custom_box_stats(data_list[i]) for i in range(len(time_steps))]
-
+    box_stats = [custom_box_stats(data[:, i]) for i in range(len(time_steps))]
 
     adjusted_positions = np.arange(len(time_steps)) - 0.2
     #Custom box plot using ECMWF-style percentiles
@@ -1437,9 +1223,8 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
            whiskerprops=dict(color="gray", linewidth=2),  # Whiskers
            capprops=dict(color="black", linewidth=1),label='forecast')
 
-    #create outer boxes climate
-
-    box_stats = [custom_box_stats(climate_list[i]) for i in range(len(time_steps))]
+      # Create boxplot statistics for each time step
+    box_stats = [custom_box_stats(data2[:, i]) for i in range(len(time_steps))]
 
     adjusted_positions = np.arange(len(time_steps)) + 0.2
     #Custom box plot using ECMWF-style percentiles
@@ -1448,9 +1233,9 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
            medianprops=dict(color="black", linewidth=1.5),  # Median line
            whiskerprops=dict(color="gray", linewidth=2),  # Whiskers
            capprops=dict(color="black", linewidth=1),label='climatology')
+    # Plot ensemble mean
 
-    #plot climatology as shading
-    climate=m_climate.sel(longitude=lon,latitude=lat,method="nearest")[var]
+    climate=m_climate.sel(longitude=lon,latitude=lat,method="nearest").tp
     climate=climate.isel(time=slice(0,len(wh.step.values)))
     plt.fill_between(time_steps, climate.isel(quantile=10), climate.isel(quantile=25), color='gray', alpha=0.3)  # 10th to 25th
     plt.fill_between(time_steps, climate.isel(quantile=50), climate.isel(quantile=75), color='gray', alpha=0.5)  # 25th to 50th
@@ -1461,81 +1246,8 @@ def meteogram_double(ds,m_climate,lat,lon,cityname,var='tp'):
     ax.set_xticks(time_steps)
     ax.set_xticklabels([f"T+{t+1} week" for t in time_steps])
     ax.set_xlabel("Forecast Time Step")
-    ax.set_ylabel(ds[var].GRIB_name+f' ({ds[var].units})')
-    ax.set_title(f"Meteogram for gridcell closest to {cityname} (lat:{m_climate.sel(longitude=lon,latitude=lat,method='nearest')[var].isel(time=slice(0,len(wh.step.values))).latitude.values} lon: {m_climate.sel(longitude=lon,latitude=lat,method='nearest')[var].isel(time=slice(0,len(wh.step.values))).longitude.values})");
+    ax.set_ylabel("Precipitation (mm/day)")
+    ax.set_title(f"Meteogram: Box-and-Whisker Plot compared to climatology for lat: {m_climate.sel(longitude=lon,latitude=lat,method='nearest').tp.isel(time=slice(0,len(wh.step.values))).latitude.values} lon: {m_climate.sel(longitude=lon,latitude=lat,method='nearest').tp.isel(time=slice(0,len(wh.step.values))).longitude.values}");
     ax.grid(True, linestyle="--", alpha=0.6)
     ax.legend()
     return ax
-
-def ensemble_plots(ds_to_plot,m_climate,var,save_path,country,fontsize,major_cities,quantiles=[75,50,25]):
-    os.makedirs(save_path, exist_ok=True)
-    for quantile in quantiles:
-        chance_to_exceed=chance_to_exceed_mclimate(ds_to_plot,quantile=quantile,m_climate=m_climate,var=var)
-        panel_plot_variable(chance_to_exceed,var,chance_to_exceed.step.values,cmap='Blues',fontsize=fontsize)
-        plt.savefig(f'{save_path}/{quantile}th_percentile_exedance_precip.png',bbox_inches='tight')
-        plt.close()
-
-        if 'temperature' in ds_to_plot[var].long_name and 'dew' not in ds_to_plot[var].long_name:
-            cmap='RdBu_r'
-        else:
-            cmap='RdBu'
-            
-        anom_clim=anomaly_from_mclimate(ds_to_plot,quantile=quantile,m_climate=m_climate,var=var)
-        if float(anom_clim[var].min().values)>0:
-            vmin=-float(anom_clim[var].max().values)
-        else:
-            vmin=None
-        if float(anom_clim[var].max().values)<0:
-            vmax=-float(anom_clim[var].min().values)
-        else:
-            vmax=None
-            
-        panel_plot_variable(anom_clim,var,anom_clim.step.values,cmap=cmap,fontsize=fontsize,vmax=vmax,vmin=vmin)
-        plt.savefig(f'{save_path}/anomaly_from_{quantile}th.png',bbox_inches='tight')
-        plt.close()
-
-    tercil_cats=['near-normal','below-normal','above-normal']
-    
-    for cat in tercil_cats:
-        tercile_clim=tercile_from_mclimate(ds_to_plot,category_choice=cat,m_climate=m_climate,var=var)
-        panel_plot_variable(tercile_clim,var,tercile_clim.step.values,cmap='rainbow',fontsize=fontsize)
-        plt.savefig(f'{save_path}/chance_of_{cat}.png',bbox_inches='tight')
-        plt.close()
-    
-    for i in range(2):
-        latf,lonf=major_cities[country][i][0],major_cities[country][i][1]
-        meteogram_double(ds_to_plot,m_climate,lat=latf,lon=lonf,var=var,cityname=major_cities[country][2][i])
-        plt.savefig(f'{save_path}/meteogram_{major_cities[country][2][i]}.png',bbox_inches='tight')
-        plt.close()
-
-def ensemble_plots_quiver(ds_to_plot,m_climate,var,u_name,v_name,save_path,country,fontsize,major_cities,quantiles=[75,50,25]):
-    os.makedirs(save_path, exist_ok=True)
-    for quantile in quantiles:
-        chance_to_exceed=chance_to_exceed_mclimate(ds_to_plot,quantile=quantile,m_climate=m_climate,var=var)
-        panel_plot_variable(chance_to_exceed,var,chance_to_exceed.step.values,cmap='Blues',fontsize=fontsize)
-        plt.savefig(f'{save_path}/{quantile}th_percentile_exedance_{var}.png',bbox_inches='tight')
-        plt.close()
-
-        hold=[]
-        for wind in [u_name,v_name,'speed']:
-            hold.append(anomaly_from_mclimate(ds_to_plot,quantile=quantile,m_climate=m_climate,var=wind))
-        hold[-1]=hold[-1]*np.nan
-        anom=xr.merge(hold)
-        
-        fig=quiver_plot_variable(anom,u_name,v_name,ds_to_plot["step"],cmap='PiYG',scale=20,fontsize=fontsize)
-        plt.savefig(f'{save_path}/anomaly_from_{quantile}th.png',bbox_inches='tight')
-        plt.close()
-
-    tercil_cats=['near-normal','below-normal','above-normal']
-    
-    for cat in tercil_cats:
-        tercile_clim=tercile_from_mclimate(ds_to_plot,category_choice=cat,m_climate=m_climate,var=var)
-        panel_plot_variable(tercile_clim,var,tercile_clim.step.values,cmap='rainbow',fontsize=fontsize)
-        plt.savefig(f'{save_path}/chance_of_{cat}_{var}.png',bbox_inches='tight')
-        plt.close()
-    
-    for i in range(2):
-        latf,lonf=major_cities[country][i][0],major_cities[country][i][1]
-        meteogram_double(ds_to_plot,m_climate,lat=latf,lon=lonf,var=var,cityname=major_cities[country][2][i])
-        plt.savefig(f'{save_path}/meteogram_{major_cities[country][2][i]}_{var}.png',bbox_inches='tight')
-        plt.close()

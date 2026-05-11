@@ -1,7 +1,0 @@
-__pycache__/
-*.pyc
-.ipynb_checkpoints/
-**/ecmwf_api_key.json
-private_data/
-private_plots/
-.vscode/
