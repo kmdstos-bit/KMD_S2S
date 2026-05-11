@@ -18,7 +18,7 @@ def generate_test_data():
     lon = np.arange(-25, 55.25, 0.25)
     
     # Generate dates (last 3 days)
-    test_dates = [(datetime.now() - timedelta(days=i)).strftime('%Y%m%d') 
+    test_dates = [f'{(datetime.now() - timedelta(days=i)).year}-{(datetime.now() - timedelta(days=i)).month}-{(datetime.now() - timedelta(days=i)).day}'
                   for i in range(3)]
     
     # Variables to generate
