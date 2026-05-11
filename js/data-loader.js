@@ -46,7 +46,7 @@ class DataLoader {
     
     async loadWeatherData(initDate, variable, timestep) {
         const filename = `${variable}_${initDate}_f${String(timestep).padStart(3, '0')}.json`;
-        const url = `${CONFIG.dataBaseUrl}/weather/${initDate}/${variable}/${filename}`;
+        const url = `${CONFIG.dataBaseUrl}/${initDate}/${variable}/${filename}`;
         return await this.loadJson(url);
     }
     
