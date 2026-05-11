@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Africa Weather Model Viewer</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Controls -->
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <h2>🌍 Africa Weather Viewer</h2>
+            </div>
+            
+            <div class="control-group">
+                <label for="init-date">Initialization Date:</label>
+                <select id="init-date">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="variable">Variable:</label>
+                <select id="variable">
+                    <option value="">Select variable</option>
+                    <option value="temp">Temperature (°C)</option>
+                    <option value="precip">Precipitation (mm)</option>
+                    <option value="wind">Wind Speed (m/s)</option>
+                    <option value="rh">Relative Humidity (%)</option>
+                    <option value="mslp">Mean Sea Level Pressure (hPa)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="timestep">Forecast Hour:</label>
+                <select id="timestep">
+                    <option value="">Select timestep</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Layer Opacity:</label>
+                <input type="range" id="opacity" min="0" max="100" value="70">
+                <span id="opacity-value">70%</span>
+            </div>
+            
+            <div class="legend" id="legend">
+                <h4>Legend</h4>
+                <div id="legend-content"></div>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>Data Source:</strong> GFS Model</p>
+                <p><strong>Resolution:</strong> 0.25°</p>
+                <p id="update-time">Last updated: Loading...</p>
+            </div>
+        </div>
+        
+        <!-- Map Container -->
+        <div id="map"></div>
+        
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet Plugins -->
+    <script src="https://unpkg.com/leaflet-canvaslayer-field@1.0.0/dist/leaflet-canvaslayer-field.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="js/config.js"></script>
+    <script src="js/data-loader.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/controls.js"></script>
+</body>
+</html>

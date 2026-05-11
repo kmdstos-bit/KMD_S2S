@@ -1,7 +1,0 @@
-data/2026-03-19/ECMWF_s2s_pf_precip_forecast_weekly-and-dekade_23N-20W-37S-59E.grib
-
-data/2026-03-19/ECMWF_s2s_cf_precip_forecast_weekly-and-dekade_23N-20W-37S-59E.grib
-
-data/2026-03-19/ECMWF_s2s_pf_othervars_forecast_42days_7N-32E-6S-43E.grib
-
-data/2026-03-19/ECMWF_s2s_cf_othervars_forecast_42days_7N-32E-6S-43E.grib
