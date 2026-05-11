@@ -21,6 +21,7 @@ class DataLoader {
         }
     }
     
+    
     getAvailableDates() {
         if (!this.catalog || !this.catalog.dates) return [];
         return [...this.catalog.dates].sort().reverse();
