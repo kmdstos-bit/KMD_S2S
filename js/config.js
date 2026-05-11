@@ -5,7 +5,7 @@ const CONFIG = {
     branchName: 'website',
     
     // Data URL (now points to weekly data)
-    dataBaseUrl: 'https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/website/data/',
+    dataBaseUrl: 'https://raw.githubusercontent.com/alecjong-lab/ECMWF-S2S4AFRICA/website/data',
     
     // Africa bounding box
     mapBounds: {

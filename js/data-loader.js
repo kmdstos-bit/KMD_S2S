@@ -65,10 +65,7 @@ class DataLoader {
         
         // Try multiple path formats
         const paths = [
-            `${initDate}/${variable}`,                           // direct
             `weekly/${initDate}/${variable}`,                   // with weather prefix
-            `${this.normalizeDate(initDate)}/${variable}`,       // normalized date
-            `weekly/${this.normalizeDate(initDate)}/${variable}`, // both
         ];
         
         let lastError = null;
