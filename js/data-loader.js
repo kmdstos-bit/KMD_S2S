@@ -43,7 +43,7 @@ class DataLoader {
         // Try multiple paths
         const paths = [
             `${initDate}/${variable}`,
-            `weather/${initDate}/${variable}`,
+            `weekly/${initDate}/${variable}`,
         ];
         
         for (const path of paths) {
