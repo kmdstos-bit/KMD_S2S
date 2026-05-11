@@ -75,7 +75,6 @@ async loadAndDisplayWeather(initDate, variable, timestep) {
     }
 }
     
-    
     createWeatherLayer(rasterData, variable) {
         const varConfig = CONFIG.variables[variable];
         const colorScale = this.getColorScale(variable);
