@@ -243,6 +243,7 @@ class WeatherMap {
         return this.createImageOverlay(rasterData, variable, colorScale, bounds);
     }
     
+    
     createImageOverlay(rasterData, variable, colorScale, bounds) {
         // Create an off-screen canvas to render the data
         const canvas = document.createElement('canvas');
