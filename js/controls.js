@@ -278,24 +278,29 @@ class UIController {
         await this.plotData();
     }
     
-    async plotData() {
-        const initDate = this.initDateSelect.value;
-        const variable = this.variableSelect.value;
-        const week = this.weekSelect.value;
+   async plotData() {
+    const initDate = this.initDateSelect.value;
+    const variable = this.variableSelect.value;
+    const week = this.weekSelect.value;
+    
+    if (!initDate || !variable || !week) return;
+    
+    this.isUpdating = true;
+    
+    try {
+        await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week));
         
-        if (!initDate || !variable || !week) return;
-        
-        this.isUpdating = true;
-        
-        try {
-            await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week));
-        } catch (error) {
-            console.error('Failed to plot data:', error);
-            alert('Failed to load weather data: ' + error.message);
-        } finally {
-            this.isUpdating = false;
+        // Auto-scale if requested
+        if (this._pendingAutoScale) {
+            this._pendingAutoScale = false;
+            // The auto-scale is handled in loadAndDisplayWeather now
         }
+    } catch (error) {
+        console.error('Failed to plot data:', error);
+    } finally {
+        this.isUpdating = false;
     }
+}
     
     updateTimestamp() {
         fetch(`${CONFIG.dataBaseUrl}/weekly/catalog.json?t=${Date.now()}`)
