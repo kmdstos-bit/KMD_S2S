@@ -302,94 +302,117 @@ class WeatherMap {
     // ============================================
     
     createGridCellLayer(rasterData, variable) {
-        console.log('Creating grid cell layer...');
-        
-        const canvas = document.createElement('canvas');
-        
-        const nCols = rasterData.nCols;
-        const nRows = rasterData.nRows;
-        
-        // Each cell will be exactly this many pixels (no gaps)
-        const cellPixelSize = 5;
-        
-        // Canvas size: exactly nCols * cellSize by nRows * cellSize
-        canvas.width = nCols * cellPixelSize;
-        canvas.height = nRows * cellPixelSize;
-        
-        console.log('Canvas size:', canvas.width, 'x', canvas.height);
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Disable all smoothing
-        ctx.imageSmoothingEnabled = false;
-        
-        // Get color scale and dynamic range
-        const colorScale = this.getColorScale(variable);
-        const range = this.getCurrentRange(variable);
-        const values = rasterData.values;
-        
-        console.log(`Color range: ${range.min} to ${range.max}`);
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw each grid cell - cells are adjacent with NO gaps
-        for (let row = 0; row < nRows; row++) {
-            for (let col = 0; col < nCols; col++) {
-                const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
-                
-                const x = col * cellPixelSize;
-                const y = row * cellPixelSize;
-                
-                if (value === null || value === undefined || isNaN(value)) {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-                } else {
-                    const [r, g, b] = this.valueToColor(value, range.min, range.max, colorScale);
-                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-                }
-                
-                ctx.fillRect(x, y, cellPixelSize, cellPixelSize);
+    console.log('Creating grid cell layer...');
+    console.log('Grid info:', {
+        latMin: rasterData.latMin,
+        latMax: rasterData.latMax,
+        lonMin: rasterData.lonMin,
+        lonMax: rasterData.lonMax,
+        latStep: rasterData.latStep,
+        lonStep: rasterData.lonStep,
+        nRows: rasterData.nRows,
+        nCols: rasterData.nCols
+    });
+    
+    const canvas = document.createElement('canvas');
+    const nCols = rasterData.nCols;
+    const nRows = rasterData.nRows;
+    const cellPixelSize = 5;
+    
+    canvas.width = nCols * cellPixelSize;
+    canvas.height = nRows * cellPixelSize;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    
+    const colorScale = this.getColorScale(variable);
+    const range = this.getCurrentRange(variable);
+    const values = rasterData.values;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw cells
+    for (let row = 0; row < nRows; row++) {
+        for (let col = 0; col < nCols; col++) {
+            const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
+            const x = col * cellPixelSize;
+            const y = row * cellPixelSize;
+            
+            if (value === null || value === undefined || isNaN(value)) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+            } else {
+                const [r, g, b] = this.valueToColor(value, range.min, range.max, colorScale);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
             }
+            ctx.fillRect(x, y, cellPixelSize, cellPixelSize);
         }
-        
-        // // // Add subtle border
-        // ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-        // ctx.lineWidth = 0.5;
-        
-        // for (let row = 0; row < nRows; row++) {
-        //     for (let col = 0; col < nCols; col++) {
-        //         const x = col * cellPixelSize;
-        //         const y = row * cellPixelSize;
-        //         ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
-        //     }
-        // }
-        
-        // Convert to image
-        const imageUrl = canvas.toDataURL('image/png');
-        
-        const bounds = [
-            [rasterData.latMin, rasterData.lonMin],
-            [rasterData.latMax, rasterData.lonMax]
-        ];
-        
-        const overlay = L.imageOverlay(imageUrl, bounds, {
-            opacity: 0.85,
-            interactive: false,
-            zIndex: 1,
-            className: 'weather-grid-overlay'
-        });
-        
-        // Fix image rendering
-        overlay.on('add', () => {
-            const img = overlay.getElement();
-            if (img) {
-                img.style.imageRendering = 'pixelated';
-                img.style.setProperty('image-rendering', 'pixelated', 'important');
-            }
-        });
-        
-        return overlay;
     }
+    
+    // // Subtle borders
+    // ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    // ctx.lineWidth = 0.5;
+    // for (let row = 0; row < nRows; row++) {
+    //     for (let col = 0; col < nCols; col++) {
+    //         const x = col * cellPixelSize;
+    //         const y = row * cellPixelSize;
+    //         ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
+    //     }
+    // }
+    
+    const imageUrl = canvas.toDataURL('image/png');
+    
+    // ============================================
+    // CONFIGURABLE: Are your grid values centers or edges?
+    // ============================================
+    const GRID_VALUES_ARE_CELL_CENTERS = false;  // CHANGE THIS if needed
+    
+    let latMin, latMax, lonMin, lonMax;
+    
+    if (GRID_VALUES_ARE_CELL_CENTERS) {
+        // Values are at cell CENTERS - expand bounds by half a cell
+        const latStep = rasterData.latStep || 0.5;
+        const lonStep = rasterData.lonStep || 0.5;
+        
+        latMin = rasterData.latMin - latStep / 2;
+        latMax = rasterData.latMax + latStep / 2;
+        lonMin = rasterData.lonMin - lonStep / 2;
+        lonMax = rasterData.lonMax + lonStep / 2;
+        
+        console.log('Using CELL CENTER bounds (expanded by half-step)');
+    } else {
+        // Values are already at cell EDGES - use directly
+        latMin = rasterData.latMin;
+        latMax = rasterData.latMax;
+        lonMin = rasterData.lonMin;
+        lonMax = rasterData.lonMax;
+        
+        console.log('Using CELL EDGE bounds (direct)');
+    }
+    
+    console.log(`Bounds: [${latMin}, ${lonMin}] to [${latMax}, ${lonMax}]`);
+    
+    const bounds = [
+        [latMin, lonMin],
+        [latMax, lonMax]
+    ];
+    
+    const overlay = L.imageOverlay(imageUrl, bounds, {
+        opacity: 0.85,
+        interactive: false,
+        zIndex: 1,
+        className: 'weather-grid-overlay'
+    });
+    
+    overlay.on('add', () => {
+        const img = overlay.getElement();
+        if (img) {
+            img.style.imageRendering = 'pixelated';
+            img.style.setProperty('image-rendering', 'pixelated', 'important');
+        }
+    });
+    
+    return overlay;
+}
     
     // ============================================
     // COLOR UTILITIES
