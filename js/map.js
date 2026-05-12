@@ -352,17 +352,17 @@ class WeatherMap {
             }
         }
         
-        // // Add subtle border
+        // // // Add subtle border
         // ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
         // ctx.lineWidth = 0.5;
         
-        for (let row = 0; row < nRows; row++) {
-            for (let col = 0; col < nCols; col++) {
-                const x = col * cellPixelSize;
-                const y = row * cellPixelSize;
-                ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
-            }
-        }
+        // for (let row = 0; row < nRows; row++) {
+        //     for (let col = 0; col < nCols; col++) {
+        //         const x = col * cellPixelSize;
+        //         const y = row * cellPixelSize;
+        //         ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
+        //     }
+        // }
         
         // Convert to image
         const imageUrl = canvas.toDataURL('image/png');
