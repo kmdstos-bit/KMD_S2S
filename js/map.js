@@ -89,9 +89,9 @@ class WeatherMap {
                 this.currentLayer = null;
             }
             
-            // Load and parse data
-            const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
-            const rasterData = this.dataLoader.parseWeatherData(data);
+            // // Load and parse data
+            // const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
+            // const rasterData = this.dataLoader.parseWeatherData(data);
             
             // Create new layer
             this.currentLayer = this.createGridCellLayer(rasterData, variable);
