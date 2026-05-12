@@ -352,9 +352,9 @@ class WeatherMap {
             }
         }
         
-        // Add subtle border
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.lineWidth = 0.5;
+        // // Add subtle border
+        // ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+        // ctx.lineWidth = 0.5;
         
         for (let row = 0; row < nRows; row++) {
             for (let col = 0; col < nCols; col++) {
@@ -434,38 +434,38 @@ class WeatherMap {
     
     getColorScale(variable) {
         const scales = {
-            temperature: [
+            temp: [
                 '#000080', '#0000cc', '#0033ff', '#0066ff', 
                 '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
                 '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
                 '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
             ],
-            precipitation: [
+            precip: [
                 '#ffffff', '#e8f4f8', '#d1e8f0', '#b0d8e8',
                 '#87ceeb', '#60b8d8', '#40a0c8', '#2088b0',
                 '#007098', '#005880', '#004068', '#30a030',
                 '#40b840', '#60d060', '#80e880', '#a0f0a0',
                 '#c0f8c0', '#e0ffe0'
             ],
-            wind: [
+            wind_speed: [
                 '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
                 '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
                 '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
                 '#ff3300', '#cc0000', '#990000'
             ],
-            humidity: [
+            rh: [
                 '#67001f', '#b2182b', '#d6604d', '#f4a582',
                 '#fddbc7', '#f7f7f7', '#d1e5f0', '#92c5de', 
                 '#4393c3', '#2166ac', '#053061'
             ],
-            pressure: [
+            mslp: [
                 '#8e0152', '#c51b7d', '#de77ae', '#f1b6da',
                 '#fde0ef', '#f7f7f7', '#e6f5d0', '#b8e186', 
                 '#7fbc41', '#4d9221', '#276419'
             ]
         };
         
-        return scales[variable] || scales.precipitation;
+        return scales[variable] || scales.temperature;
     }
     
     // ============================================
