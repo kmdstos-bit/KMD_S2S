@@ -61,6 +61,24 @@ class WeatherMap {
         try {
             document.getElementById('loading').classList.add('active');
             
+            const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
+            const rasterData = this.dataLoader.parseWeatherData(data);
+            
+            // If auto-scale is pending, calculate data range
+            if (this._pendingAutoScale) {
+                this.autoScaleToData(rasterData.values, variable);
+                this._pendingAutoScale = false;
+            }
+            
+            // Update variable defaults when variable changes
+            if (this._lastVariable && this._lastVariable !== variable) {
+                this.updateVariableDefaults(variable);
+            }
+            this._lastVariable = variable;
+            
+            // Create layer with current range
+            this.currentLayer = this.createGridCellLayer(rasterData, variable);
+            
             // Save current view state
             const currentCenter = this.leafletMap.getCenter();
             const currentZoom = this.leafletMap.getZoom();

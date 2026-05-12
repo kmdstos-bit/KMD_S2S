@@ -9,6 +9,9 @@ class UIController {
         this.weekDates = document.getElementById('week-dates');
         this.opacitySlider = document.getElementById('opacity');
         this.opacityValue = document.getElementById('opacity-value');
+        this.currentMin = null;
+        this.currentMax = null;
+        this.useAutoScale = false;
         
         this.isUpdating = false;
         
@@ -59,6 +62,52 @@ class UIController {
             this.opacityValue.textContent = `${opacity}%`;
             this.weatherMap.setLayerOpacity(opacity);
         });
+
+        // Variable change - reset color scale to defaults
+        this.variableSelect.addEventListener('change', async (e) => {
+            if (this.isUpdating) return;
+            const variable = e.target.value;
+            if (variable) {
+                // Reset color scale to defaults for this variable
+                this.weatherMap.updateVariableDefaults(variable);
+                await this.onVariableChange(variable);
+            }
+        });
+
+        // VMin input
+        const vminInput = document.getElementById('vmin');
+        if (vminInput) {
+            vminInput.addEventListener('change', async () => {
+                this.weatherMap.setManualRange(
+                    parseFloat(vminInput.value),
+                    parseFloat(document.getElementById('vmax').value)
+                );
+                await this.plotData();
+            });
+        }
+        
+        // VMax input
+        const vmaxInput = document.getElementById('vmax');
+        if (vmaxInput) {
+            vmaxInput.addEventListener('change', async () => {
+                this.weatherMap.setManualRange(
+                    parseFloat(document.getElementById('vmin').value),
+                    parseFloat(vmaxInput.value)
+                );
+                await this.plotData();
+            });
+        }
+
+        // Auto-scale button
+        const autoScaleBtn = document.getElementById('auto-scale');
+        if (autoScaleBtn) {
+            autoScaleBtn.addEventListener('click', async () => {
+                // We need to auto-scale after loading data
+                this._pendingAutoScale = true;
+                await this.plotData();
+            });
+        }
+        
     }
     
     async loadInitialData() {

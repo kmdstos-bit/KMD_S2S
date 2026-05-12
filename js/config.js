@@ -31,42 +31,58 @@ const CONFIG = {
         6: 'Week 6'
     },
     
-    // Available variables with metadata
     variables: {
         temp: {
             label: 'Weekly Mean Temperature',
             unit: '°C',
             colorScheme: 'temperature',
-            min: -10,
-            max: 45
+            // These are the DEFAULT ranges (forecaster-trusted values)
+            defaultMin: 0,
+            defaultMax: 40,
+            // Allowable range for the sliders
+            absoluteMin: -20,
+            absoluteMax: 55,
+            step: 1
         },
         precip: {
             label: 'Weekly Total Precipitation',
             unit: 'mm',
             colorScheme: 'precipitation',
-            min: 0,
-            max: 200
+            defaultMin: 0,
+            defaultMax: 100,
+            absoluteMin: 0,
+            absoluteMax: 500,
+            step: 5
         },
         wind_speed: {
             label: 'Weekly Mean Wind Speed',
             unit: 'm/s',
             colorScheme: 'wind',
-            min: 0,
-            max: 15
+            defaultMin: 0,
+            defaultMax: 15,
+            absoluteMin: 0,
+            absoluteMax: 40,
+            step: 1
         },
         rh: {
             label: 'Weekly Mean Relative Humidity',
             unit: '%',
             colorScheme: 'humidity',
-            min: 20,
-            max: 100
+            defaultMin: 0,
+            defaultMax: 100,
+            absoluteMin: 0,
+            absoluteMax: 100,
+            step: 5
         },
         mslp: {
             label: 'Weekly Mean Sea Level Pressure',
             unit: 'hPa',
             colorScheme: 'pressure',
-            min: 995,
-            max: 1025
+            defaultMin: 990,
+            defaultMax: 1030,
+            absoluteMin: 950,
+            absoluteMax: 1060,
+            step: 2
         }
     },
     
