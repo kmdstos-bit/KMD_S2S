@@ -368,26 +368,14 @@ class WeatherMap {
     
     let latMin, latMax, lonMin, lonMax;
     
-    if (GRID_VALUES_ARE_CELL_CENTERS) {
-        // Values are at cell CENTERS - expand bounds by half a cell
-        const latStep =  0;
-        const lonStep = rasterData.lonStep || 0.5;
-        
-        latMin = rasterData.latMin - latStep / 2;
-        latMax = rasterData.latMax + latStep / 2;
-        lonMin = rasterData.lonMin - lonStep / 2;
-        lonMax = rasterData.lonMax + lonStep / 2;
-        
-        console.log('Using CELL CENTER bounds (expanded by half-step)');
-    } else {
-        // Values are already at cell EDGES - use directly
-        latMin = rasterData.latMin;
-        latMax = rasterData.latMax;
-        lonMin = rasterData.lonMin;
-        lonMax = rasterData.lonMax;
-        
-        console.log('Using CELL EDGE bounds (direct)');
-    }
+    const GRID_SPACING = 1.5;  // degrees per cell
+    const HALF_CELL = GRID_SPACING / 2;  // 0.75°
+    
+    // Expand bounds by half a cell on each side
+    const latMin = rasterData.latMin - HALF_CELL;
+    const latMax = rasterData.latMax + HALF_CELL;
+    const lonMin = rasterData.lonMin - HALF_CELL;
+    const lonMax = rasterData.lonMax + HALF_CELL;
     
     console.log(`Bounds: [${latMin}, ${lonMin}] to [${latMax}, ${lonMax}]`);
     
