@@ -85,95 +85,122 @@ class WeatherMap {
     }
     
     createGridCellLayer(rasterData, variable) {
-        // Create a canvas element
-        const canvas = document.createElement('canvas');
-        
-        // Use the actual grid dimensions
-        const nCols = rasterData.nCols;
-        const nRows = rasterData.nRows;
-        
-        // Add extra pixels for grid lines between cells
-        const gridLineWidth = 1; // pixels between cells
-        canvas.width = nCols + (nCols - 1) * gridLineWidth;
-        canvas.height = nRows + (nRows - 1) * gridLineWidth;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Disable image smoothing for crisp cell edges
-        ctx.imageSmoothingEnabled = false;
-        
-        // Get color scale
-        const colorScale = this.getColorScale(variable);
-        const varConfig = CONFIG.variables[variable];
-        const minVal = varConfig.min;
-        const maxVal = varConfig.max;
-        
-        // Draw each grid cell
-        const values = rasterData.values;
-        
-        for (let row = 0; row < nRows; row++) {
-            for (let col = 0; col < nCols; col++) {
-                const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
-                
-                // Calculate cell position on canvas
-                const x = col * (1 + gridLineWidth);
-                const y = row * (1 + gridLineWidth);
-                const cellSize = 1; // each cell is 1 pixel + grid lines
-                
-                if (value === null || value === undefined || isNaN(value)) {
-                    // Transparent for no data or ocean
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-                } else {
-                    // Get color for this value
-                    const [r, g, b] = this.valueToColor(value, minVal, maxVal, colorScale);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-                }
-                
-                // Draw the cell (1 pixel with possible grid line spacing)
-                ctx.fillRect(x, y, cellSize, cellSize);
+    console.log('Creating grid cell layer...');
+    console.log('Grid size:', rasterData.nCols, 'x', rasterData.nRows);
+    
+    // Create a MUCH larger canvas
+    const canvas = document.createElement('canvas');
+    
+    const nCols = rasterData.nCols;
+    const nRows = rasterData.nRows;
+    
+    // Make each grid cell at least 3-4 pixels on screen
+    // For a 161x161 grid, this gives a canvas of ~644x644 pixels
+    const cellPixelSize = 4;  // Each cell will be 4x4 pixels
+    const gridLineWidth = 1;  // 1 pixel grid lines
+    
+    canvas.width = nCols * cellPixelSize + (nCols - 1) * gridLineWidth;
+    canvas.height = nRows * cellPixelSize + (nRows - 1) * gridLineWidth;
+    
+    console.log('Canvas size:', canvas.width, 'x', canvas.height);
+    
+    const ctx = canvas.getContext('2d');
+    
+    // CRITICAL: Disable all smoothing
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
+    
+    // Get color scale
+    const colorScale = this.getColorScale(variable);
+    const varConfig = CONFIG.variables[variable];
+    const minVal = varConfig.min;
+    const maxVal = varConfig.max;
+    const values = rasterData.values;
+    
+    // Clear canvas first
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw each grid cell as a block of pixels
+    for (let row = 0; row < nRows; row++) {
+        for (let col = 0; col < nCols; col++) {
+            const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
+            
+            // Calculate position on canvas
+            const x = col * (cellPixelSize + gridLineWidth);
+            const y = row * (cellPixelSize + gridLineWidth);
+            
+            if (value === null || value === undefined || isNaN(value)) {
+                // No data - make transparent (or white)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+            } else {
+                // Get color for this value
+                const [r, g, b] = this.valueToColor(value, minVal, maxVal, colorScale);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
             }
+            
+            // Fill the cell (cellPixelSize x cellPixelSize pixels)
+            ctx.fillRect(x, y, cellPixelSize, cellPixelSize);
         }
+    }
+    
+    // Add grid lines between cells
+    if (gridLineWidth > 0) {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.lineWidth = gridLineWidth;
         
-        // Optional: Add subtle grid lines
-        // This is commented out because the spacing already acts as grid lines
-        /*
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 0.5;
+        // Horizontal lines
         for (let row = 0; row <= nRows; row++) {
-            const y = row * (1 + gridLineWidth) - gridLineWidth / 2;
+            const y = row * (cellPixelSize + gridLineWidth) - Math.floor(gridLineWidth / 2);
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(canvas.width, y);
             ctx.stroke();
         }
+        
+        // Vertical lines
         for (let col = 0; col <= nCols; col++) {
-            const x = col * (1 + gridLineWidth) - gridLineWidth / 2;
+            const x = col * (cellPixelSize + gridLineWidth) - Math.floor(gridLineWidth / 2);
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, canvas.height);
             ctx.stroke();
         }
-        */
-        
-        // Convert canvas to image
-        const imageUrl = canvas.toDataURL('image/png');
-        
-        // Create image overlay
-        const bounds = [
-            [rasterData.latMin, rasterData.lonMin],
-            [rasterData.latMax, rasterData.lonMax]
-        ];
-        
-        const overlay = L.imageOverlay(imageUrl, bounds, {
-            opacity: 0.85,
-            interactive: true,
-            zIndex: 1,
-            // Prevent Leaflet from smoothing the image
-            className: 'grid-overlay'
-        });
-        
-        return overlay;
     }
+    
+    // CRITICAL: Use toDataURL with no compression
+    const imageUrl = canvas.toDataURL('image/png');
+    
+    // Create bounds for overlay
+    const bounds = [
+        [rasterData.latMin, rasterData.lonMin],
+        [rasterData.latMax, rasterData.lonMax]
+    ];
+    
+    // Create the overlay
+    const overlay = L.imageOverlay(imageUrl, bounds, {
+        opacity: 0.85,
+        interactive: false,
+        zIndex: 1,
+        // Add a class we can target with CSS
+        className: 'weather-grid-overlay'
+    });
+    
+    // After the overlay is added to the map, fix the image rendering
+    overlay.on('add', () => {
+        const img = overlay.getElement();
+        if (img) {
+            img.style.imageRendering = 'pixelated';
+            img.style.imageRendering = 'crisp-edges';
+            img.style.setProperty('image-rendering', 'pixelated', 'important');
+            img.style.setProperty('image-rendering', 'crisp-edges', 'important');
+            img.style.setProperty('-ms-interpolation-mode', 'nearest-neighbor');
+        }
+    });
+    
+    return overlay;
+}
     
     valueToColor(value, min, max, colorScale) {
         // Normalize value to 0-1 range

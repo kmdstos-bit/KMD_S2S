@@ -126,12 +126,17 @@ input[type="range"] {
     height: 100vh;
 }
 
-.grid-overlay img {
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
+/* Force pixelated rendering for grid overlays */
+.weather-grid-overlay img,
+.weather-grid-overlay image,
+.grid-overlay img,
+img[src*="data:image"] {
+    image-rendering: pixelated !important;
+    image-rendering: crisp-edges !important;
+    image-rendering: -moz-crisp-edges !important;
+    image-rendering: -webkit-crisp-edges !important;
+    -ms-interpolation-mode: nearest-neighbor !important;
 }
-
 .loading {
     display: none;
     position: absolute;
