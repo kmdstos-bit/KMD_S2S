@@ -465,7 +465,7 @@ class WeatherMap {
             ]
         };
         
-        return scales[variable] || scales.temperature;
+        return scales[variable];
     }
     
     // ============================================
