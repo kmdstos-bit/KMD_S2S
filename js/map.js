@@ -465,7 +465,7 @@ class WeatherMap {
             ]
         };
         
-        return scales[variable];
+        return scales[variable] || scales.precipitation;
     }
     
     // ============================================
