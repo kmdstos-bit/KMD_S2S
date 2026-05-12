@@ -1,169 +1,9 @@
-// class WeatherMap {
-//     constructor() {
-//         this.map = null;
-//         this.currentLayer = null;
-//         this.dataLoader = new DataLoader();
-//         this.leafletMap = null;
-        
-//         this.init();
-//     }
-    
-//     init() {
-//         // Initialize Leaflet map centered on Africa
-//         this.leafletMap = L.map('map', {
-//             center: CONFIG.mapDefaults.center,
-//             zoom: CONFIG.mapDefaults.zoom,
-//             maxZoom: CONFIG.mapDefaults.maxZoom,
-//             minZoom: CONFIG.mapDefaults.minZoom,
-//             zoomControl: true
-//         });
-        
-//         // Add base tile layer (OpenStreetMap)
-//         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//             attribution: '© OpenStreetMap contributors',
-//             maxZoom: 10
-//         }).addTo(this.leafletMap);
-        
-//         // Add a semi-transparent overlay for ocean masking (optional)
-//         this.setupMapBounds();
-//     }
-    
-//     setupMapBounds() {
-//         // Add country boundaries overlay
-//         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-//             attribution: '© OpenStreetMap, © CartoDB',
-//             maxZoom: 10,
-//             opacity: 0.7
-//         }).addTo(this.leafletMap);
-//     }
-
-//     // In the loadAndDisplayWeather method:
-// async loadAndDisplayWeather(initDate, variable, timestep) {
-//     try {
-//         document.getElementById('loading').classList.add('active');
-        
-//         // Remove previous layer if exists
-//         if (this.currentLayer) {
-//             this.leafletMap.removeLayer(this.currentLayer);
-//             this.currentLayer = null;
-//         }
-        
-//         // Load data
-//         const data = await this.dataLoader.loadWeatherData(initDate, variable, timestep);
-//         console.log('Raw data loaded:', data);
-        
-//         // Parse the data
-//         const rasterData = this.dataLoader.parseWeatherData(data);
-//         console.log('Parsed raster data:', rasterData);
-        
-//         // Create and add layer
-//         this.currentLayer = this.createWeatherLayer(rasterData, variable);
-        
-//         if (this.currentLayer) {
-//             this.currentLayer.addTo(this.leafletMap);
-//             this.updateLegend(variable);
-//         } else {
-//             throw new Error('Failed to create weather layer');
-//         }
-        
-//         document.getElementById('loading').classList.remove('active');
-        
-//     } catch (error) {
-//         console.error('Error loading weather data:', error);
-//         document.getElementById('loading').classList.remove('active');
-//         alert('Failed to load weather data. Please try again.\n\nError: ' + error.message);
-//     }
-// }
-    
-//     createWeatherLayer(rasterData, variable) {
-//         const varConfig = CONFIG.variables[variable];
-//         const colorScale = this.getColorScale(variable);
-        
-//         // Create canvas layer
-//         const canvasLayer = L.canvasLayerField({
-//             data: rasterData.values,
-//             lngMin: rasterData.lonMin,
-//             lngMax: rasterData.lonMax,
-//             latMin: rasterData.latMin,
-//             latMax: rasterData.latMax,
-//             colorScale: colorScale,
-//             opacity: 0.7
-//         });
-        
-//         return canvasLayer;
-//     }
-    
-//     getColorScale(variable) {
-//         // Define color scales for different variables
-//         const scales = {
-//             temperature: [
-//                 '#000080', '#0000ff', '#0080ff', '#00ffff', 
-//                 '#00ff80', '#80ff00', '#ffff00', '#ff8000', '#ff0000', '#800000'
-//             ],
-//             precipitation: [
-//                 '#ffffff', '#e0f0ff', '#80c0ff', '#0080ff',
-//                 '#00ff00', '#80ff00', '#ffff00', '#ff8000', '#ff0000', '#800080'
-//             ],
-//             wind: [
-//                 '#ffffff', '#d4f0ff', '#a0d8ff', '#6bb5ff',
-//                 '#3399ff', '#0066cc', '#ffcc00', '#ff6600', '#ff3300', '#cc0000'
-//             ],
-//             humidity: [
-//                 '#67001f', '#b2182b', '#d6604d', '#f4a582',
-//                 '#fddbc7', '#e0e0e0', '#d1e5f0', '#92c5de', '#4393c3', '#2166ac'
-//             ],
-//             pressure: [
-//                 '#8e0152', '#c51b7d', '#de77ae', '#f1b6da',
-//                 '#fde0ef', '#f7f7f7', '#e6f5d0', '#b8e186', '#7fbc41', '#276419'
-//             ]
-//         };
-        
-//         return scales[variable] || scales.temperature;
-//     }
-    
-//     updateLegend(variable) {
-//         const varConfig = CONFIG.variables[variable];
-//         const legendContent = document.getElementById('legend-content');
-//         const colorScale = this.getColorScale(variable);
-        
-//         // Create gradient bar
-//         const gradientBar = document.createElement('div');
-//         gradientBar.className = 'legend-gradient';
-//         gradientBar.style.background = `linear-gradient(to right, ${colorScale.join(', ')})`;
-        
-//         // Create labels
-//         const labels = document.createElement('div');
-//         labels.className = 'legend-labels';
-        
-//         const minLabel = document.createElement('span');
-//         minLabel.textContent = `${varConfig.min}${varConfig.unit}`;
-        
-//         const maxLabel = document.createElement('span');
-//         maxLabel.textContent = `${varConfig.max}${varConfig.unit}`;
-        
-//         labels.appendChild(minLabel);
-//         labels.appendChild(maxLabel);
-        
-//         // Clear and update legend
-//         legendContent.innerHTML = '';
-//         legendContent.appendChild(gradientBar);
-//         legendContent.appendChild(labels);
-//     }
-    
-//     setLayerOpacity(opacity) {
-//         if (this.currentLayer) {
-//             this.currentLayer.setOpacity(opacity / 100);
-//         }
-//     }
-// }
-
 class WeatherMap {
     constructor() {
         this.map = null;
         this.currentLayer = null;
         this.dataLoader = new DataLoader();
         this.leafletMap = null;
-        this.canvasLayer = null;
         
         this.init();
     }
@@ -175,7 +15,10 @@ class WeatherMap {
             zoom: CONFIG.mapDefaults.zoom,
             maxZoom: CONFIG.mapDefaults.maxZoom,
             minZoom: CONFIG.mapDefaults.minZoom,
-            zoomControl: true
+            zoomControl: true,
+            // Disable smooth zoom to keep grid crisp
+            zoomSnap: 0.25,
+            zoomDelta: 0.5
         });
         
         // Add base tile layer
@@ -192,125 +35,141 @@ class WeatherMap {
         }).addTo(this.leafletMap);
     }
     
-   async loadAndDisplayWeather(initDate, variable, week) {
-    try {
-        console.log('=== LOADING WEATHER DATA ===');
-        console.log('InitDate:', initDate);
-        console.log('Variable:', variable);
-        console.log('Week:', week);
-        
-        document.getElementById('loading').classList.add('active');
-        
-        // Remove previous layer
-        if (this.currentLayer) {
-            this.leafletMap.removeLayer(this.currentLayer);
-            this.currentLayer = null;
-        }
-        
-        // Load the data
-        const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
-        console.log('Data received:', data);
-        
-        const rasterData = this.dataLoader.parseWeatherData(data);
-        
-        this.currentLayer = this.createCanvasLayer(rasterData, variable);
-        this.currentLayer.addTo(this.leafletMap);
-         // Update legend
-        this.updateLegend(variable);
+    async loadAndDisplayWeather(initDate, variable, week) {
+        try {
+            console.log('=== LOADING WEATHER DATA ===');
+            console.log('InitDate:', initDate);
+            console.log('Variable:', variable);
+            console.log('Week:', week);
             
-        // Fit bounds to data
-        this.leafletMap.fitBounds([
-            [rasterData.latMin, rasterData.lonMin],
-            [rasterData.latMax, rasterData.lonMax]
-        ]);
-        
-        document.getElementById('loading').classList.remove('active');
+            document.getElementById('loading').classList.add('active');
+            
+            // Remove previous layer
+            if (this.currentLayer) {
+                this.leafletMap.removeLayer(this.currentLayer);
+                this.currentLayer = null;
+            }
+            
+            // Load the data
+            const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
+            const rasterData = this.dataLoader.parseWeatherData(data);
+            
+            // Create grid cell layer
+            this.currentLayer = this.createGridCellLayer(rasterData, variable);
+            
+            if (this.currentLayer) {
+                this.currentLayer.addTo(this.leafletMap);
+                
+                // Add popup with info
+                const weekLabel = data.metadata ? data.metadata.week_label : `Week ${week}`;
+                this.currentLayer.bindPopup(`<b>${CONFIG.variables[variable].label}</b><br>${weekLabel}`);
+                
+                // Update legend
+                this.updateLegend(variable);
+                
+                // Fit bounds
+                this.leafletMap.fitBounds([
+                    [rasterData.latMin, rasterData.lonMin],
+                    [rasterData.latMax, rasterData.lonMax]
+                ]);
+            }
+            
+            console.log('✅ Map updated successfully');
+            document.getElementById('loading').classList.remove('active');
             
         } catch (error) {
-            console.error('Error loading weather data:', error);
+            console.error('❌ Error in loadAndDisplayWeather:', error);
             document.getElementById('loading').classList.remove('active');
-            alert('Failed to load weather data: ' + error.message);
-        
-    } 
-}
+            alert('Failed to load weather data.\n\nError: ' + error.message);
+        }
+    }
     
-    createCanvasLayer(rasterData, variable) {
-        const varConfig = CONFIG.variables[variable];
+    createGridCellLayer(rasterData, variable) {
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        
+        // Use the actual grid dimensions
+        const nCols = rasterData.nCols;
+        const nRows = rasterData.nRows;
+        
+        // Add extra pixels for grid lines between cells
+        const gridLineWidth = 1; // pixels between cells
+        canvas.width = nCols + (nCols - 1) * gridLineWidth;
+        canvas.height = nRows + (nRows - 1) * gridLineWidth;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Disable image smoothing for crisp cell edges
+        ctx.imageSmoothingEnabled = false;
+        
+        // Get color scale
         const colorScale = this.getColorScale(variable);
+        const varConfig = CONFIG.variables[variable];
+        const minVal = varConfig.min;
+        const maxVal = varConfig.max;
+        
+        // Draw each grid cell
+        const values = rasterData.values;
+        
+        for (let row = 0; row < nRows; row++) {
+            for (let col = 0; col < nCols; col++) {
+                const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
+                
+                // Calculate cell position on canvas
+                const x = col * (1 + gridLineWidth);
+                const y = row * (1 + gridLineWidth);
+                const cellSize = 1; // each cell is 1 pixel + grid lines
+                
+                if (value === null || value === undefined || isNaN(value)) {
+                    // Transparent for no data or ocean
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+                } else {
+                    // Get color for this value
+                    const [r, g, b] = this.valueToColor(value, minVal, maxVal, colorScale);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
+                }
+                
+                // Draw the cell (1 pixel with possible grid line spacing)
+                ctx.fillRect(x, y, cellSize, cellSize);
+            }
+        }
+        
+        // Optional: Add subtle grid lines
+        // This is commented out because the spacing already acts as grid lines
+        /*
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 0.5;
+        for (let row = 0; row <= nRows; row++) {
+            const y = row * (1 + gridLineWidth) - gridLineWidth / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+        for (let col = 0; col <= nCols; col++) {
+            const x = col * (1 + gridLineWidth) - gridLineWidth / 2;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        */
+        
+        // Convert canvas to image
+        const imageUrl = canvas.toDataURL('image/png');
+        
+        // Create image overlay
         const bounds = [
             [rasterData.latMin, rasterData.lonMin],
             [rasterData.latMax, rasterData.lonMax]
         ];
         
-        // Create a canvas element
-        const canvas = L.canvasLayer ? null : null; // We'll implement our own
-        
-        // Use a simple image overlay approach instead
-        return this.createImageOverlay(rasterData, variable, colorScale, bounds);
-    }
-    
-
-    createImageOverlay(rasterData, variable, colorScale, bounds) {
-        // Create an off-screen canvas to render the data
-        const canvas = document.createElement('canvas');
-        canvas.width = rasterData.nCols || 321;
-        canvas.height = rasterData.nRows || 321;
-        
-        const ctx = canvas.getContext('2d');
-        const imageData = ctx.createImageData(canvas.width, canvas.height);
-        
-        // Map values to colors
-        const varConfig = CONFIG.variables[variable];
-        const minVal = varConfig.min;
-        const maxVal = varConfig.max;
-        
-        // Flatten values if needed
-        const values = rasterData.values;
-        
-        for (let row = 0; row < canvas.height; row++) {
-            for (let col = 0; col < canvas.width; col++) {
-                let value;
-                if (Array.isArray(values[row]) && values[row][col] !== undefined) {
-                    value = values[row][col];
-                } else {
-                    value = null;
-                }
-                
-                const pixelIndex = (row * canvas.width + col) * 4;
-                
-                if (value === null || value === undefined || isNaN(value)) {
-                    // Transparent for no data
-                    imageData.data[pixelIndex] = 0;
-                    imageData.data[pixelIndex + 1] = 0;
-                    imageData.data[pixelIndex + 2] = 0;
-                    imageData.data[pixelIndex + 3] = 0;
-                } else {
-                    // Get color for this value
-                    const color = this.valueToColor(value, minVal, maxVal, colorScale);
-                    
-                    imageData.data[pixelIndex] = color[0];     // R
-                    imageData.data[pixelIndex + 1] = color[1]; // G
-                    imageData.data[pixelIndex + 2] = color[2]; // B
-                    imageData.data[pixelIndex + 3] = 180;      // A (semi-transparent)
-                }
-            }
-        }
-        
-        ctx.putImageData(imageData, 0, 0);
-        
-        // Convert canvas to image overlay
-        const imageUrl = canvas.toDataURL();
-        
-        // Remove previous layer if exists
-        if (this.currentLayer) {
-            this.leafletMap.removeLayer(this.currentLayer);
-        }
-        
-        // Create image overlay
         const overlay = L.imageOverlay(imageUrl, bounds, {
-            opacity: 0.7,
+            opacity: 0.85,
             interactive: true,
-            zIndex: 1
+            zIndex: 1,
+            // Prevent Leaflet from smoothing the image
+            className: 'grid-overlay'
         });
         
         return overlay;
@@ -324,7 +183,7 @@ class WeatherMap {
         // Get color from scale
         const index = normalized * (colorScale.length - 1);
         const lowerIndex = Math.floor(index);
-        const upperIndex = Math.ceil(index);
+        const upperIndex = Math.min(Math.ceil(index), colorScale.length - 1);
         const fraction = index - lowerIndex;
         
         const lowerColor = this.hexToRgb(colorScale[lowerIndex]);
@@ -344,35 +203,39 @@ class WeatherMap {
             parseInt(result[1], 16),
             parseInt(result[2], 16),
             parseInt(result[3], 16)
-        ] : [0, 0, 0];
+        ] : [128, 128, 128];
     }
     
     getColorScale(variable) {
         const scales = {
             temperature: [
-                '#000080', '#0000ff', '#0080ff', '#00ffff', 
-                '#00ff80', '#80ff00', '#ffff00', '#ff8000', 
-                '#ff0000', '#800000'
+                '#000080', '#0000cc', '#0033ff', '#0066ff', 
+                '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
+                '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
+                '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
             ],
             precipitation: [
-                '#ffffff', '#e0f0ff', '#80c0ff', '#0080ff',
-                '#00ff00', '#80ff00', '#ffff00', '#ff8000', 
-                '#ff0000', '#800080'
+                '#ffffff', '#e8f4f8', '#d1e8f0', '#b0d8e8',
+                '#87ceeb', '#60b8d8', '#40a0c8', '#2088b0',
+                '#007098', '#005880', '#004068', '#30a030',
+                '#40b840', '#60d060', '#80e880', '#a0f0a0',
+                '#c0f8c0', '#e0ffe0'
             ],
             wind: [
-                '#ffffff', '#d4f0ff', '#a0d8ff', '#6bb5ff',
-                '#3399ff', '#0066cc', '#ffcc00', '#ff6600', 
-                '#ff3300', '#cc0000'
+                '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
+                '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
+                '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
+                '#ff3300', '#cc0000', '#990000'
             ],
             humidity: [
                 '#67001f', '#b2182b', '#d6604d', '#f4a582',
-                '#fddbc7', '#e0e0e0', '#d1e5f0', '#92c5de', 
-                '#4393c3', '#2166ac'
+                '#fddbc7', '#f7f7f7', '#d1e5f0', '#92c5de', 
+                '#4393c3', '#2166ac', '#053061'
             ],
             pressure: [
                 '#8e0152', '#c51b7d', '#de77ae', '#f1b6da',
                 '#fde0ef', '#f7f7f7', '#e6f5d0', '#b8e186', 
-                '#7fbc41', '#276419'
+                '#7fbc41', '#4d9221', '#276419'
             ]
         };
         
@@ -392,14 +255,17 @@ class WeatherMap {
         
         let html = '';
         
-        // Create color bar
-        html += '<div style="height: 20px; background: linear-gradient(to right, ';
-        html += colorScale.join(', ');
-        html += '); border-radius: 4px; margin: 10px 0;"></div>';
+        // Create discrete color blocks for each color
+        html += '<div style="display: flex; height: 25px; margin: 10px 0; border: 1px solid rgba(255,255,255,0.3);">';
+        colorScale.forEach(color => {
+            html += `<div style="flex: 1; background: ${color};"></div>`;
+        });
+        html += '</div>';
         
         // Create labels
-        html += '<div style="display: flex; justify-content: space-between; font-size: 0.8em;">';
+        html += '<div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-top: 5px;">';
         html += `<span>${varConfig.min}${varConfig.unit}</span>`;
+        html += `<span style="text-align: center;">${Math.round((varConfig.max + varConfig.min) / 2)}${varConfig.unit}</span>`;
         html += `<span>${varConfig.max}${varConfig.unit}</span>`;
         html += '</div>';
         

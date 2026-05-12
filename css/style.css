@@ -126,6 +126,12 @@ input[type="range"] {
     height: 100vh;
 }
 
+.grid-overlay img {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
 .loading {
     display: none;
     position: absolute;
