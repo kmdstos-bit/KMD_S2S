@@ -370,7 +370,7 @@ class WeatherMap {
     
     if (GRID_VALUES_ARE_CELL_CENTERS) {
         // Values are at cell CENTERS - expand bounds by half a cell
-        const latStep = rasterData.latStep || 0.5;
+        const latStep =  0;
         const lonStep = rasterData.lonStep || 0.5;
         
         latMin = rasterData.latMin - latStep / 2;
