@@ -54,7 +54,20 @@
                 <input type="range" id="opacity" min="0" max="100" value="70">
                 <span id="opacity-value">70%</span>
             </div>
-            
+
+            <div class="control-group">
+                <button id="reset-view" style="width: 100%; padding: 10px; 
+                        background: rgba(255,255,255,0.2); 
+                        border: 2px solid rgba(255,255,255,0.3); 
+                        border-radius: 6px; color: white; 
+                        cursor: pointer; font-size: 0.9em;
+                        transition: background 0.3s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                    🔍 Reset View
+                </button>
+            </div>
+                        
             <div class="legend" id="legend">
                 <h4>Legend</h4>
                 <div id="legend-content"></div>

@@ -4,19 +4,18 @@ class WeatherMap {
         this.currentLayer = null;
         this.dataLoader = new DataLoader();
         this.leafletMap = null;
+        this._hasInitialized = false;  // Track if we've done the initial fit
         
         this.init();
     }
     
     init() {
-        // Initialize Leaflet map centered on Africa
         this.leafletMap = L.map('map', {
             center: CONFIG.mapDefaults.center,
             zoom: CONFIG.mapDefaults.zoom,
             maxZoom: CONFIG.mapDefaults.maxZoom,
             minZoom: CONFIG.mapDefaults.minZoom,
             zoomControl: true,
-            // Disable smooth zoom to keep grid crisp
             zoomSnap: 0.25,
             zoomDelta: 0.5
         });
@@ -33,16 +32,38 @@ class WeatherMap {
             maxZoom: 10,
             opacity: 0.7
         }).addTo(this.leafletMap);
+        
+        // Add info control that shows current zoom/center
+        this.addCoordinateDisplay();
+    }
+    
+    addCoordinateDisplay() {
+        // Show coordinates on mouse move (optional but nice for forecasters)
+        const coordDisplay = L.control({ position: 'bottomleft' });
+        coordDisplay.onAdd = () => {
+            const div = L.DomUtil.create('div', 'coord-display');
+            div.style.cssText = 'background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; font-size: 12px; border-radius: 4px;';
+            div.innerHTML = 'Move mouse over map';
+            return div;
+        };
+        coordDisplay.addTo(this.leafletMap);
+        
+        this.leafletMap.on('mousemove', (e) => {
+            const lat = e.latlng.lat.toFixed(4);
+            const lng = e.latlng.lng.toFixed(4);
+            const zoom = this.leafletMap.getZoom();
+            document.querySelector('.coord-display').innerHTML = 
+                `📍 ${lat}°, ${lng}° | Zoom: ${zoom}`;
+        });
     }
     
     async loadAndDisplayWeather(initDate, variable, week) {
         try {
-            console.log('=== LOADING WEATHER DATA ===');
-            console.log('InitDate:', initDate);
-            console.log('Variable:', variable);
-            console.log('Week:', week);
-            
             document.getElementById('loading').classList.add('active');
+            
+            // Save current view state
+            const currentCenter = this.leafletMap.getCenter();
+            const currentZoom = this.leafletMap.getZoom();
             
             // Remove previous layer
             if (this.currentLayer) {
@@ -50,67 +71,81 @@ class WeatherMap {
                 this.currentLayer = null;
             }
             
-            // Load the data
+            // Load and parse data
             const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
             const rasterData = this.dataLoader.parseWeatherData(data);
             
-            // Create grid cell layer
+            // Create new layer
             this.currentLayer = this.createGridCellLayer(rasterData, variable);
             
             if (this.currentLayer) {
                 this.currentLayer.addTo(this.leafletMap);
                 
-                // Add popup with info
-                const weekLabel = data.metadata ? data.metadata.week_label : `Week ${week}`;
-                this.currentLayer.bindPopup(`<b>${CONFIG.variables[variable].label}</b><br>${weekLabel}`);
-                
                 // Update legend
                 this.updateLegend(variable);
                 
-                // Fit bounds
-                this.leafletMap.fitBounds([
-                    [rasterData.latMin, rasterData.lonMin],
-                    [rasterData.latMax, rasterData.lonMax]
-                ]);
+                // Only reset view on first load
+                if (!this._hasInitialized) {
+                    console.log('📍 First load - fitting to data bounds');
+                    this.leafletMap.fitBounds([
+                        [rasterData.latMin, rasterData.lonMin],
+                        [rasterData.latMax, rasterData.lonMax]
+                    ]);
+                    this._hasInitialized = true;
+                } else {
+                    // Keep the user's current view
+                    console.log('📍 Keeping current view');
+                    // Restore view silently (no animation)
+                    this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
+                }
             }
             
-            console.log('✅ Map updated successfully');
             document.getElementById('loading').classList.remove('active');
             
         } catch (error) {
-            console.error('❌ Error in loadAndDisplayWeather:', error);
+            console.error('Error:', error);
             document.getElementById('loading').classList.remove('active');
             alert('Failed to load weather data.\n\nError: ' + error.message);
         }
     }
     
+    resetView() {
+        // Reset to show all of Africa with data
+        if (this.currentLayer) {
+            try {
+                const bounds = this.currentLayer.getBounds();
+                this.leafletMap.fitBounds(bounds);
+            } catch (e) {
+                this.leafletMap.setView(CONFIG.mapDefaults.center, CONFIG.mapDefaults.zoom);
+            }
+        } else {
+            this.leafletMap.setView(CONFIG.mapDefaults.center, CONFIG.mapDefaults.zoom);
+        }
+        // Don't reset _hasInitialized - user explicitly asked for reset
+    }
+    
     createGridCellLayer(rasterData, variable) {
     console.log('Creating grid cell layer...');
-    console.log('Grid size:', rasterData.nCols, 'x', rasterData.nRows);
     
-    // Create a MUCH larger canvas
     const canvas = document.createElement('canvas');
     
     const nCols = rasterData.nCols;
     const nRows = rasterData.nRows;
     
-    // Make each grid cell at least 3-4 pixels on screen
-    // For a 161x161 grid, this gives a canvas of ~644x644 pixels
-    const cellPixelSize = 4;  // Each cell will be 4x4 pixels
-    const gridLineWidth = 1;  // 1 pixel grid lines
+    // Each cell will be exactly this many pixels (no gaps)
+    const cellPixelSize = 5;  // 5x5 pixels per cell
     
-    canvas.width = nCols * cellPixelSize + (nCols - 1) * gridLineWidth;
-    canvas.height = nRows * cellPixelSize + (nRows - 1) * gridLineWidth;
+    // Canvas size: exactly nCols * cellSize by nRows * cellSize
+    canvas.width = nCols * cellPixelSize;
+    canvas.height = nRows * cellPixelSize;
     
     console.log('Canvas size:', canvas.width, 'x', canvas.height);
+    console.log('Grid:', nCols, 'cols x', nRows, 'rows');
     
     const ctx = canvas.getContext('2d');
     
-    // CRITICAL: Disable all smoothing
+    // Disable all smoothing
     ctx.imageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
     
     // Get color scale
     const colorScale = this.getColorScale(variable);
@@ -119,83 +154,65 @@ class WeatherMap {
     const maxVal = varConfig.max;
     const values = rasterData.values;
     
-    // Clear canvas first
+    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw each grid cell as a block of pixels
+    // Draw each grid cell - cells are adjacent with NO gaps
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
-            // Calculate position on canvas
-            const x = col * (cellPixelSize + gridLineWidth);
-            const y = row * (cellPixelSize + gridLineWidth);
+            // Position: cells start right next to each other
+            const x = col * cellPixelSize;
+            const y = row * cellPixelSize;
             
             if (value === null || value === undefined || isNaN(value)) {
-                // No data - make transparent (or white)
-                ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+                // Make no-data areas fully transparent
+                ctx.fillStyle = 'rgba(0, 0, 0, 0)';
             } else {
-                // Get color for this value
                 const [r, g, b] = this.valueToColor(value, minVal, maxVal, colorScale);
                 ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
             }
             
-            // Fill the cell (cellPixelSize x cellPixelSize pixels)
+            // Fill the cell - exactly cellPixelSize x cellPixelSize
             ctx.fillRect(x, y, cellPixelSize, cellPixelSize);
         }
     }
     
-    // Add grid lines between cells
-    if (gridLineWidth > 0) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.lineWidth = gridLineWidth;
-        
-        // Horizontal lines
-        for (let row = 0; row <= nRows; row++) {
-            const y = row * (cellPixelSize + gridLineWidth) - Math.floor(gridLineWidth / 2);
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(canvas.width, y);
-            ctx.stroke();
-        }
-        
-        // Vertical lines
-        for (let col = 0; col <= nCols; col++) {
-            const x = col * (cellPixelSize + gridLineWidth) - Math.floor(gridLineWidth / 2);
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
-            ctx.stroke();
+    // Add a very subtle border around each cell (optional)
+    // This draws ON TOP of the cells so there are no gaps
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.lineWidth = 0.5;
+    
+    for (let row = 0; row < nRows; row++) {
+        for (let col = 0; col < nCols; col++) {
+            const x = col * cellPixelSize;
+            const y = row * cellPixelSize;
+            ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
         }
     }
     
-    // CRITICAL: Use toDataURL with no compression
+    // Convert to image
     const imageUrl = canvas.toDataURL('image/png');
     
-    // Create bounds for overlay
     const bounds = [
         [rasterData.latMin, rasterData.lonMin],
         [rasterData.latMax, rasterData.lonMax]
     ];
     
-    // Create the overlay
     const overlay = L.imageOverlay(imageUrl, bounds, {
         opacity: 0.85,
         interactive: false,
         zIndex: 1,
-        // Add a class we can target with CSS
         className: 'weather-grid-overlay'
     });
     
-    // After the overlay is added to the map, fix the image rendering
+    // Fix image rendering after adding to map
     overlay.on('add', () => {
         const img = overlay.getElement();
         if (img) {
             img.style.imageRendering = 'pixelated';
-            img.style.imageRendering = 'crisp-edges';
             img.style.setProperty('image-rendering', 'pixelated', 'important');
-            img.style.setProperty('image-rendering', 'crisp-edges', 'important');
-            img.style.setProperty('-ms-interpolation-mode', 'nearest-neighbor');
         }
     });
     

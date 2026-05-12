@@ -23,6 +23,9 @@ class UIController {
     }
     
     setupEventListeners() {
+        document.getElementById('reset-view').addEventListener('click', () => {
+        this.weatherMap.resetView();
+        });
         // Variable change
         this.variableSelect.addEventListener('change', async (e) => {
             if (this.isUpdating) return;
