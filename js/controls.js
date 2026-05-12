@@ -30,10 +30,16 @@ class UIController {
         this.weatherMap.resetView();
         });
         // Variable change
-        this.variableSelect.addEventListener('change', async (e) => {
+       this.variableSelect.addEventListener('change', async (e) => {
             if (this.isUpdating) return;
             const variable = e.target.value;
             if (variable) {
+                console.log(`Variable selected: ${variable}`);
+                
+                // FIRST: reset the color scale
+                this.weatherMap.updateVariableDefaults(variable);
+                
+                // THEN: update the data (which will use the new defaults)
                 await this.onVariableChange(variable);
             }
         });
@@ -98,16 +104,18 @@ class UIController {
             });
         }
 
-        // Auto-scale button
         const autoScaleBtn = document.getElementById('auto-scale');
         if (autoScaleBtn) {
             autoScaleBtn.addEventListener('click', async () => {
-                // We need to auto-scale after loading data
-                this._pendingAutoScale = true;
+                console.log('🔄 Auto-scale requested');
+                
+                // Set the flag on the weatherMap
+                this.weatherMap._pendingAutoScale = true;
+                
+                // Re-plot the data (this will trigger loadAndDisplayWeather which checks the flag)
                 await this.plotData();
             });
         }
-        
     }
     
     async loadInitialData() {
@@ -278,7 +286,7 @@ class UIController {
         await this.plotData();
     }
     
-   async plotData() {
+    async plotData() {
     const initDate = this.initDateSelect.value;
     const variable = this.variableSelect.value;
     const week = this.weekSelect.value;
@@ -288,13 +296,8 @@ class UIController {
     this.isUpdating = true;
     
     try {
+        // The weatherMap will check _pendingAutoScale inside loadAndDisplayWeather
         await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week));
-        
-        // Auto-scale if requested
-        if (this._pendingAutoScale) {
-            this._pendingAutoScale = false;
-            // The auto-scale is handled in loadAndDisplayWeather now
-        }
     } catch (error) {
         console.error('Failed to plot data:', error);
     } finally {

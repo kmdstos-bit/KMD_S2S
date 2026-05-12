@@ -68,29 +68,37 @@ class WeatherMap {
     // COLOR SCALE METHODS
     // ============================================
     
-    getCurrentRange(variable) {
-        const varConfig = CONFIG.variables[variable];
-        
-        // If auto-scale is active and we have data range, use it
-        if (this.useAutoScale && this._lastDataRange) {
-            return {
-                min: this._lastDataRange.min,
-                max: this._lastDataRange.max
-            };
-        }
-        
-        // Use user-set values from inputs if available
-        const vminInput = document.getElementById('vmin');
-        const vmaxInput = document.getElementById('vmax');
-        
-        const userMin = vminInput ? parseFloat(vminInput.value) : NaN;
-        const userMax = vmaxInput ? parseFloat(vmaxInput.value) : NaN;
-        
-        const min = (!isNaN(userMin)) ? userMin : (this.currentMin !== null ? this.currentMin : varConfig.defaultMin);
-        const max = (!isNaN(userMax)) ? userMax : (this.currentMax !== null ? this.currentMax : varConfig.defaultMax);
-        
-        return { min, max };
+   getCurrentRange(variable) {
+    const varConfig = CONFIG.variables[variable];
+    
+    // If auto-scale is active and we have data range, use it
+    if (this.useAutoScale && this._lastDataRange) {
+        return {
+            min: this._lastDataRange.min,
+            max: this._lastDataRange.max
+        };
     }
+    
+    // Check if we have stored manual values (set by user or variable change)
+    if (this.currentMin !== null && this.currentMax !== null && !this.useAutoScale) {
+        return {
+            min: this.currentMin,
+            max: this.currentMax
+        };
+    }
+    
+    // Fallback to reading from inputs
+    const vminInput = document.getElementById('vmin');
+    const vmaxInput = document.getElementById('vmax');
+    
+    const min = (vminInput && vminInput.value !== '') ? parseFloat(vminInput.value) : varConfig.defaultMin;
+    const max = (vmaxInput && vmaxInput.value !== '') ? parseFloat(vmaxInput.value) : varConfig.defaultMax;
+    
+    return { 
+        min: isNaN(min) ? varConfig.defaultMin : min, 
+        max: isNaN(max) ? varConfig.defaultMax : max 
+    };
+}
     
     getDataRange(values) {
         let min = Infinity;
@@ -159,101 +167,122 @@ class WeatherMap {
     }
     
     updateVariableDefaults(variable) {
-        const varConfig = CONFIG.variables[variable];
-        this.useAutoScale = false;
-        this.currentMin = varConfig.defaultMin;
-        this.currentMax = varConfig.defaultMax;
-        
-        // Update input fields
-        const vminInput = document.getElementById('vmin');
-        const vmaxInput = document.getElementById('vmax');
-        if (vminInput) {
-            vminInput.value = varConfig.defaultMin;
-            vminInput.min = varConfig.absoluteMin;
-            vminInput.max = varConfig.absoluteMax;
-            vminInput.step = varConfig.step || 1;
-        }
-        if (vmaxInput) {
-            vmaxInput.value = varConfig.defaultMax;
-            vmaxInput.min = varConfig.absoluteMin;
-            vmaxInput.max = varConfig.absoluteMax;
-            vmaxInput.step = varConfig.step || 1;
-        }
-        
-        const rangeInfo = document.getElementById('data-range-info');
-        if (rangeInfo) {
-            rangeInfo.textContent = `Default: ${varConfig.defaultMin} to ${varConfig.defaultMax} ${varConfig.unit}`;
-        }
-        
-        console.log(`Reset to defaults for ${variable}: ${varConfig.defaultMin} to ${varConfig.defaultMax}`);
+    const varConfig = CONFIG.variables[variable];
+    
+    console.log(`Resetting color scale for ${variable}: ${varConfig.defaultMin} to ${varConfig.defaultMax}`);
+    
+    // Force reset all the tracking
+    this.useAutoScale = false;
+    this._pendingAutoScale = false;
+    this.currentMin = varConfig.defaultMin;
+    this.currentMax = varConfig.defaultMax;
+    this._lastDataRange = null;
+    
+    // Update input fields forcefully
+    const vminInput = document.getElementById('vmin');
+    const vmaxInput = document.getElementById('vmax');
+    
+    if (vminInput) {
+        vminInput.value = varConfig.defaultMin;
+        vminInput.setAttribute('min', varConfig.absoluteMin);
+        vminInput.setAttribute('max', varConfig.absoluteMax);
+        vminInput.setAttribute('step', varConfig.step || 1);
     }
+    if (vmaxInput) {
+        vmaxInput.value = varConfig.defaultMax;
+        vmaxInput.setAttribute('min', varConfig.absoluteMin);
+        vmaxInput.setAttribute('max', varConfig.absoluteMax);
+        vmaxInput.setAttribute('step', varConfig.step || 1);
+    }
+    
+    // Update info display
+    const rangeInfo = document.getElementById('data-range-info');
+    if (rangeInfo) {
+        rangeInfo.textContent = `Default: ${varConfig.defaultMin} to ${varConfig.defaultMax} ${varConfig.unit}`;
+    }
+}
     
     // ============================================
     // DATA LOADING & DISPLAY
     // ============================================
     
     async loadAndDisplayWeather(initDate, variable, week) {
-        try {
-            document.getElementById('loading').classList.add('active');
-            
-            // Save current view state BEFORE any changes
-            const currentCenter = this.leafletMap.getCenter();
-            const currentZoom = this.leafletMap.getZoom();
-            
-            // Remove previous layer
-            if (this.currentLayer) {
-                this.leafletMap.removeLayer(this.currentLayer);
-                this.currentLayer = null;
-            }
-            
-            // Load data
-            const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
-            const rasterData = this.dataLoader.parseWeatherData(data);
-            
-            // Update variable defaults when variable changes
-            if (this._lastVariable && this._lastVariable !== variable) {
-                this.updateVariableDefaults(variable);
-            }
-            this._lastVariable = variable;
-            
-            // If auto-scale is pending, calculate data range
-            if (this._pendingAutoScale) {
-                this.autoScaleToData(rasterData.values, variable);
-                this._pendingAutoScale = false;
-            }
-            
-            // Create new layer with current color range
-            this.currentLayer = this.createGridCellLayer(rasterData, variable);
-            
-            if (this.currentLayer) {
-                this.currentLayer.addTo(this.leafletMap);
-                
-                // Update legend
-                this.updateLegend(variable);
-                
-                // Only reset view on first load
-                if (!this._hasInitialized) {
-                    console.log('📍 First load - fitting to data bounds');
-                    this.leafletMap.fitBounds([
-                        [rasterData.latMin, rasterData.lonMin],
-                        [rasterData.latMax, rasterData.lonMax]
-                    ]);
-                    this._hasInitialized = true;
-                } else {
-                    // Keep the user's current view
-                    console.log('📍 Keeping current view');
-                    this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
-                }
-            }
-            
-            document.getElementById('loading').classList.remove('active');
-            
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('loading').classList.remove('active');
-            alert('Failed to load weather data.\n\nError: ' + error.message);
+    try {
+        document.getElementById('loading').classList.add('active');
+        
+        // Save current view state
+        const currentCenter = this.leafletMap.getCenter();
+        const currentZoom = this.leafletMap.getZoom();
+        
+        // Remove previous layer
+        if (this.currentLayer) {
+            this.leafletMap.removeLayer(this.currentLayer);
+            this.currentLayer = null;
         }
+        
+        // Load data
+        const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
+        const rasterData = this.dataLoader.parseWeatherData(data);
+        
+        // CHECK IF VARIABLE CHANGED - update defaults BEFORE creating layer
+        const variableChanged = (this._lastVariable && this._lastVariable !== variable);
+        if (variableChanged) {
+            console.log(`Variable changed: ${this._lastVariable} -> ${variable}`);
+            this.updateVariableDefaults(variable);
+        }
+        
+        // Handle auto-scale if pending
+        if (this._pendingAutoScale) {
+            console.log('Applying auto-scale...');
+            const dataRange = this.getDataRange(rasterData.values);
+            this._lastDataRange = dataRange;
+            this.useAutoScale = true;
+            
+            const vminInput = document.getElementById('vmin');
+            const vmaxInput = document.getElementById('vmax');
+            if (vminInput) vminInput.value = dataRange.min;
+            if (vmaxInput) vmaxInput.value = dataRange.max;
+            
+            const rangeInfo = document.getElementById('data-range-info');
+            if (rangeInfo) {
+                rangeInfo.textContent = `Auto-scaled: ${dataRange.min} to ${dataRange.max} ${CONFIG.variables[variable].unit}`;
+            }
+            
+            this._pendingAutoScale = false;
+        }
+        
+        // Store current variable for next comparison
+        this._lastVariable = variable;
+        
+        // NOW create the layer with the correct range
+        this.currentLayer = this.createGridCellLayer(rasterData, variable);
+        
+        if (this.currentLayer) {
+            this.currentLayer.addTo(this.leafletMap);
+            
+            // Update legend with current range
+            this.updateLegend(variable);
+            
+            // Handle view
+            if (!this._hasInitialized) {
+                this.leafletMap.fitBounds([
+                    [rasterData.latMin, rasterData.lonMin],
+                    [rasterData.latMax, rasterData.lonMax]
+                ]);
+                this._hasInitialized = true;
+            } else {
+                this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
+            }
+        }
+        
+        document.getElementById('loading').classList.remove('active');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').classList.remove('active');
+        alert('Failed to load weather data.\n\nError: ' + error.message);
     }
+}
     
     resetView() {
         if (this.currentLayer) {
