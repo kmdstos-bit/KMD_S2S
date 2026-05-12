@@ -364,7 +364,7 @@ class WeatherMap {
     // ============================================
     // CONFIGURABLE: Are your grid values centers or edges?
     // ============================================
-    const GRID_VALUES_ARE_CELL_CENTERS = false;  // CHANGE THIS if needed
+    const GRID_VALUES_ARE_CELL_CENTERS = true;  // CHANGE THIS if needed
     
     let latMin, latMax, lonMin, lonMax;
     
