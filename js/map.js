@@ -301,7 +301,7 @@ class WeatherMap {
     // GRID CELL LAYER
     // ============================================
     
-    createGridCellLayer(rasterData, variable) {
+createGridCellLayer(rasterData, variable) {
     console.log('Creating grid cell layer...');
     console.log('Grid info:', {
         latMin: rasterData.latMin,
@@ -329,53 +329,53 @@ class WeatherMap {
     const range = this.getCurrentRange(variable);
     const values = rasterData.values;
     
+    // Clear canvas with FULLY TRANSPARENT background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw cells
+    // Draw each grid cell
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
+            
             const x = col * cellPixelSize;
             const y = row * cellPixelSize;
             
             if (value === null || value === undefined || isNaN(value)) {
+                // No data: fully transparent
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
             } else {
-                const [r, g, b] = this.valueToColor(value, range.min, range.max, colorScale);
-                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                const [r, g, b, a] = this.valueToColor(value, range.min, range.max, colorScale);
+                // Use the alpha channel from the color scale
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a !== undefined ? a : 1})`;
             }
+            
             ctx.fillRect(x, y, cellPixelSize, cellPixelSize);
         }
     }
     
-    // // Subtle borders
-    // ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-    // ctx.lineWidth = 0.5;
-    // for (let row = 0; row < nRows; row++) {
-    //     for (let col = 0; col < nCols; col++) {
-    //         const x = col * cellPixelSize;
-    //         const y = row * cellPixelSize;
-    //         ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
+    // // Add subtle borders (skip for precipitation to keep it clean)
+    // if (variable !== 'precip') {
+    //     ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    //     ctx.lineWidth = 0.5;
+    //     for (let row = 0; row < nRows; row++) {
+    //         for (let col = 0; col < nCols; col++) {
+    //             const x = col * cellPixelSize;
+    //             const y = row * cellPixelSize;
+    //             ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
+    //         }
     //     }
     // }
     
     const imageUrl = canvas.toDataURL('image/png');
     
-    // ============================================
-    // CONFIGURABLE: Are your grid values centers or edges?
-    // ============================================
-    const GRID_VALUES_ARE_CELL_CENTERS = true;  // CHANGE THIS if needed
-        
-    const GRID_SPACING = 1.5;  // degrees per cell
-    const HALF_CELL = GRID_SPACING / 2;  // 0.75°
+    // Grid bounds calculation (1.5° spacing, cell centers)
+    const GRID_SPACING = 1.5;
+    const HALF_CELL = GRID_SPACING / 2;
     
-    // Expand bounds by half a cell on each side
     const latMin = rasterData.latMin - HALF_CELL;
     const latMax = rasterData.latMax + HALF_CELL;
     const lonMin = rasterData.lonMin - HALF_CELL;
     const lonMax = rasterData.lonMax + HALF_CELL;
-    
-    console.log(`Bounds: [${latMin}, ${lonMin}] to [${latMax}, ${lonMax}]`);
     
     const bounds = [
         [latMin, lonMin],
@@ -383,7 +383,7 @@ class WeatherMap {
     ];
     
     const overlay = L.imageOverlay(imageUrl, bounds, {
-        opacity: 0.85,
+        opacity: 0.9,  // Slightly higher since alpha is in the colors
         interactive: false,
         zIndex: 1,
         className: 'weather-grid-overlay'
@@ -405,42 +405,92 @@ class WeatherMap {
     // ============================================
     
     valueToColor(value, min, max, colorScale) {
-        // Handle edge cases
-        if (min === max) {
-            const color = this.hexToRgb(colorScale[Math.floor(colorScale.length / 2)]);
-            return color;
+    // Handle edge cases
+    if (min === max) {
+        const color = this.parseColor(colorScale[Math.floor(colorScale.length / 2)]);
+        return color;
+    }
+    
+    // Normalize value to 0-1 range
+    let normalized = (value - min) / (max - min);
+    normalized = Math.max(0, Math.min(1, normalized));
+    
+    // Get color from scale
+    const index = normalized * (colorScale.length - 1);
+    const lowerIndex = Math.floor(index);
+    const upperIndex = Math.min(Math.ceil(index), colorScale.length - 1);
+    const fraction = index - lowerIndex;
+    
+    const lowerColor = this.parseColor(colorScale[lowerIndex]);
+    const upperColor = this.parseColor(colorScale[upperIndex]);
+    
+    // Interpolate between colors (including alpha)
+    const r = Math.round(lowerColor[0] + (upperColor[0] - lowerColor[0]) * fraction);
+    const g = Math.round(lowerColor[1] + (upperColor[1] - lowerColor[1]) * fraction);
+    const b = Math.round(lowerColor[2] + (upperColor[2] - lowerColor[2]) * fraction);
+    const a = lowerColor[3] + (upperColor[3] - lowerColor[3]) * fraction;
+    
+    return [r, g, b, a];
+}
+
+parseColor(colorStr) {
+    // Handle rgba() format
+    if (typeof colorStr === 'string' && colorStr.startsWith('rgba')) {
+        const match = colorStr.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+        if (match) {
+            return [
+                parseInt(match[1]),
+                parseInt(match[2]),
+                parseInt(match[3]),
+                parseFloat(match[4])
+            ];
         }
-        
-        // Normalize value to 0-1 range
-        let normalized = (value - min) / (max - min);
-        normalized = Math.max(0, Math.min(1, normalized));
-        
-        // Get color from scale
-        const index = normalized * (colorScale.length - 1);
-        const lowerIndex = Math.floor(index);
-        const upperIndex = Math.min(Math.ceil(index), colorScale.length - 1);
-        const fraction = index - lowerIndex;
-        
-        const lowerColor = this.hexToRgb(colorScale[lowerIndex]);
-        const upperColor = this.hexToRgb(colorScale[upperIndex]);
-        
-        // Interpolate between colors
-        const r = Math.round(lowerColor[0] + (upperColor[0] - lowerColor[0]) * fraction);
-        const g = Math.round(lowerColor[1] + (upperColor[1] - lowerColor[1]) * fraction);
-        const b = Math.round(lowerColor[2] + (upperColor[2] - lowerColor[2]) * fraction);
-        
-        return [r, g, b];
     }
     
-    hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? [
-            parseInt(result[1], 16),
-            parseInt(result[2], 16),
-            parseInt(result[3], 16)
-        ] : [128, 128, 128];
+    // Handle rgb() format
+    if (typeof colorStr === 'string' && colorStr.startsWith('rgb')) {
+        const match = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (match) {
+            return [
+                parseInt(match[1]),
+                parseInt(match[2]),
+                parseInt(match[3]),
+                1.0  // fully opaque
+            ];
+        }
     }
     
+    // Handle hex format
+    if (typeof colorStr === 'string' && colorStr.startsWith('#')) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(colorStr);
+        if (result) {
+            return [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16),
+                1.0
+            ];
+        }
+    }
+    
+    // Fallback
+    return [128, 128, 128, 1.0];
+}
+    
+  hexToRgb(hex) {
+    // Handle rgba strings
+    if (typeof hex === 'string' && hex.startsWith('rgba')) {
+        return this.parseColor(hex);
+    }
+    
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+        1.0  // fully opaque
+    ] : [128, 128, 128, 1.0];
+}
     getColorScale(variable) {
         const scales = {
             temp: [
@@ -449,13 +499,33 @@ class WeatherMap {
                 '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
                 '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
             ],
-            precip: [
-                '#ffffff', '#e8f4f8', '#d1e8f0', '#b0d8e8',
-                '#87ceeb', '#60b8d8', '#40a0c8', '#2088b0',
-                '#007098', '#005880', '#004068', '#30a030',
-                '#40b840', '#60d060', '#80e880', '#a0f0a0',
-                '#c0f8c0', '#e0ffe0'
-            ],
+            precip:[ // Low values: transparent → light blue (barely visible rain)
+            'rgba(0,0,0,0)',       // 0 mm: fully transparent
+            'rgba(180,220,255,0.3)', // trace: very light blue, mostly transparent
+            'rgba(140,200,255,0.5)', // light rain
+            'rgba(100,180,255,0.7)',
+            // Moderate rain: transitioning to greens
+            '#87ceeb',
+            '#60b8d8',
+            '#40a0c8',
+            '#2088b0',
+            // Heavy rain: darker blues to greens
+            '#007098',
+            '#005880',
+            '#30a030',
+            '#40b840',
+            '#60d060',
+            // Very heavy: bright greens to yellows
+            '#80e880',
+            '#ffff00',
+            '#ffcc00',
+            '#ff9900',
+            // Extreme: oranges to reds to purples
+            '#ff6600',
+            '#ff3300',
+            '#cc0000',
+            '#990000',
+            '#800080',],
             wind_speed: [
                 '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
                 '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
