@@ -39,12 +39,13 @@ class WeatherMap {
             maxZoom: 10
         }).addTo(this.leafletMap);
         
-        // Add country labels
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap, © CartoDB',
-            maxZoom: 10,
-            opacity: 0.7
-        }).addTo(this.leafletMap);
+        this.bordersLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap, © CartoDB',
+        maxZoom: 10,
+        opacity: 0.9,
+        pane: 'bordersPane',  // This keeps it above everything
+        zIndex: 1000
+    }).addTo(this.leafletMap);
         
         // Add coordinate display
         this.addCoordinateDisplay();
