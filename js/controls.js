@@ -163,7 +163,7 @@ class UIController {
     
     // Keyboard shortcut: ` (backtick) toggles sidebar
     document.addEventListener('keydown', (e) => {
-        if (e.key === '`' && 
+        if (e.key === 'q' && 
             document.activeElement.tagName !== 'INPUT' &&
             document.activeElement.tagName !== 'TEXTAREA' &&
             document.activeElement.tagName !== 'SELECT') {
