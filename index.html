@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Africa Weather Model Viewer</title>
+    <title>Africa S2S Viewer</title>
     
+   <title>Africa S2S Weather Viewer</title>
+    
+    <!-- Favicon - shows in browser tab -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🌍</text></svg>">
+    
+    <!-- Also add for Apple devices -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🌍</text></svg>">
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -15,24 +23,24 @@
     <div id="app">
         <!-- Sidebar Controls -->
        <div id="sidebar">
-            <div class="sidebar-header">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2>🌍 Africa S2S Viewer</h2>
-                    <button id="sidebar-toggle" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
-                            color: white; font-size: 1.2em; cursor: pointer; padding: 5px 10px; border-radius: 4px; 
-                            transition: all 0.3s; min-width: 40px;"
-                            onmouseover="this.style.background='rgba(255,255,255,0.4)'"
-                            onmouseout="this.style.background='rgba(255,255,255,0.2)'"
-                            title="Toggle sidebar">
-                        ◀
-                    </button>
-                </div>
+    <div class="sidebar-header" style="margin-bottom: 10px; padding-bottom: 5px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 0;">
+            <h2 style="margin: 0; padding: 0; font-size: 1.3em;">🌍 Africa S2S Viewer</h2>
+            <button id="sidebar-toggle" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
+                    color: white; font-size: 1.2em; cursor: pointer; padding: 3px 8px; border-radius: 4px; 
+                    transition: all 0.3s; min-width: 40px; line-height: 1;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.4)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+                    title="Toggle sidebar">
+                ◀
+            </button>
         </div>
+    </div>
 
-        <!-- Add this near the toggle button or at the bottom of sidebar -->
-        <div style="font-size: 0.65em; opacity: 0.5; text-align: center; margin-top: 5px;">
-            Press q to toggle sidebar
-        </div>
+    <!-- Hint text - moved closer -->
+    <div style="font-size: 0.65em; opacity: 0.5; text-align: center; margin: -5px 0 10px 0; padding: 0; line-height: 1;">
+        Press q to toggle sidebar
+    </div>
             
             <div class="control-group">
                 <label for="init-date">Initialization Date:</label>

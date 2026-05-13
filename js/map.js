@@ -27,6 +27,11 @@ class WeatherMap {
             zoomSnap: 0.25,
             zoomDelta: 0.5
         });
+
+        // Create custom pane for borders (highest z-index)
+        this.leafletMap.createPane('bordersPane');
+        this.leafletMap.getPane('bordersPane').style.zIndex = 650;
+        this.leafletMap.getPane('bordersPane').style.pointerEvents = 'none';
         
         // Add base tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
