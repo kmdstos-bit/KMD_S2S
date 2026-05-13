@@ -29,9 +29,14 @@ class WeatherMap {
         });
 
         // Create custom pane for borders (highest z-index)
+        // Create custom panes for layering
         this.leafletMap.createPane('bordersPane');
-        this.leafletMap.getPane('bordersPane').style.zIndex = 650;
+        this.leafletMap.getPane('bordersPane').style.zIndex = 640;
         this.leafletMap.getPane('bordersPane').style.pointerEvents = 'none';
+        
+        this.leafletMap.createPane('labelsPane');
+        this.leafletMap.getPane('labelsPane').style.zIndex = 650;
+        this.leafletMap.getPane('labelsPane').style.pointerEvents = 'none';
         
         // Add base tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -39,13 +44,15 @@ class WeatherMap {
             maxZoom: 10
         }).addTo(this.leafletMap);
         
-        this.bordersLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap, © CartoDB',
-        maxZoom: 10,
-        opacity: 0.9,
-        pane: 'bordersPane',  // This keeps it above everything
-        zIndex: 1000
-    }).addTo(this.leafletMap);
+    //     this.bordersLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+    //     attribution: '© OpenStreetMap, © CartoDB',
+    //     maxZoom: 10,
+    //     opacity: 0.9,
+    //     pane: 'bordersPane',  // This keeps it above everything
+    //     zIndex: 1000
+    // }).addTo(this.leafletMap);
+
+        this.addCountryBorders();
         
         // Add coordinate display
         this.addCoordinateDisplay();
@@ -69,6 +76,53 @@ class WeatherMap {
                 `📍 ${lat}°, ${lng}° | Zoom: ${zoom}`;
         });
     }
+
+    async addCountryBorders() {
+    try {
+        // Load Africa GeoJSON
+        const response = await fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson');
+        const data = await response.json();
+        
+        // Add country borders
+        this.countryBorders = L.geoJSON(data, {
+            style: function(feature) {
+                return {
+                    color: '#ffffff',       // Dark gray borders
+                    weight: 1.5,            // Line thickness
+                    opacity: 1,           // Border opacity
+                    fillOpacity: 0,         // No fill
+                    dashArray: null,        // Solid lines
+                    lineJoin: 'round',
+                    lineCap: 'round'
+                };
+            },
+            pane: 'bordersPane',           // Put in borders pane
+            interactive: false,             // Allow clicking through to map
+            // onEachFeature: function(feature, layer) {
+            //     // Optional: add country name on hover
+            //     layer.bindTooltip(feature.properties.ADMIN || feature.properties.name || '', {
+            //         permanent: false,
+            //         direction: 'center',
+            //         className: 'country-label',
+            //         opacity: 0.8
+            //     });
+            // }
+        }).addTo(this.leafletMap);
+        
+        console.log('✅ Country borders loaded');
+        
+    } catch (e) {
+        console.log('⚠️ Could not load country borders, using tile fallback:', e.message);
+        
+        // Fallback: Use a tile layer that includes borders
+        this.countryBorders = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '',
+            maxZoom: 10,
+            opacity: 0.3,
+            pane: 'bordersPane'
+        }).addTo(this.leafletMap);
+    }
+}
     
     // ============================================
     // COLOR SCALE METHODS
