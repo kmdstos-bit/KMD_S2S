@@ -150,35 +150,44 @@ class DataLoader {
         throw new Error('Data values must be a non-empty array');
     }
     
-    // Get grid info
-    const latStart = grid.lat ? grid.lat[0] : 22.5;  // First lat value
-    const latEnd = grid.lat ? grid.lat[1] : -36;      // Last lat value
+    // Grid info from your JSON
+    // lat: [22.5, -36, 1.5] means cells from 22.5°N down to 36°S, step 1.5°
+    // lon: [-25, 55, 1.5] means cells from 25°W to 55°E, step 1.5°
+    
+    const latStart = grid.lat ? grid.lat[0] : 22.5;   // First cell center (north)
+    const latEnd = grid.lat ? grid.lat[1] : -36;       // Last cell center (south)
     const latStep = grid.lat ? (grid.lat[2] || 1.5) : 1.5;
-    const lonStart = grid.lon ? grid.lon[0] : -25;
-    const lonEnd = grid.lon ? grid.lon[1] : 55;
+    
+    const lonStart = grid.lon ? grid.lon[0] : -25;     // First cell center (west)
+    const lonEnd = grid.lon ? grid.lon[1] : 55;        // Last cell center (east)
     const lonStep = grid.lon ? (grid.lon[2] || 1.5) : 1.5;
     
-    // Determine which is north and which is south
-    const northCenter = Math.max(latStart, latEnd);  // 22.5
-    const southCenter = Math.min(latStart, latEnd);  // -36
-    const westCenter = Math.min(lonStart, lonEnd);
-    const eastCenter = Math.max(lonStart, lonEnd);
+    // IMPORTANT: Your data goes North-to-South
+    // Row 0 = 22.5°N (northernmost)
+    // Row 39 = -36°S (southernmost)
+    
+    // Store the actual first and last cell centers
+    const firstRowLat = latStart;   // 22.5 (northernmost cell)
+    const lastRowLat = latEnd;      // -36 (southernmost cell)
+    const firstColLon = lonStart;   // -25 (westernmost cell)
+    const lastColLon = lonEnd;      // 55 (easternmost cell)
+    
+    console.log('Grid interpretation:');
+    console.log('  Row 0 (top of canvas):    ', firstRowLat, '°N (north)');
+    console.log('  Row', values.length - 1, '(bottom of canvas):', lastRowLat, '°S (south)');
+    console.log('  Col 0 (left of canvas):   ', firstColLon, '° (west)');
+    console.log('  Col', values[0].length - 1, '(right of canvas):', lastColLon, '° (east)');
     
     return {
-        position: {
-            lat: (northCenter + southCenter) / 2,
-            lng: (westCenter + eastCenter) / 2
-        },
-        // Store the actual grid values
-        latMin: latStart,   // Keep original for reference (22.5)
-        latMax: latEnd,     // Keep original for reference (-36)
-        lonMin: westCenter,
-        lonMax: eastCenter,
-        nRows: values.length,
-        nCols: Array.isArray(values[0]) ? values[0].length : 0,
+        latMin: firstRowLat,     // 22.5 - first cell center (north)
+        latMax: lastRowLat,      // -36 - last cell center (south)
+        lonMin: firstColLon,     // -25 - first cell center (west)
+        lonMax: lastColLon,      // 55 - last cell center (east)
+        nRows: values.length,    // 40
+        nCols: values[0].length, // 50
         values: values,
-        latStep: latStep,
-        lonStep: lonStep,
+        latStep: latStep,        // 1.5
+        lonStep: lonStep,        // 1.5
         metadata: data.metadata || {}
     };
 }
