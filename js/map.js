@@ -373,9 +373,9 @@ class WeatherMap {
     // GRID CELL LAYER
     // ============================================
     
-createGridCellLayer(rasterData, variable) {
+    createGridCellLayer(rasterData, variable) {
     console.log('Creating grid cell layer...');
-    console.log('rasterData received:', {
+    console.log('rasterData:', {
         latMin: rasterData.latMin,
         latMax: rasterData.latMax,
         lonMin: rasterData.lonMin,
@@ -391,8 +391,8 @@ createGridCellLayer(rasterData, variable) {
     const nRows = rasterData.nRows;  // 40
     const cellPixelSize = 5;
     
-    canvas.width = nCols * cellPixelSize;   // 250 pixels
-    canvas.height = nRows * cellPixelSize;  // 200 pixels
+    canvas.width = nCols * cellPixelSize;
+    canvas.height = nRows * cellPixelSize;
     
     console.log('Canvas size:', canvas.width, 'x', canvas.height);
     
@@ -406,14 +406,16 @@ createGridCellLayer(rasterData, variable) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw cells
-    // Row 0 = TOP of canvas = NORTH (22.5°N)
-    // Row 39 = BOTTOM of canvas = SOUTH (-36°S)
+    // Row 0 = BOTTOM of canvas = SOUTH (-36°S)
+    // Row 39 = TOP of canvas = NORTH (22.5°N)
+    // So we need to flip: canvas row = (nRows - 1 - dataRow) * cellPixelSize
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
             const x = col * cellPixelSize;
-            const y = row * cellPixelSize;
+            // FLIP Y: Row 0 (south) goes to bottom of canvas
+            const y = (nRows - 1 - row) * cellPixelSize;
             
             if (value === null || value === undefined || isNaN(value)) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
@@ -432,7 +434,7 @@ createGridCellLayer(rasterData, variable) {
     //     for (let row = 0; row < nRows; row++) {
     //         for (let col = 0; col < nCols; col++) {
     //             const x = col * cellPixelSize;
-    //             const y = row * cellPixelSize;
+    //             const y = (nRows - 1 - row) * cellPixelSize;
     //             ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
     //         }
     //     }
@@ -441,48 +443,35 @@ createGridCellLayer(rasterData, variable) {
     const imageUrl = canvas.toDataURL('image/png');
     
     // ============================================
-    // BOUNDS CALCULATION FOR NORTH-TO-SOUTH GRID
+    // BOUNDS FOR ASCENDING LATITUDES (South to North)
     // ============================================
-    // Cell centers:
-    //   latMin (22.5) = center of FIRST row (northernmost)
-    //   latMax (-36)  = center of LAST row (southernmost)
-    //   latStep = 1.5°
+    // latMin = -36 (south), latMax = 22.5 (north)
     
     const latStep = rasterData.latStep || 1.5;
     const lonStep = rasterData.lonStep || 1.5;
-    const halfLat = latStep / 2;  // 0.75°
-    const halfLon = lonStep / 2;  // 0.75°
+    const halfLat = latStep / 2;  // 0.75
+    const halfLon = lonStep / 2;  // 0.75
     
-    // Northernmost cell center = 22.5°N
-    const northCenter = rasterData.latMin;  // 22.5
-    // Southernmost cell center = -36°S
-    const southCenter = rasterData.latMax;  // -36
-    
-    // Westernmost cell center = -25° (25°W)
+    const southCenter = rasterData.latMin;  // -36
+    const northCenter = rasterData.latMax;  // 22.5
     const westCenter = rasterData.lonMin;   // -25
-    // Easternmost cell center = 55°E
     const eastCenter = rasterData.lonMax;   // 55
     
-    // Calculate cell EDGES
-    const northEdge = northCenter + halfLat;   // 22.5 + 0.75 = 23.25°N
-    const southEdge = southCenter - halfLat;   // -36 - 0.75 = -36.75°S
-    const westEdge = westCenter - halfLon;     // -25 - 0.75 = -25.75°W
-    const eastEdge = eastCenter + halfLon;     // 55 + 0.75 = 55.75°E
+    // Cell edges
+    const southEdge = southCenter - halfLat;   // -36 - 0.75 = -36.75
+    const northEdge = northCenter + halfLat;   // 22.5 + 0.75 = 23.25
+    const westEdge = westCenter - halfLon;     // -25 - 0.75 = -25.75
+    const eastEdge = eastCenter + halfLon;     // 55 + 0.75 = 55.75
     
-    console.log('Bounds calculation:');
-    console.log('  North center:', northCenter, '→ North edge:', northEdge.toFixed(2));
-    console.log('  South center:', southCenter, '→ South edge:', southEdge.toFixed(2));
-    console.log('  West center: ', westCenter, '→ West edge: ', westEdge.toFixed(2));
-    console.log('  East center: ', eastCenter, '→ East edge: ', eastEdge.toFixed(2));
-    console.log('  Lat range:', southEdge.toFixed(2), 'to', northEdge.toFixed(2));
+    console.log('Bounds:');
+    console.log('  South:', southEdge.toFixed(2), 'to North:', northEdge.toFixed(2));
+    console.log('  West: ', westEdge.toFixed(2), 'to East: ', eastEdge.toFixed(2));
     
     // Leaflet bounds: [[southLat, westLon], [northLat, eastLon]]
     const bounds = [
-        [southEdge, westEdge],   // Bottom-left corner
-        [northEdge, eastEdge]    // Top-right corner
+        [southEdge, westEdge],
+        [northEdge, eastEdge]
     ];
-    
-    console.log('Leaflet bounds:', bounds);
     
     const overlay = L.imageOverlay(imageUrl, bounds, {
         opacity: 0.9,
@@ -501,6 +490,7 @@ createGridCellLayer(rasterData, variable) {
     
     return overlay;
 }
+
     
     // ============================================
     // COLOR UTILITIES
