@@ -136,79 +136,50 @@ class DataLoader {
     }
     
     parseWeatherData(data) {
-        console.log('=== PARSING WEATHER DATA ===');
-        console.log('Raw data:', data);
-        console.log('Data type:', typeof data);
-        
-        if (!data) {
-            throw new Error('No data provided');
-        }
-        
-        if (typeof data !== 'object') {
-            throw new Error(`Expected object, got ${typeof data}`);
-        }
-        
-        // Get values from whatever format
-        let values = data.values || data.data || data.d;
-        
-        if (!values) {
-            console.error('Data keys:', Object.keys(data));
-            throw new Error('No values found in data. Available keys: ' + Object.keys(data).join(', '));
-        }
-        
-        // Handle case where values might be a string (serialized JSON)
-        if (typeof values === 'string') {
-            try {
-                values = JSON.parse(values);
-            } catch (e) {
-                throw new Error('Values is a string but not valid JSON');
-            }
-        }
-        
-        // Ensure values is an array
-        if (!Array.isArray(values)) {
-            console.error('Values type:', typeof values);
-            throw new Error(`Expected array for values, got ${typeof values}`);
-        }
-        
-        if (values.length === 0) {
-            throw new Error('Values array is empty');
-        }
-        
-        // Check if first element is an array (2D grid) or number (1D array)
-        const firstElement = values[0];
-        console.log('First element type:', typeof firstElement);
-        console.log('First element is array:', Array.isArray(firstElement));
-        
-        if (!Array.isArray(firstElement)) {
-            // Might be a flat array that needs reshaping
-            throw new Error('Values should be a 2D array (array of arrays)');
-        }
-        
-        // Get grid info
-        const grid = data.grid || data.g || {};
-        
-        const result = {
-            latMin: grid.lat ? grid.lat[0] : -40,
-            latMax: grid.lat ? grid.lat[1] : 40,
-            lonMin: grid.lon ? grid.lon[0] : -25,
-            lonMax: grid.lon ? grid.lon[1] : 55,
-            nRows: values.length,
-            nCols: firstElement.length,
-            values: values,
-            latStep: grid.lat ? (grid.lat[2] || 0.5) : 0.5,
-            lonStep: grid.lon ? (grid.lon[2] || 0.5) : 0.5,
-            metadata: data.metadata || data.m || {}
-        };
-        
-        console.log('Parsed result:', {
-            rows: result.nRows,
-            cols: result.nCols,
-            latRange: [result.latMin, result.latMax],
-            lonRange: [result.lonMin, result.lonMax],
-            hasMetadata: !!result.metadata
-        });
-        
-        return result;
+    console.log('Parsing weekly data:', data);
+    
+    if (!data || !data.values) {
+        console.error('Invalid data structure:', data);
+        throw new Error('Data missing values array');
     }
+    
+    const grid = data.grid || {};
+    const values = data.values;
+    
+    if (!Array.isArray(values) || values.length === 0) {
+        throw new Error('Data values must be a non-empty array');
+    }
+    
+    // Get grid info
+    const latStart = grid.lat ? grid.lat[0] : 22.5;  // First lat value
+    const latEnd = grid.lat ? grid.lat[1] : -36;      // Last lat value
+    const latStep = grid.lat ? (grid.lat[2] || 1.5) : 1.5;
+    const lonStart = grid.lon ? grid.lon[0] : -25;
+    const lonEnd = grid.lon ? grid.lon[1] : 55;
+    const lonStep = grid.lon ? (grid.lon[2] || 1.5) : 1.5;
+    
+    // Determine which is north and which is south
+    const northCenter = Math.max(latStart, latEnd);  // 22.5
+    const southCenter = Math.min(latStart, latEnd);  // -36
+    const westCenter = Math.min(lonStart, lonEnd);
+    const eastCenter = Math.max(lonStart, lonEnd);
+    
+    return {
+        position: {
+            lat: (northCenter + southCenter) / 2,
+            lng: (westCenter + eastCenter) / 2
+        },
+        // Store the actual grid values
+        latMin: latStart,   // Keep original for reference (22.5)
+        latMax: latEnd,     // Keep original for reference (-36)
+        lonMin: westCenter,
+        lonMax: eastCenter,
+        nRows: values.length,
+        nCols: Array.isArray(values[0]) ? values[0].length : 0,
+        values: values,
+        latStep: latStep,
+        lonStep: lonStep,
+        metadata: data.metadata || {}
+    };
 }
+};
