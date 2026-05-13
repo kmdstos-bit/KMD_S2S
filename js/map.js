@@ -324,13 +324,25 @@ class WeatherMap {
             this.updateLegend(variable);
             
             // Handle view
-            if (!this._hasInitialized) {
-                this.leafletMap.fitBounds([
-                    [rasterData.latMin, rasterData.lonMin],
-                    [rasterData.latMax, rasterData.lonMax]
-                ]);
-                this._hasInitialized = true;
-            } else {
+           if (!this._hasInitialized) {
+    console.log('📍 First load - fitting to data bounds');
+    
+    const latStep = rasterData.latStep || 1.5;
+    const lonStep = rasterData.lonStep || 1.5;
+    const halfLat = latStep / 2;
+    const halfLon = lonStep / 2;
+    
+    const northEdge = rasterData.latMin + halfLat;   // 22.5 + 0.75 = 23.25
+    const southEdge = rasterData.latMax - halfLat;   // -36 - 0.75 = -36.75
+    const westEdge = rasterData.lonMin - halfLon;    // -25 - 0.75 = -25.75
+    const eastEdge = rasterData.lonMax + halfLon;    // 55 + 0.75 = 55.75
+    
+    this.leafletMap.fitBounds([
+        [southEdge, westEdge],
+        [northEdge, eastEdge]
+    ]);
+    this._hasInitialized = true;
+}else {
                 this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
             }
         }
@@ -363,24 +375,26 @@ class WeatherMap {
     
 createGridCellLayer(rasterData, variable) {
     console.log('Creating grid cell layer...');
-    console.log('Grid info:', {
+    console.log('rasterData received:', {
         latMin: rasterData.latMin,
         latMax: rasterData.latMax,
         lonMin: rasterData.lonMin,
         lonMax: rasterData.lonMax,
-        latStep: rasterData.latStep,
-        lonStep: rasterData.lonStep,
         nRows: rasterData.nRows,
-        nCols: rasterData.nCols
+        nCols: rasterData.nCols,
+        latStep: rasterData.latStep,
+        lonStep: rasterData.lonStep
     });
     
     const canvas = document.createElement('canvas');
-    const nCols = rasterData.nCols;
-    const nRows = rasterData.nRows;
+    const nCols = rasterData.nCols;  // 50
+    const nRows = rasterData.nRows;  // 40
     const cellPixelSize = 5;
     
-    canvas.width = nCols * cellPixelSize;
-    canvas.height = nRows * cellPixelSize;
+    canvas.width = nCols * cellPixelSize;   // 250 pixels
+    canvas.height = nRows * cellPixelSize;  // 200 pixels
+    
+    console.log('Canvas size:', canvas.width, 'x', canvas.height);
     
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
@@ -391,16 +405,15 @@ createGridCellLayer(rasterData, variable) {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw cells - ROW 0 is NORTHERNMOST (22.5°N)
-    // We draw row 0 at the TOP of the canvas
+    // Draw cells
+    // Row 0 = TOP of canvas = NORTH (22.5°N)
+    // Row 39 = BOTTOM of canvas = SOUTH (-36°S)
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
-            // row 0 = top of canvas (north)
-            // row nRows-1 = bottom of canvas (south)
             const x = col * cellPixelSize;
-            const y = row * cellPixelSize;  // This is correct: row 0 is top
+            const y = row * cellPixelSize;
             
             if (value === null || value === undefined || isNaN(value)) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
@@ -412,54 +425,64 @@ createGridCellLayer(rasterData, variable) {
         }
     }
     
-    // // Subtle borders
-    // if (variable !== 'precip') {
-    //     ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-    //     ctx.lineWidth = 0.5;
-    //     for (let row = 0; row < nRows; row++) {
-    //         for (let col = 0; col < nCols; col++) {
-    //             const x = col * cellPixelSize;
-    //             const y = row * cellPixelSize;
-    //             ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
-    //         }
-    //     }
-    // }
+    // Subtle borders
+    if (variable !== 'precip') {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.lineWidth = 0.5;
+        for (let row = 0; row < nRows; row++) {
+            for (let col = 0; col < nCols; col++) {
+                const x = col * cellPixelSize;
+                const y = row * cellPixelSize;
+                ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
+            }
+        }
+    }
     
     const imageUrl = canvas.toDataURL('image/png');
     
     // ============================================
-    // CORRECT BOUNDS FOR NORTH-TO-SOUTH DATA
+    // BOUNDS CALCULATION FOR NORTH-TO-SOUTH GRID
     // ============================================
+    // Cell centers:
+    //   latMin (22.5) = center of FIRST row (northernmost)
+    //   latMax (-36)  = center of LAST row (southernmost)
+    //   latStep = 1.5°
     
     const latStep = rasterData.latStep || 1.5;
     const lonStep = rasterData.lonStep || 1.5;
     const halfLat = latStep / 2;  // 0.75°
     const halfLon = lonStep / 2;  // 0.75°
     
-    // First row is NORTHERNMOST (largest latitude)
+    // Northernmost cell center = 22.5°N
     const northCenter = rasterData.latMin;  // 22.5
+    // Southernmost cell center = -36°S
     const southCenter = rasterData.latMax;  // -36
     
-    // For longitude, first column is WESTERNMOST
-    const westCenter = rasterData.lonMin;
-    const eastCenter = rasterData.lonMax;
+    // Westernmost cell center = -25° (25°W)
+    const westCenter = rasterData.lonMin;   // -25
+    // Easternmost cell center = 55°E
+    const eastCenter = rasterData.lonMax;   // 55
     
-    // Cell EDGES (expand half-step from centers)
-    const northEdge = northCenter + halfLat;   // 22.5 + 0.75 = 23.25
-    const southEdge = southCenter - halfLat;   // -36 - 0.75 = -36.75
-    const westEdge = westCenter - halfLon;
-    const eastEdge = eastCenter + halfLon;
+    // Calculate cell EDGES
+    const northEdge = northCenter + halfLat;   // 22.5 + 0.75 = 23.25°N
+    const southEdge = southCenter - halfLat;   // -36 - 0.75 = -36.75°S
+    const westEdge = westCenter - halfLon;     // -25 - 0.75 = -25.75°W
+    const eastEdge = eastCenter + halfLon;     // 55 + 0.75 = 55.75°E
     
-    console.log(`North center: ${northCenter} → North edge: ${northEdge.toFixed(2)}`);
-    console.log(`South center: ${southCenter} → South edge: ${southEdge.toFixed(2)}`);
-    console.log(`West center:  ${westCenter} → West edge:  ${westEdge.toFixed(2)}`);
-    console.log(`East center:  ${eastCenter} → East edge:  ${eastEdge.toFixed(2)}`);
+    console.log('Bounds calculation:');
+    console.log('  North center:', northCenter, '→ North edge:', northEdge.toFixed(2));
+    console.log('  South center:', southCenter, '→ South edge:', southEdge.toFixed(2));
+    console.log('  West center: ', westCenter, '→ West edge: ', westEdge.toFixed(2));
+    console.log('  East center: ', eastCenter, '→ East edge: ', eastEdge.toFixed(2));
+    console.log('  Lat range:', southEdge.toFixed(2), 'to', northEdge.toFixed(2));
     
-    // Leaflet bounds: [[south, west], [north, east]]
+    // Leaflet bounds: [[southLat, westLon], [northLat, eastLon]]
     const bounds = [
-        [southEdge, westEdge],   // Bottom-left
-        [northEdge, eastEdge]    // Top-right
+        [southEdge, westEdge],   // Bottom-left corner
+        [northEdge, eastEdge]    // Top-right corner
     ];
+    
+    console.log('Leaflet bounds:', bounds);
     
     const overlay = L.imageOverlay(imageUrl, bounds, {
         opacity: 0.9,
