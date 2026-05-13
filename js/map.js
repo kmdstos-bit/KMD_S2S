@@ -389,31 +389,30 @@ createGridCellLayer(rasterData, variable) {
     const range = this.getCurrentRange(variable);
     const values = rasterData.values;
     
-    // Clear canvas with FULLY TRANSPARENT background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw each grid cell
+    // Draw cells - ROW 0 is NORTHERNMOST (22.5°N)
+    // We draw row 0 at the TOP of the canvas
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
+            // row 0 = top of canvas (north)
+            // row nRows-1 = bottom of canvas (south)
             const x = col * cellPixelSize;
-            const y = row * cellPixelSize;
+            const y = row * cellPixelSize;  // This is correct: row 0 is top
             
             if (value === null || value === undefined || isNaN(value)) {
-                // No data: fully transparent
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
             } else {
                 const [r, g, b, a] = this.valueToColor(value, range.min, range.max, colorScale);
-                // Use the alpha channel from the color scale
                 ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a !== undefined ? a : 1})`;
             }
-            
             ctx.fillRect(x, y, cellPixelSize, cellPixelSize);
         }
     }
     
-    // // Add subtle borders (skip for precipitation to keep it clean)
+    // // Subtle borders
     // if (variable !== 'precip') {
     //     ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
     //     ctx.lineWidth = 0.5;
@@ -428,22 +427,42 @@ createGridCellLayer(rasterData, variable) {
     
     const imageUrl = canvas.toDataURL('image/png');
     
-    // Grid bounds calculation (1.5° spacing, cell centers)
-    const GRID_SPACING = 1.5;
-    const HALF_CELL = GRID_SPACING / 2;
+    // ============================================
+    // CORRECT BOUNDS FOR NORTH-TO-SOUTH DATA
+    // ============================================
     
-    const latMin = rasterData.latMin - HALF_CELL;
-    const latMax = rasterData.latMax + HALF_CELL;
-    const lonMin = rasterData.lonMin - HALF_CELL;
-    const lonMax = rasterData.lonMax + HALF_CELL;
+    const latStep = rasterData.latStep || 1.5;
+    const lonStep = rasterData.lonStep || 1.5;
+    const halfLat = latStep / 2;  // 0.75°
+    const halfLon = lonStep / 2;  // 0.75°
     
+    // First row is NORTHERNMOST (largest latitude)
+    const northCenter = rasterData.latMin;  // 22.5
+    const southCenter = rasterData.latMax;  // -36
+    
+    // For longitude, first column is WESTERNMOST
+    const westCenter = rasterData.lonMin;
+    const eastCenter = rasterData.lonMax;
+    
+    // Cell EDGES (expand half-step from centers)
+    const northEdge = northCenter + halfLat;   // 22.5 + 0.75 = 23.25
+    const southEdge = southCenter - halfLat;   // -36 - 0.75 = -36.75
+    const westEdge = westCenter - halfLon;
+    const eastEdge = eastCenter + halfLon;
+    
+    console.log(`North center: ${northCenter} → North edge: ${northEdge.toFixed(2)}`);
+    console.log(`South center: ${southCenter} → South edge: ${southEdge.toFixed(2)}`);
+    console.log(`West center:  ${westCenter} → West edge:  ${westEdge.toFixed(2)}`);
+    console.log(`East center:  ${eastCenter} → East edge:  ${eastEdge.toFixed(2)}`);
+    
+    // Leaflet bounds: [[south, west], [north, east]]
     const bounds = [
-        [latMin, lonMin],
-        [latMax, lonMax]
+        [southEdge, westEdge],   // Bottom-left
+        [northEdge, eastEdge]    // Top-right
     ];
     
     const overlay = L.imageOverlay(imageUrl, bounds, {
-        opacity: 0.9,  // Slightly higher since alpha is in the colors
+        opacity: 0.9,
         interactive: false,
         zIndex: 1,
         className: 'weather-grid-overlay'
