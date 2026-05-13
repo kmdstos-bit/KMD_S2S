@@ -14,13 +14,20 @@
 <body>
     <div id="app">
         <!-- Sidebar Controls -->
-        <<div id="sidebar">
+       <div id="sidebar">
             <div class="sidebar-header">
-                <h2>🌍 Africa Weekly Weather</h2>
-                <p style="font-size: 0.9em; opacity: 0.8; margin-top: -10px;">
-                    Sub-seasonal to Seasonal Forecast
-                </p>
-            </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>🌍 Africa Weekly Weather</h2>
+                    <button id="sidebar-toggle" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
+                            color: white; font-size: 1.2em; cursor: pointer; padding: 5px 10px; border-radius: 4px; 
+                            transition: all 0.3s; min-width: 40px;"
+                            onmouseover="this.style.background='rgba(255,255,255,0.4)'"
+                            onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+                            title="Toggle sidebar">
+                        ◀
+                    </button>
+                </div>
+        </div>
             
             <div class="control-group">
                 <label for="init-date">Initialization Date:</label>

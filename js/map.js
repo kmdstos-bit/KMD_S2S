@@ -557,37 +557,62 @@ parseColor(colorStr) {
         }
     }
     
-    updateLegend(variable) {
-        const varConfig = CONFIG.variables[variable];
-        const legendContent = document.getElementById('legend-content');
-        const colorScale = this.getColorScale(variable);
-        const range = this.getCurrentRange(variable);
-        
-        let html = '';
-        
-        // Title showing current range
-        html += '<div style="font-size: 0.8em; margin-bottom: 5px; text-align: center; opacity: 0.9;">';
-        html += `${range.min} to ${range.max} ${varConfig.unit}`;
-        if (this.useAutoScale) {
-            html += ' <span style="color: #4CAF50; font-size: 0.8em;">(auto)</span>';
-        }
-        html += '</div>';
-        
-        // Color bar
-        html += '<div style="display: flex; height: 25px; margin: 10px 0; border: 1px solid rgba(255,255,255,0.3);">';
-        colorScale.forEach(color => {
-            html += `<div style="flex: 1; background: ${color};"></div>`;
-        });
-        html += '</div>';
-        
-        // Labels with min, mid, max
-        const mid = Math.round((range.max + range.min) / 2);
-        html += '<div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-top: 5px;">';
-        html += `<span>${range.min}</span>`;
-        html += `<span style="text-align: center;">${mid}</span>`;
-        html += `<span>${range.max}</span>`;
-        html += '</div>';
-        
-        legendContent.innerHTML = html;
+   updateLegend(variable) {
+    const varConfig = CONFIG.variables[variable];
+    const legendContent = document.getElementById('legend-content');
+    const colorScale = this.getColorScale(variable);
+    const range = this.getCurrentRange(variable);
+    
+    let html = '';
+    
+    // Title
+    html += '<div style="font-size: 0.85em; margin-bottom: 8px; text-align: center; font-weight: 500;">';
+    html += `${CONFIG.variables[variable].label}`;
+    html += '</div>';
+    
+    // Range indicator
+    html += '<div style="font-size: 0.7em; margin-bottom: 4px; text-align: center; opacity: 0.8;">';
+    html += `${range.min} to ${range.max} ${varConfig.unit}`;
+    if (this.useAutoScale) {
+        html += ' <span style="color: #4CAF50;">(auto)</span>';
     }
+    html += '</div>';
+    
+    // Color bar
+    html += '<div style="display: flex; height: 22px; margin: 6px 0; border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">';
+    colorScale.forEach(color => {
+        html += `<div style="flex: 1; background: ${color};"></div>`;
+    });
+    html += '</div>';
+    
+    // Tick marks and labels
+    const numTicks = 9;  // Number of labeled ticks
+    html += '<div style="display: flex; justify-content: space-between; font-size: 0.7em; margin-top: 4px; padding: 0 1px;">';
+    
+    for (let i = 0; i < numTicks; i++) {
+        const value = range.min + (range.max - range.min) * (i / (numTicks - 1));
+        let formattedValue;
+        
+        // Smart formatting based on value size
+        if (Math.abs(value) < 0.1 && value !== 0) {
+            formattedValue = value.toFixed(2);
+        } else if (Math.abs(value) < 1) {
+            formattedValue = value.toFixed(1);
+        } else if (Math.abs(value) < 100) {
+            formattedValue = value.toFixed(1);
+        } else {
+            formattedValue = Math.round(value).toString();
+        }
+        
+        // Add tick mark above the label
+        html += '<div style="flex: 1; text-align: center; position: relative;">';
+        html += '<div style="position: absolute; top: -8px; left: 50%; width: 1px; height: 5px; background: rgba(255,255,255,0.5);"></div>';
+        html += formattedValue;
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    
+    legendContent.innerHTML = html;
+}
 }

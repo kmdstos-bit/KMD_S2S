@@ -43,7 +43,62 @@ class UIController {
                 await this.onVariableChange(variable);
             }
         });
-        
+
+        // Sidebar toggle
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+
+        if (sidebarToggle && sidebar) {
+            // Check if there's a saved preference
+            const savedState = localStorage.getItem('sidebar-collapsed');
+            if (savedState === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+            
+            sidebarToggle.addEventListener('click', () => {
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                
+                // Update button text/icon
+                sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
+                sidebarToggle.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+                
+                // Save preference
+                localStorage.setItem('sidebar-collapsed', isCollapsed);
+                
+                // Invalidate map size so it recalculates
+                setTimeout(() => {
+                    this.weatherMap.leafletMap.invalidateSize();
+                }, 350);  // Wait for animation to finish
+            });
+        }
+
+        // Keyboard shortcut: press 'S' to toggle sidebar
+        document.addEventListener('keydown', (e) => {
+            // Only if not typing in an input field
+            if (e.key === 's' && 
+                document.activeElement !== document.getElementById('vmin') &&
+                document.activeElement !== document.getElementById('vmax') &&
+                document.activeElement.tagName !== 'INPUT' &&
+                document.activeElement.tagName !== 'SELECT') {
+                
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) {
+                    const isCollapsed = sidebar.classList.toggle('collapsed');
+                    
+                    const sidebarToggle = document.getElementById('sidebar-toggle');
+                    if (sidebarToggle) {
+                        sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
+                    }
+                    
+                    localStorage.setItem('sidebar-collapsed', isCollapsed);
+                    
+                    setTimeout(() => {
+                        this.weatherMap.leafletMap.invalidateSize();
+                    }, 350);
+                }
+            }
+        });
+                
         // Init date change
         this.initDateSelect.addEventListener('change', async (e) => {
             if (this.isUpdating) return;
