@@ -26,152 +26,171 @@ class UIController {
     }
     
     setupEventListeners() {
-        document.getElementById('reset-view').addEventListener('click', () => {
-        this.weatherMap.resetView();
-        });
-        // Variable change
-       this.variableSelect.addEventListener('change', async (e) => {
-            if (this.isUpdating) return;
-            const variable = e.target.value;
-            if (variable) {
-                console.log(`Variable selected: ${variable}`);
-                
-                // FIRST: reset the color scale
-                this.weatherMap.updateVariableDefaults(variable);
-                
-                // THEN: update the data (which will use the new defaults)
-                await this.onVariableChange(variable);
-            }
-        });
-
-        // Sidebar toggle
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebar = document.getElementById('sidebar');
-
-        if (sidebarToggle && sidebar) {
-            // Check if there's a saved preference
-            const savedState = localStorage.getItem('sidebar-collapsed');
-            if (savedState === 'true') {
-                sidebar.classList.add('collapsed');
-            }
-            
-            sidebarToggle.addEventListener('click', () => {
-                const isCollapsed = sidebar.classList.toggle('collapsed');
-                
-                // Update button text/icon
-                sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
-                sidebarToggle.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
-                
-                // Save preference
-                localStorage.setItem('sidebar-collapsed', isCollapsed);
-                
-                // Invalidate map size so it recalculates
-                setTimeout(() => {
-                    this.weatherMap.leafletMap.invalidateSize();
-                }, 350);  // Wait for animation to finish
-            });
+    // Variable change
+    this.variableSelect.addEventListener('change', async (e) => {
+        if (this.isUpdating) return;
+        const variable = e.target.value;
+        if (variable) {
+            console.log(`Variable selected: ${variable}`);
+            this.weatherMap.updateVariableDefaults(variable);
+            await this.onVariableChange(variable);
         }
-
-        // Keyboard shortcut: press 'S' to toggle sidebar
-        document.addEventListener('keydown', (e) => {
-            // Only if not typing in an input field
-            if (e.key === 's' && 
-                document.activeElement !== document.getElementById('vmin') &&
-                document.activeElement !== document.getElementById('vmax') &&
-                document.activeElement.tagName !== 'INPUT' &&
-                document.activeElement.tagName !== 'SELECT') {
-                
-                const sidebar = document.getElementById('sidebar');
-                if (sidebar) {
-                    const isCollapsed = sidebar.classList.toggle('collapsed');
-                    
-                    const sidebarToggle = document.getElementById('sidebar-toggle');
-                    if (sidebarToggle) {
-                        sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
-                    }
-                    
-                    localStorage.setItem('sidebar-collapsed', isCollapsed);
-                    
-                    setTimeout(() => {
-                        this.weatherMap.leafletMap.invalidateSize();
-                    }, 350);
-                }
-            }
-        });
-                
-        // Init date change
-        this.initDateSelect.addEventListener('change', async (e) => {
-            if (this.isUpdating) return;
-            const date = e.target.value;
-            if (date) {
-                await this.onInitDateChange(date);
-            }
-        });
-        
-        // Week change
-        this.weekSelect.addEventListener('change', async (e) => {
-            if (this.isUpdating) return;
-            const week = e.target.value;
-            if (week) {
-                await this.onWeekChange(week);
-            }
-        });
-        
-        // Opacity change
-        this.opacitySlider.addEventListener('input', (e) => {
-            const opacity = e.target.value;
-            this.opacityValue.textContent = `${opacity}%`;
-            this.weatherMap.setLayerOpacity(opacity);
-        });
-
-        // Variable change - reset color scale to defaults
-        this.variableSelect.addEventListener('change', async (e) => {
-            if (this.isUpdating) return;
-            const variable = e.target.value;
-            if (variable) {
-                // Reset color scale to defaults for this variable
-                this.weatherMap.updateVariableDefaults(variable);
-                await this.onVariableChange(variable);
-            }
-        });
-
-        // VMin input
-        const vminInput = document.getElementById('vmin');
-        if (vminInput) {
-            vminInput.addEventListener('change', async () => {
-                this.weatherMap.setManualRange(
-                    parseFloat(vminInput.value),
-                    parseFloat(document.getElementById('vmax').value)
-                );
-                await this.plotData();
-            });
+    });
+    
+    // Init date change
+    this.initDateSelect.addEventListener('change', async (e) => {
+        if (this.isUpdating) return;
+        const date = e.target.value;
+        if (date) {
+            await this.onInitDateChange(date);
         }
-        
-        // VMax input
-        const vmaxInput = document.getElementById('vmax');
-        if (vmaxInput) {
-            vmaxInput.addEventListener('change', async () => {
-                this.weatherMap.setManualRange(
-                    parseFloat(document.getElementById('vmin').value),
-                    parseFloat(vmaxInput.value)
-                );
-                await this.plotData();
-            });
+    });
+    
+    // Week change
+    this.weekSelect.addEventListener('change', async (e) => {
+        if (this.isUpdating) return;
+        const week = e.target.value;
+        if (week) {
+            await this.onWeekChange(week);
         }
-
-        const autoScaleBtn = document.getElementById('auto-scale');
-        if (autoScaleBtn) {
-            autoScaleBtn.addEventListener('click', async () => {
-                console.log('🔄 Auto-scale requested');
-                
-                // Set the flag on the weatherMap
-                this.weatherMap._pendingAutoScale = true;
-                
-                // Re-plot the data (this will trigger loadAndDisplayWeather which checks the flag)
-                await this.plotData();
-            });
-        }
+    });
+    
+    // Opacity change
+    this.opacitySlider.addEventListener('input', (e) => {
+        const opacity = e.target.value;
+        this.opacityValue.textContent = `${opacity}%`;
+        this.weatherMap.setLayerOpacity(opacity);
+    });
+    
+    // Reset view button
+    const resetBtn = document.getElementById('reset-view');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            this.weatherMap.resetView();
+        });
     }
+    
+    // Auto-scale button
+    const autoScaleBtn = document.getElementById('auto-scale');
+    if (autoScaleBtn) {
+        autoScaleBtn.addEventListener('click', async () => {
+            console.log('🔄 Auto-scale button clicked');
+            this.weatherMap._pendingAutoScale = true;
+            await this.plotData();
+        });
+    }
+    
+    // VMin/VMax inputs
+    const vminInput = document.getElementById('vmin');
+    if (vminInput) {
+        vminInput.addEventListener('change', async () => {
+            const min = parseFloat(vminInput.value);
+            const max = parseFloat(document.getElementById('vmax').value);
+            if (!isNaN(min) && !isNaN(max)) {
+                this.weatherMap.setManualRange(min, max);
+                await this.plotData();
+            }
+        });
+    }
+    
+    const vmaxInput = document.getElementById('vmax');
+    if (vmaxInput) {
+        vmaxInput.addEventListener('change', async () => {
+            const min = parseFloat(document.getElementById('vmin').value);
+            const max = parseFloat(vmaxInput.value);
+            if (!isNaN(min) && !isNaN(max)) {
+                this.weatherMap.setManualRange(min, max);
+                await this.plotData();
+            }
+        });
+    }
+    
+    // ============================================
+    // SIDEBAR TOGGLE - Buttons and Keyboard
+    // ============================================
+    
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const expandFloat = document.getElementById('sidebar-expand-float');
+    
+    // Toggle function
+    const toggleSidebar = () => {
+        if (!sidebar) return;
+        
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        
+        if (sidebarToggle) {
+            sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
+            sidebarToggle.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        }
+        
+        if (expandFloat) {
+            expandFloat.style.display = isCollapsed ? 'block' : 'none';
+        }
+        
+        localStorage.setItem('sidebar-collapsed', isCollapsed);
+        
+        setTimeout(() => {
+            this.weatherMap.leafletMap.invalidateSize();
+        }, 350);
+    };
+    
+    // Restore saved state
+    const savedState = localStorage.getItem('sidebar-collapsed');
+    if (savedState === 'true' && sidebar) {
+        sidebar.classList.add('collapsed');
+        if (sidebarToggle) {
+            sidebarToggle.innerHTML = '▶';
+            sidebarToggle.title = 'Expand sidebar';
+        }
+        if (expandFloat) {
+            expandFloat.style.display = 'block';
+        }
+        setTimeout(() => {
+            this.weatherMap.leafletMap.invalidateSize();
+        }, 500);
+    }
+    
+    // Button click
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Floating expand button
+    if (expandFloat) {
+        expandFloat.addEventListener('click', toggleSidebar);
+    }
+    
+    // Keyboard shortcut: ` (backtick) toggles sidebar
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '`' && 
+            document.activeElement.tagName !== 'INPUT' &&
+            document.activeElement.tagName !== 'TEXTAREA' &&
+            document.activeElement.tagName !== 'SELECT') {
+            e.preventDefault();
+            toggleSidebar();
+        }
+    });
+    
+    // ESC key expands sidebar if collapsed
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('collapsed')) {
+            e.preventDefault();
+            sidebar.classList.remove('collapsed');
+            if (sidebarToggle) {
+                sidebarToggle.innerHTML = '◀';
+                sidebarToggle.title = 'Collapse sidebar';
+            }
+            if (expandFloat) {
+                expandFloat.style.display = 'none';
+            }
+            localStorage.setItem('sidebar-collapsed', 'false');
+            setTimeout(() => {
+                this.weatherMap.leafletMap.invalidateSize();
+            }, 350);
+        }
+    });
+}
     
     async loadInitialData() {
         try {
