@@ -376,10 +376,8 @@ class WeatherMap {
     createGridCellLayer(rasterData, variable) {
     console.log('Creating grid cell layer...');
     console.log('rasterData:', {
-        latMin: rasterData.latMin,
-        latMax: rasterData.latMax,
-        lonMin: rasterData.lonMin,
-        lonMax: rasterData.lonMax,
+        firstLat: rasterData.firstLat,
+        lastLat: rasterData.lastLat,
         nRows: rasterData.nRows,
         nCols: rasterData.nCols,
         latStep: rasterData.latStep,
@@ -389,10 +387,10 @@ class WeatherMap {
     const canvas = document.createElement('canvas');
     const nCols = rasterData.nCols;  // 50
     const nRows = rasterData.nRows;  // 40
-    const cellPixelSize = 5;
+    const cellPixelSize = 6;  // 6 pixels per cell (300×240 canvas)
     
-    canvas.width = nCols * cellPixelSize;
-    canvas.height = nRows * cellPixelSize;
+    canvas.width = nCols * cellPixelSize;   // 300
+    canvas.height = nRows * cellPixelSize;  // 240
     
     console.log('Canvas size:', canvas.width, 'x', canvas.height);
     
@@ -406,16 +404,15 @@ class WeatherMap {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw cells
-    // Row 0 = BOTTOM of canvas = SOUTH (-36°S)
-    // Row 39 = TOP of canvas = NORTH (22.5°N)
-    // So we need to flip: canvas row = (nRows - 1 - dataRow) * cellPixelSize
+    // Row 0 = 22.5°N (NORTH) → TOP of canvas
+    // Row 39 = -36°S (SOUTH) → BOTTOM of canvas
+    // NO FLIPPING NEEDED - Row 0 is already north
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
             const x = col * cellPixelSize;
-            // FLIP Y: Row 0 (south) goes to bottom of canvas
-            const y = (nRows - 1 - row) * cellPixelSize;
+            const y = row * cellPixelSize;  // Row 0 = top (north)
             
             if (value === null || value === undefined || isNaN(value)) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
@@ -427,50 +424,29 @@ class WeatherMap {
         }
     }
     
-    // // Subtle borders
-    // if (variable !== 'precip') {
-    //     ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-    //     ctx.lineWidth = 0.5;
-    //     for (let row = 0; row < nRows; row++) {
-    //         for (let col = 0; col < nCols; col++) {
-    //             const x = col * cellPixelSize;
-    //             const y = (nRows - 1 - row) * cellPixelSize;
-    //             ctx.strokeRect(x + 0.25, y + 0.25, cellPixelSize - 0.5, cellPixelSize - 0.5);
-    //         }
-    //     }
-    // }
-    
     const imageUrl = canvas.toDataURL('image/png');
     
     // ============================================
-    // BOUNDS FOR ASCENDING LATITUDES (South to North)
+    // BOUNDS: North-to-South grid, 1.5° spacing
     // ============================================
-    // latMin = -36 (south), latMax = 22.5 (north)
+    // Row 0 center = 22.5°N → North edge = 22.5 + 0.75 = 23.25
+    // Row 39 center = -36°S → South edge = -36 - 0.75 = -36.75
     
-    const latStep = rasterData.latStep || 1.5;
-    const lonStep = rasterData.lonStep || 1.5;
-    const halfLat = latStep / 2;  // 0.75
-    const halfLon = lonStep / 2;  // 0.75
+    const halfLat = rasterData.latStep / 2;  // 0.75°
+    const halfLon = rasterData.lonStep / 2;  // 0.75°
     
-    const southCenter = rasterData.latMin;  // -36
-    const northCenter = rasterData.latMax;  // 22.5
-    const westCenter = rasterData.lonMin;   // -25
-    const eastCenter = rasterData.lonMax;   // 55
-    
-    // Cell edges
-    const southEdge = southCenter - halfLat;   // -36 - 0.75 = -36.75
-    const northEdge = northCenter + halfLat;   // 22.5 + 0.75 = 23.25
-    const westEdge = westCenter - halfLon;     // -25 - 0.75 = -25.75
-    const eastEdge = eastCenter + halfLon;     // 55 + 0.75 = 55.75
+    const northEdge = rasterData.northCenter + halfLat;   // 22.5 + 0.75 = 23.25
+    const southEdge = rasterData.southCenter - halfLat;   // -36 - 0.75 = -36.75
+    const westEdge = rasterData.westCenter - halfLon;     // -19.5 - 0.75 = -20.25
+    const eastEdge = rasterData.eastCenter + halfLon;     // 54 + 0.75 = 54.75
     
     console.log('Bounds:');
     console.log('  South:', southEdge.toFixed(2), 'to North:', northEdge.toFixed(2));
     console.log('  West: ', westEdge.toFixed(2), 'to East: ', eastEdge.toFixed(2));
     
-    // Leaflet bounds: [[southLat, westLon], [northLat, eastLon]]
     const bounds = [
-        [southEdge, westEdge],
-        [northEdge, eastEdge]
+        [southEdge, westEdge],   // [-36.75, -20.25]
+        [northEdge, eastEdge]    // [23.25, 54.75]
     ];
     
     const overlay = L.imageOverlay(imageUrl, bounds, {

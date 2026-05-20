@@ -136,7 +136,7 @@ class DataLoader {
     }
     
     parseWeatherData(data) {
-    console.log('Parsing weekly data:', data);
+    console.log('Parsing data:', data);
     
     if (!data || !data.values) {
         console.error('Invalid data structure:', data);
@@ -150,41 +150,46 @@ class DataLoader {
         throw new Error('Data values must be a non-empty array');
     }
     
-    // Grid info from your JSON
-    // After sorting ascending: lat: [-36, 22.5, 1.5]
-    // Row 0 = -36°S, Row 39 = 22.5°N
+    // Grid info from JSON
+    // lat: [22.5, -36, 1.5] → 40 rows from 22.5°N down to 36°S, step 1.5°
+    // Row 0 = 22.5°N (northernmost)
+    // Row 39 = -36°S (southernmost)
+    // lon: [-19.5, 54, 1.5] → 50 cols from 19.5°W to 54°E, step 1.5°
     
-    const latStart = grid.lat ? grid.lat[0] : -36;    // First cell (south) = -36
-    const latEnd = grid.lat ? grid.lat[1] : 22.5;     // Last cell (north) = 22.5
-    const latStep = grid.lat ? (grid.lat[2] || 1.5) : 1.5;
+    const firstLat = grid.lat ? grid.lat[0] : 22.5;    // Row 0: 22.5°N (north)
+    const lastLat = grid.lat ? grid.lat[1] : -36;      // Row 39: -36°S (south)
+    const absLatStep = Math.abs(grid.lat ? grid.lat[2] : 1.5);  // 1.5° (always positive)
     
-    const lonStart = grid.lon ? grid.lon[0] : -25;
-    const lonEnd = grid.lon ? grid.lon[1] : 55;
-    const lonStep = grid.lon ? (grid.lon[2] || 1.5) : 1.5;
+    const firstLon = grid.lon ? grid.lon[0] : -19.5;   // Col 0: 19.5°W (west)
+    const lastLon = grid.lon ? grid.lon[1] : 54;       // Col 49: 54°E (east)
+    const absLonStep = Math.abs(grid.lon ? grid.lon[2] : 1.5);
     
-    // Now Row 0 = southernmost, Row 39 = northernmost
-    const southCenter = Math.min(latStart, latEnd);   // -36
-    const northCenter = Math.max(latStart, latEnd);   // 22.5
-    const westCenter = Math.min(lonStart, lonEnd);    // -25
-    const eastCenter = Math.max(lonStart, lonEnd);    // 55
+    // Determine which is north, south, east, west
+    const northCenter = Math.max(firstLat, lastLat);   // 22.5
+    const southCenter = Math.min(firstLat, lastLat);   // -36
+    const westCenter = Math.min(firstLon, lastLon);    // -19.5
+    const eastCenter = Math.max(firstLon, lastLon);    // 54
     
-    console.log('Grid (ascending latitudes):');
-    console.log('  Row 0 (south):', southCenter, '°');
-    console.log('  Row', values.length - 1, '(north):', northCenter, '°');
-    console.log('  Col 0 (west): ', westCenter, '°');
-    console.log('  Col', values[0].length - 1, '(east):', eastCenter, '°');
+    console.log('Grid parsed:');
+    console.log('  Rows:', values.length, '| North:', northCenter, 'to South:', southCenter, '| Step:', absLatStep, '°');
+    console.log('  Cols:', values[0].length, '| West:', westCenter, 'to East:', eastCenter, '| Step:', absLonStep, '°');
+    console.log('  Row 0 =', firstLat, '(top of canvas = north)');
+    console.log('  Row', values.length-1, '=', lastLat, '(bottom of canvas = south)');
     
     return {
-        // Store the actual grid range
-        latMin: southCenter,     // -36 (first row, southernmost)
-        latMax: northCenter,     // 22.5 (last row, northernmost)
-        lonMin: westCenter,      // -25
-        lonMax: eastCenter,      // 55
-        nRows: values.length,    // 40
-        nCols: values[0].length, // 50
+        firstLat: firstLat,        // 22.5 - Row 0 center (NORTH)
+        lastLat: lastLat,          // -36 - Row 39 center (SOUTH)
+        northCenter: northCenter,  // 22.5
+        southCenter: southCenter,  // -36
+        firstLon: firstLon,        // -19.5 - Col 0 center (WEST)
+        lastLon: lastLon,          // 54 - Col 49 center (EAST)
+        westCenter: westCenter,
+        eastCenter: eastCenter,
+        nRows: values.length,      // 40
+        nCols: values[0].length,   // 50
         values: values,
-        latStep: latStep,        // 1.5
-        lonStep: lonStep,        // 1.5
+        latStep: absLatStep,       // 1.5
+        lonStep: absLonStep,       // 1.5
         metadata: data.metadata || {}
     };
 }
