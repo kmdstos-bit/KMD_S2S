@@ -54,7 +54,7 @@ const CONFIG = {
             absoluteMax: 500,
             step: 5
         },
-        tcwv: {
+        tcw: {
             label: 'Weekly Mean Total Column Water',
             unit: 'kg/m²',
             colorScheme: 'humidity',
@@ -65,14 +65,24 @@ const CONFIG = {
             step: 5
         },
         cape: {
-            label: 'Weekly Mean Sea Level Pressure',
-            unit: 'hPa',
+            label: 'Weekly Mean CAPE (J/kg)',
+            unit: 'J/kg',
             colorScheme: 'temperature',
             defaultMin: 0,
             defaultMax: 2500,
             absoluteMin: 0,
             absoluteMax: 5000,
             step: 100
+        },
+            d2m: {
+            label: 'Weekly Mean Relative Dewpoint Temperature',
+            unit: '°C',
+            colorScheme: 'humidity',
+            defaultMin: 0,
+            defaultMax: 50,
+            absoluteMin: 0,
+            absoluteMax: 200,
+            step: 5
         },
           mx2t6: {
             label: 'Weekly Mean Max Temperature',
