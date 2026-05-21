@@ -1,0 +1,71 @@
+name: Convert NetCDF & Update Catalog
+
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+
+jobs:
+  convert-and-catalog:
+    runs-on: ubuntu-latest
+
+    # ----------------------------------------------------------------
+    # Configuration — adjust these without touching the rest
+    # ----------------------------------------------------------------
+    env:
+      NCDF_DIR:     ncdf_data          # source NetCDF folder
+      OUTPUT_DIR:   data/weekly        # destination JSON folder
+      CATALOG_PATH: data/weekly/catalog.json       # catalog file (repo root)
+
+      # Comma-separated variable names as they appear in filenames
+      # e.g. ECMWF_s2s_control_forecast_precip_42days_....nc → "precip"
+      VARIABLES: "temp,precip,u10,v10,w500,u700,v700,tcw,cape,d2m,mn2t6,mx2t6"
+
+      # Forecast weeks per file
+      N_WEEKS: "6"
+
+      # How many forecast dates to keep (older ones are auto-deleted)
+      KEEP_FORECASTS: "7"
+
+    steps:
+      # ── 1. Check out website branch ──────────────────────────────
+      - name: Check out website branch
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ─────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── 3. Install dependencies ───────────────────────────────────
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install xarray numpy netCDF4
+
+      # ── 4. Convert NetCDF → JSON and update catalog ───────────────
+      - name: Convert NetCDF and update catalog
+        run: |
+          python scripts/nc_to_json_and_catalog.py \
+            --ncdf-dir    "${{ env.NCDF_DIR }}" \
+            --output-dir  "${{ env.OUTPUT_DIR }}" \
+            --catalog     "${{ env.CATALOG_PATH }}" \
+            --variables   "${{ env.VARIABLES }}" \
+            --n-weeks     "${{ env.N_WEEKS }}" \
+            --keep        "${{ env.KEEP_FORECASTS }}"
+
+      # ── 5. Commit and push ────────────────────────────────────────
+      - name: Commit and push changes
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "${{ env.OUTPUT_DIR }}" "${{ env.CATALOG_PATH }}"
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit — everything is up to date."
+          else
+            git commit -m "chore: convert NetCDF → JSON and update catalog [$(date -u +'%Y-%m-%d %H:%M UTC')]"
+            git push origin website
+          fi
