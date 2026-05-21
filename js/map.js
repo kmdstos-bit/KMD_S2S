@@ -573,61 +573,94 @@ parseColor(colorStr) {
         1.0  // fully opaque
     ] : [128, 128, 128, 1.0];
 }
-    getColorScale(variable) {
-        const scales = {
-            temp: [
-                '#000080', '#0000cc', '#0033ff', '#0066ff', 
-                '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
-                '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
-                '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
-            ],
-            precip:[ // Low values: transparent → light blue (barely visible rain)
-            'rgba(0,0,0,0)',       // 0 mm: fully transparent
-            'rgba(180,220,255,0.3)', // trace: very light blue, mostly transparent
-            'rgba(140,200,255,0.5)', // light rain
+  getColorScale(variable) {
+    const scales = {
+        temp: [
+            '#000080', '#0000cc', '#0033ff', '#0066ff', 
+            '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
+            '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
+            '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
+        ],
+        mx2t6: [
+            '#000080', '#0000cc', '#0033ff', '#0066ff', 
+            '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
+            '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
+            '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
+        ],
+        mn2t6: [
+            '#000080', '#0000cc', '#0033ff', '#0066ff', 
+            '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
+            '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
+            '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
+        ], 
+        cape: [
+            '#000080', '#0000cc', '#0033ff', '#0066ff', 
+            '#0099ff', '#00ccff', '#00ffff', '#00ffcc',
+            '#00ff66', '#33ff00', '#99ff00', '#ffff00', 
+            '#ffcc00', '#ff9900', '#ff3300', '#cc0000', '#800000'
+        ],
+        precip: [
+            'rgba(0,0,0,0)',
+            'rgba(180,220,255,0.3)',
+            'rgba(140,200,255,0.5)',
             'rgba(100,180,255,0.7)',
-            // Moderate rain: transitioning to greens
             '#87ceeb',
             '#60b8d8',
             '#40a0c8',
             '#2088b0',
-            // Heavy rain: darker blues to greens
             '#007098',
             '#005880',
             '#30a030',
             '#40b840',
             '#60d060',
-            // Very heavy: bright greens to yellows
             '#80e880',
             '#ffff00',
             '#ffcc00',
             '#ff9900',
-            // Extreme: oranges to reds to purples
             '#ff6600',
             '#ff3300',
             '#cc0000',
             '#990000',
-            '#800080',],
-            wind_speed: [
-                '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
-                '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
-                '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
-                '#ff3300', '#cc0000', '#990000'
-            ],
-            rh: [
-                '#67001f', '#b2182b', '#d6604d', '#f4a582',
-                '#fddbc7', '#f7f7f7', '#d1e5f0', '#92c5de', 
-                '#4393c3', '#2166ac', '#053061'
-            ],
-            mslp: [
-                '#8e0152', '#c51b7d', '#de77ae', '#f1b6da',
-                '#fde0ef', '#f7f7f7', '#e6f5d0', '#b8e186', 
-                '#7fbc41', '#4d9221', '#276419'
-            ]
-        };
-        
-        return scales[variable] || scales.temperature;
-    }
+            '#800080',
+        ],
+        tcw: [
+            '#fff7fb', '#ece7f2', '#d0d1e6', '#a6bddb',
+            '#74a9cf', '#3690c0', '#0570b0', '#045a8d',
+            '#023858', '#011428'
+        ],
+        d2m: [
+            '#67001f', '#b2182b', '#d6604d', '#f4a582',
+            '#fddbc7', '#f7f7f7', '#d1e5f0', '#92c5de', 
+            '#4393c3', '#2166ac', '#053061'
+        ],
+        u10: [
+            '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
+            '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
+            '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
+            '#ff3300', '#cc0000', '#990000'
+        ],
+        v10: [
+            '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
+            '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
+            '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
+            '#ff3300', '#cc0000', '#990000'
+        ],
+        u700: [
+            '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
+            '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
+            '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
+            '#ff3300', '#cc0000', '#990000'
+        ],
+        v700: [
+            '#ffffff', '#e6f0ff', '#cce0ff', '#99ccff',
+            '#66b3ff', '#3399ff', '#0080ff', '#0066cc',
+            '#004d99', '#ffcc00', '#ff9900', '#ff6600', 
+            '#ff3300', '#cc0000', '#990000'
+        ],
+    };
+
+    return scales[variable] || scales.temp;
+}
     
     // ============================================
     // UI UPDATES
