@@ -108,6 +108,16 @@ const CONFIG = {
             absoluteMax: 55,
             step: 1
         },
+         w500: {
+            label: "Weekly Mean 500hPa W-Wind",
+            unit: 'm/s',
+            colorScheme: 'wind',
+            defaultMin: -0.1,
+            defaultMax: 0.1,
+            absoluteMin: -1,
+            absoluteMax: 1,
+            step: 1
+        },
             u700: {
             label: "Weekly Mean 700hPa U-Wind",
             unit: 'm/s',
@@ -122,9 +132,9 @@ const CONFIG = {
             label: "Weekly Mean 10m U-Wind",
             unit: 'm/s',
             colorScheme: 'wind',
-            defaultMin: 0,
+            defaultMin: -15,
             defaultMax: 15,
-            absoluteMin: 0,
+            absoluteMin: -100,
             absoluteMax: 100,
             step: 1
         },
@@ -132,9 +142,9 @@ const CONFIG = {
             label: "Weekly Mean 10m V-Wind",
             unit: 'm/s',
             colorScheme: 'wind',
-            defaultMin: 0,
+            defaultMin: -15,
             defaultMax: 15,
-            absoluteMin: 0,
+            absoluteMin: -100,
             absoluteMax: 100,
             step: 1
         },
@@ -142,9 +152,9 @@ const CONFIG = {
             label: "Weekly Mean 700hPa V-Wind",
             unit: 'm/s',
             colorScheme: 'wind',
-            defaultMin: 0,
+            defaultMin: -15,
             defaultMax: 15,
-            absoluteMin: 0,
+            absoluteMin: -100,
             absoluteMax: 100,
             step: 1
         },

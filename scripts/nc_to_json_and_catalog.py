@@ -85,7 +85,7 @@ VAR_METADATA = {
         "unit":     "J/kg",
         "nc_names": ["cape"],
     },
-    "tcwv": {
+    "tcw": {
         "label":    "Total Column Water Vapour",
         "unit":     "kg/m²",
         "nc_names": ["tcwv", "tcw"],
@@ -115,6 +115,8 @@ VAR_METADATA = {
 UNIT_CONVERSIONS = {
     "temp":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
     "d2m":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
+    "mx2t6":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
+    "mn2t6":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
     "mslp":  lambda v: v / 100.0  if np.nanmax(v) > 10000 else v,   # Pa → hPa
 }
 
