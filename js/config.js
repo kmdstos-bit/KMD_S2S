@@ -37,7 +37,7 @@ const CONFIG = {
             unit: '°C',
             colorScheme: 'temperature',
             // These are the DEFAULT ranges (forecaster-trusted values)
-            defaultMin: 0,
+            defaultMin: 15,
             defaultMax: 40,
             // Allowable range for the sliders
             absoluteMin: -20,
@@ -89,7 +89,7 @@ const CONFIG = {
             unit: '°C',
             colorScheme: 'temperature',
             // These are the DEFAULT ranges (forecaster-trusted values)
-            defaultMin: 0,
+            defaultMin: 15,
             defaultMax: 40,
             // Allowable range for the sliders
             absoluteMin: -20,
@@ -101,7 +101,7 @@ const CONFIG = {
             unit: '°C',
             colorScheme: 'temperature',
             // These are the DEFAULT ranges (forecaster-trusted values)
-            defaultMin: 0,
+            defaultMin: 15,
             defaultMax: 40,
             // Allowable range for the sliders
             absoluteMin: -20,
@@ -116,7 +116,7 @@ const CONFIG = {
             defaultMax: 0.1,
             absoluteMin: -1,
             absoluteMax: 1,
-            step: 1
+            step: 0.01
         },
             u700: {
             label: "Weekly Mean 700hPa U-Wind",
