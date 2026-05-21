@@ -70,14 +70,29 @@ class UIController {
         });
     }
     
-    // Auto-scale button
+    // Auto-scale button (all data)
     const autoScaleBtn = document.getElementById('auto-scale');
     if (autoScaleBtn) {
         autoScaleBtn.addEventListener('click', async () => {
-            console.log('🔄 Auto-scale button clicked');
+            console.log('🔄 Auto-scale (all data)');
+            this.weatherMap.useViewportAutoScale = false;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
         });
+    }
+
+    // Viewport auto-scale button (visible area only)
+    const autoScaleViewportBtn = document.getElementById('auto-scale-viewport');
+    if (autoScaleViewportBtn) {
+        autoScaleViewportBtn.addEventListener('click', async () => {
+            console.log('🔄 Auto-scale (viewport only)');
+            this.weatherMap.useViewportAutoScale = true;
+            this.weatherMap._pendingAutoScale = true;
+            await this.plotData();
+        });
+        
+        // Update title based on state
+        autoScaleViewportBtn.title = 'Auto-scale to visible map area only';
     }
     
     // VMin/VMax inputs

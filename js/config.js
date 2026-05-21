@@ -109,7 +109,7 @@ const CONFIG = {
             step: 1
         },
          w500: {
-            label: "Weekly Mean 500hPa W-Wind",
+            label: "Weekly Mean 500hPa Vertical Wind",
             unit: 'm/s',
             colorScheme: 'wind',
             defaultMin: -0.1,

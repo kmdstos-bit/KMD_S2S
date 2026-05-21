@@ -85,11 +85,19 @@
             <div class="control-group" id="color-scale-controls">
                 <label style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Color Scale Range</span>
-                    <button id="auto-scale" style="padding: 3px 8px; font-size: 0.75em; 
-                            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
-                            border-radius: 4px; color: white; cursor: pointer;">
-                        Auto
-                    </button>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="auto-scale" style="padding: 3px 8px; font-size: 0.75em; 
+                                background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
+                                border-radius: 4px; color: white; cursor: pointer;">
+                            Auto
+                        </button>
+                        <button id="auto-scale-viewport" style="padding: 3px 6px; font-size: 0.65em; 
+                                background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); 
+                                border-radius: 4px; color: white; cursor: pointer;"
+                                title="Auto-scale to visible area only">
+                            🖼️
+                        </button>
+                    </div>
                 </label>
                 
                 <div style="display: flex; gap: 10px; margin-top: 8px;">

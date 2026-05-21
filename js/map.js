@@ -160,60 +160,159 @@ class WeatherMap {
     };
 }
     
-    getDataRange(values) {
-        let min = Infinity;
-        let max = -Infinity;
-        
-        for (const row of values) {
-            if (!row) continue;
-            for (const val of row) {
-                if (val !== null && val !== undefined && !isNaN(val) && isFinite(val)) {
-                    if (val < min) min = val;
-                    if (val > max) max = val;
-                }
-            }
-        }
-        
-        // If no valid data found
-        if (min === Infinity || max === -Infinity) {
-            return { min: 0, max: 100 };
-        }
-        
-        // Round to nice numbers
-        const range = max - min;
-        let step;
-        if (range < 1) step = 0.1;
-        else if (range < 10) step = 1;
-        else if (range < 50) step = 5;
-        else step = 10;
-        
-        min = Math.floor(min / step) * step;
-        max = Math.ceil(max / step) * step;
-        
-        return { min, max };
+    getDataRange(values, rasterData) {
+    // Check if we should only use visible data
+    if (this.useViewportAutoScale && rasterData) {
+        return this.getVisibleDataRange(values, rasterData);
     }
     
-    autoScaleToData(values, variable) {
-        const dataRange = this.getDataRange(values);
-        this._lastDataRange = dataRange;
-        this.useAutoScale = true;
-        
-        // Update the input fields
-        const vminInput = document.getElementById('vmin');
-        const vmaxInput = document.getElementById('vmax');
-        if (vminInput) vminInput.value = dataRange.min;
-        if (vmaxInput) vmaxInput.value = dataRange.max;
-        
-        // Update data range info display
-        const rangeInfo = document.getElementById('data-range-info');
-        if (rangeInfo) {
-            const unit = CONFIG.variables[variable].unit;
-            rangeInfo.textContent = `Data range: ${dataRange.min} to ${dataRange.max} ${unit}`;
+    // Default: use all data
+    let min = Infinity;
+    let max = -Infinity;
+    
+    for (const row of values) {
+        if (!row) continue;
+        for (const val of row) {
+            if (val !== null && val !== undefined && !isNaN(val) && isFinite(val)) {
+                if (val < min) min = val;
+                if (val > max) max = val;
+            }
         }
-        
-        console.log(`Auto-scale: ${dataRange.min} to ${dataRange.max}`);
-        return dataRange;
     }
+    
+    if (min === Infinity || max === -Infinity) {
+        return { min: 0, max: 100 };
+    }
+    
+    // Round to nice numbers
+    const range = max - min;
+    let step;
+    if (range < 1) step = 0.1;
+    else if (range < 10) step = 1;
+    else if (range < 50) step = 5;
+    else step = 10;
+    
+    min = Math.floor(min / step) * step;
+    max = Math.ceil(max / step) * step;
+    
+    return { min, max };
+}
+
+getVisibleDataRange(values, rasterData) {
+    // Get current map bounds
+    const bounds = this.leafletMap.getBounds();
+    const south = bounds.getSouth();
+    const north = bounds.getNorth();
+    const west = bounds.getWest();
+    const east = bounds.getEast();
+    
+    console.log('Visible bounds:', { south, north, west, east });
+    
+    // Calculate which cells are visible
+    const latStep = rasterData.latStep || 1.5;
+    const lonStep = rasterData.lonStep || 1.5;
+    
+    // Cell centers (accounting for North-to-South ordering)
+    const firstLat = rasterData.latMax;  // 22.5 (north, row 0)
+    const lastLat = rasterData.latMin;   // -36 (south, row 39)
+    const firstLon = rasterData.lonMin;  // -19.5 (west, col 0)
+    
+    const nRows = rasterData.nRows;
+    const nCols = rasterData.nCols;
+    
+    // Find visible row range
+    let firstVisibleRow = -1;
+    let lastVisibleRow = -1;
+    
+    for (let row = 0; row < nRows; row++) {
+        const cellLat = firstLat - row * latStep;  // Row 0=22.5, row 1=21.0, etc.
+        
+        // Check if this cell's center is within visible bounds
+        if (cellLat >= south && cellLat <= north) {
+            if (firstVisibleRow === -1) firstVisibleRow = row;
+            lastVisibleRow = row;
+        }
+    }
+    
+    // Find visible column range
+    let firstVisibleCol = -1;
+    let lastVisibleCol = -1;
+    
+    for (let col = 0; col < nCols; col++) {
+        const cellLon = firstLon + col * lonStep;
+        
+        if (cellLon >= west && cellLon <= east) {
+            if (firstVisibleCol === -1) firstVisibleCol = col;
+            lastVisibleCol = col;
+        }
+    }
+    
+    console.log('Visible cells: rows', firstVisibleRow, 'to', lastVisibleRow, 
+                'cols', firstVisibleCol, 'to', lastVisibleCol);
+    
+    // No visible cells? Use all data
+    if (firstVisibleRow === -1 || firstVisibleCol === -1) {
+        console.log('No cells in view, using all data');
+        return this.getDataRange(values, null);
+    }
+    
+    // Collect values from visible cells only
+    let min = Infinity;
+    let max = -Infinity;
+    
+    for (let row = firstVisibleRow; row <= lastVisibleRow; row++) {
+        if (!values[row]) continue;
+        for (let col = firstVisibleCol; col <= lastVisibleCol; col++) {
+            const val = values[row][col];
+            if (val !== null && val !== undefined && !isNaN(val) && isFinite(val)) {
+                if (val < min) min = val;
+                if (val > max) max = val;
+            }
+        }
+    }
+    
+    if (min === Infinity || max === -Infinity) {
+        return { min: 0, max: 100 };
+    }
+    
+    // Round to nice numbers
+    const range = max - min;
+    let step;
+    if (range < 1) step = 0.1;
+    else if (range < 10) step = 1;
+    else if (range < 50) step = 5;
+    else step = 10;
+    
+    min = Math.floor(min / step) * step;
+    max = Math.ceil(max / step) * step;
+    
+    console.log('Visible data range:', min, 'to', max);
+    return { min, max };
+}
+
+autoScaleToData(values, variable, rasterData) {
+    // Check if viewport-aware auto-scale is enabled
+    const dataRange = this.getDataRange(values, rasterData);
+    this._lastDataRange = dataRange;
+    this.useAutoScale = true;
+    
+    // Update input fields
+    const vminInput = document.getElementById('vmin');
+    const vmaxInput = document.getElementById('vmax');
+    if (vminInput) vminInput.value = dataRange.min;
+    if (vmaxInput) vmaxInput.value = dataRange.max;
+    
+    // Update info display
+    const rangeInfo = document.getElementById('data-range-info');
+    if (rangeInfo) {
+        const unit = CONFIG.variables[variable].unit;
+        const scopeText = this.useViewportAutoScale ? ' (viewport)' : ' (all data)';
+        rangeInfo.textContent = `Auto-scaled${scopeText}: ${dataRange.min} to ${dataRange.max} ${unit}`;
+    }
+    
+    console.log(`Auto-scale: ${dataRange.min} to ${dataRange.max}`);
+    return dataRange;
+}
     
     setManualRange(min, max) {
         this.useAutoScale = false;
@@ -265,116 +364,66 @@ class WeatherMap {
     // ============================================
     // DATA LOADING & DISPLAY
     // ============================================
-    
     async loadAndDisplayWeather(initDate, variable, week) {
     try {
         document.getElementById('loading').classList.add('active');
         
-        // Save current view state
         const currentCenter = this.leafletMap.getCenter();
         const currentZoom = this.leafletMap.getZoom();
         
-        // Remove previous layer
         if (this.currentLayer) {
             this.leafletMap.removeLayer(this.currentLayer);
             this.currentLayer = null;
         }
         
-        // Load data
         const data = await this.dataLoader.loadWeatherData(initDate, variable, week);
         const rasterData = this.dataLoader.parseWeatherData(data);
         
-        // CHECK IF VARIABLE CHANGED - update defaults BEFORE creating layer
+        // Store rasterData for viewport calculations
+        this._currentRasterData = rasterData;
+        
         const variableChanged = (this._lastVariable && this._lastVariable !== variable);
         if (variableChanged) {
-            console.log(`Variable changed: ${this._lastVariable} -> ${variable}`);
             this.updateVariableDefaults(variable);
         }
         
-        // Handle auto-scale if pending
+        // Handle auto-scale WITH rasterData
         if (this._pendingAutoScale) {
             console.log('Applying auto-scale...');
-            const dataRange = this.getDataRange(rasterData.values);
-            this._lastDataRange = dataRange;
-            this.useAutoScale = true;
-            
-            const vminInput = document.getElementById('vmin');
-            const vmaxInput = document.getElementById('vmax');
-            if (vminInput) vminInput.value = dataRange.min;
-            if (vmaxInput) vmaxInput.value = dataRange.max;
-            
-            const rangeInfo = document.getElementById('data-range-info');
-            if (rangeInfo) {
-                rangeInfo.textContent = `Auto-scaled: ${dataRange.min} to ${dataRange.max} ${CONFIG.variables[variable].unit}`;
-            }
-            
+            this.autoScaleToData(rasterData.values, variable, rasterData);
             this._pendingAutoScale = false;
         }
         
-        // Store current variable for next comparison
         this._lastVariable = variable;
         
-        // NOW create the layer with the correct range
         this.currentLayer = this.createGridCellLayer(rasterData, variable);
         
         if (this.currentLayer) {
             this.currentLayer.addTo(this.leafletMap);
-            
-            // Update legend with current range
             this.updateLegend(variable);
             
-            // Handle view
-        if (!this._hasInitialized) {
-            console.log('📍 First load - fitting to data bounds');
-            
-            // Use pre-calculated edges if available
-            let southEdge = rasterData.southEdge;
-            let northEdge = rasterData.northEdge;
-            let westEdge = rasterData.westEdge;
-            let eastEdge = rasterData.eastEdge;
-            
-            // Fallback calculation if edges aren't available
-            if (isNaN(southEdge) || isNaN(northEdge)) {
-                const halfLat = (rasterData.latStep || 1.5) / 2;
-                southEdge = rasterData.latMin - halfLat;
-                northEdge = rasterData.latMax + halfLat;
-            }
-            if (isNaN(westEdge) || isNaN(eastEdge)) {
-                const halfLon = (rasterData.lonStep || 1.5) / 2;
-                westEdge = rasterData.lonMin - halfLon;
-                eastEdge = rasterData.lonMax + halfLon;
-            }
-            
-            console.log('Fitting to bounds:', [[southEdge, westEdge], [northEdge, eastEdge]]);
-            
-            // Safety: ensure all values are valid numbers
-            if (isFinite(southEdge) && isFinite(northEdge) && isFinite(westEdge) && isFinite(eastEdge)) {
+            if (!this._hasInitialized) {
                 this.leafletMap.fitBounds([
-                    [southEdge, westEdge],
-                    [northEdge, eastEdge]
+                    [rasterData.southEdge || rasterData.latMin - rasterData.latStep/2,
+                     rasterData.westEdge || rasterData.lonMin - rasterData.lonStep/2],
+                    [rasterData.northEdge || rasterData.latMax + rasterData.latStep/2,
+                     rasterData.eastEdge || rasterData.lonMax + rasterData.lonStep/2]
                 ]);
+                this._hasInitialized = true;
             } else {
-                console.warn('Invalid bounds, using default Africa view');
-                this.leafletMap.setView([0, 20], 4);
+                this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
             }
-            
-            this._hasInitialized = true;
         }
+        
+        document.getElementById('loading').classList.remove('active');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').classList.remove('active');
+        alert('Failed to load weather data.\n\nError: ' + error.message);
+    }
+}    
 
-        else {
-                        this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
-                    }
-                }
-                
-                document.getElementById('loading').classList.remove('active');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('loading').classList.remove('active');
-                alert('Failed to load weather data.\n\nError: ' + error.message);
-            }
-        }
-    
     resetView() {
         if (this.currentLayer) {
             try {
