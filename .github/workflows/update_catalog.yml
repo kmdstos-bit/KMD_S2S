@@ -3,6 +3,11 @@ name: Convert NetCDF & Update Catalog
 permissions:
   contents: write
 on:
+  push:
+    branches:
+      - website
+    paths:
+      - 'ncdf_data/**'
   workflow_dispatch:
 
 jobs:

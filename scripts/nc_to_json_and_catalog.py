@@ -116,7 +116,6 @@ UNIT_CONVERSIONS = {
     "temp":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
     "d2m":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
     "mslp":  lambda v: v / 100.0  if np.nanmax(v) > 10000 else v,   # Pa → hPa
-    "precip": lambda v: v * 1000.0 if np.nanmax(v) < 10   else v,   # m → mm
 }
 
 

@@ -54,36 +54,90 @@ const CONFIG = {
             absoluteMax: 500,
             step: 5
         },
-        wind_speed: {
-            label: 'Weekly Mean Wind Speed',
+        tcwv: {
+            label: 'Weekly Mean Total Column Water',
+            unit: 'kg/m²',
+            colorScheme: 'humidity',
+            defaultMin: 0,
+            defaultMax: 50,
+            absoluteMin: 0,
+            absoluteMax: 200,
+            step: 5
+        },
+        cape: {
+            label: 'Weekly Mean Sea Level Pressure',
+            unit: 'hPa',
+            colorScheme: 'temperature',
+            defaultMin: 0,
+            defaultMax: 2500,
+            absoluteMin: 0,
+            absoluteMax: 5000,
+            step: 100
+        },
+          mx2t6: {
+            label: 'Weekly Mean Max Temperature',
+            unit: '°C',
+            colorScheme: 'temperature',
+            // These are the DEFAULT ranges (forecaster-trusted values)
+            defaultMin: 0,
+            defaultMax: 40,
+            // Allowable range for the sliders
+            absoluteMin: -20,
+            absoluteMax: 55,
+            step: 1
+        },
+          mn2t6: {
+            label: 'Weekly Mean Min Temperature',
+            unit: '°C',
+            colorScheme: 'temperature',
+            // These are the DEFAULT ranges (forecaster-trusted values)
+            defaultMin: 0,
+            defaultMax: 40,
+            // Allowable range for the sliders
+            absoluteMin: -20,
+            absoluteMax: 55,
+            step: 1
+        },
+            u700: {
+            label: "Weekly Mean 700hPa U-Wind",
             unit: 'm/s',
             colorScheme: 'wind',
             defaultMin: 0,
             defaultMax: 15,
             absoluteMin: 0,
-            absoluteMax: 40,
+            absoluteMax: 100,
             step: 1
         },
-        rh: {
-            label: 'Weekly Mean Relative Humidity',
-            unit: '%',
-            colorScheme: 'humidity',
+            u10: {
+            label: "Weekly Mean 10m U-Wind",
+            unit: 'm/s',
+            colorScheme: 'wind',
             defaultMin: 0,
-            defaultMax: 100,
+            defaultMax: 15,
             absoluteMin: 0,
             absoluteMax: 100,
-            step: 5
+            step: 1
         },
-        mslp: {
-            label: 'Weekly Mean Sea Level Pressure',
-            unit: 'hPa',
-            colorScheme: 'pressure',
-            defaultMin: 990,
-            defaultMax: 1030,
-            absoluteMin: 950,
-            absoluteMax: 1060,
-            step: 2
-        }
+        v10: {
+            label: "Weekly Mean 10m V-Wind",
+            unit: 'm/s',
+            colorScheme: 'wind',
+            defaultMin: 0,
+            defaultMax: 15,
+            absoluteMin: 0,
+            absoluteMax: 100,
+            step: 1
+        },
+        v700: {
+            label: "Weekly Mean 700hPa V-Wind",
+            unit: 'm/s',
+            colorScheme: 'wind',
+            defaultMin: 0,
+            defaultMax: 15,
+            absoluteMin: 0,
+            absoluteMax: 100,
+            step: 1
+        },
     },
     
     // Map defaults
