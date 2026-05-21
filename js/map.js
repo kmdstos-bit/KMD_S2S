@@ -324,37 +324,56 @@ class WeatherMap {
             this.updateLegend(variable);
             
             // Handle view
-           if (!this._hasInitialized) {
-    console.log('📍 First load - fitting to data bounds');
-    
-    const latStep = rasterData.latStep || 1.5;
-    const lonStep = rasterData.lonStep || 1.5;
-    const halfLat = latStep / 2;
-    const halfLon = lonStep / 2;
-    
-    const northEdge = rasterData.latMin + halfLat;   // 22.5 + 0.75 = 23.25
-    const southEdge = rasterData.latMax - halfLat;   // -36 - 0.75 = -36.75
-    const westEdge = rasterData.lonMin - halfLon;    // -25 - 0.75 = -25.75
-    const eastEdge = rasterData.lonMax + halfLon;    // 55 + 0.75 = 55.75
-    
-    this.leafletMap.fitBounds([
-        [southEdge, westEdge],
-        [northEdge, eastEdge]
-    ]);
-    this._hasInitialized = true;
-}else {
-                this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
+        if (!this._hasInitialized) {
+            console.log('📍 First load - fitting to data bounds');
+            
+            // Use pre-calculated edges if available
+            let southEdge = rasterData.southEdge;
+            let northEdge = rasterData.northEdge;
+            let westEdge = rasterData.westEdge;
+            let eastEdge = rasterData.eastEdge;
+            
+            // Fallback calculation if edges aren't available
+            if (isNaN(southEdge) || isNaN(northEdge)) {
+                const halfLat = (rasterData.latStep || 1.5) / 2;
+                southEdge = rasterData.latMin - halfLat;
+                northEdge = rasterData.latMax + halfLat;
+            }
+            if (isNaN(westEdge) || isNaN(eastEdge)) {
+                const halfLon = (rasterData.lonStep || 1.5) / 2;
+                westEdge = rasterData.lonMin - halfLon;
+                eastEdge = rasterData.lonMax + halfLon;
+            }
+            
+            console.log('Fitting to bounds:', [[southEdge, westEdge], [northEdge, eastEdge]]);
+            
+            // Safety: ensure all values are valid numbers
+            if (isFinite(southEdge) && isFinite(northEdge) && isFinite(westEdge) && isFinite(eastEdge)) {
+                this.leafletMap.fitBounds([
+                    [southEdge, westEdge],
+                    [northEdge, eastEdge]
+                ]);
+            } else {
+                console.warn('Invalid bounds, using default Africa view');
+                this.leafletMap.setView([0, 20], 4);
+            }
+            
+            this._hasInitialized = true;
+        }
+
+        else {
+                        this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
+                    }
+                }
+                
+                document.getElementById('loading').classList.remove('active');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').classList.remove('active');
+                alert('Failed to load weather data.\n\nError: ' + error.message);
             }
         }
-        
-        document.getElementById('loading').classList.remove('active');
-        
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('loading').classList.remove('active');
-        alert('Failed to load weather data.\n\nError: ' + error.message);
-    }
-}
     
     resetView() {
         if (this.currentLayer) {
@@ -375,24 +394,18 @@ class WeatherMap {
     
     createGridCellLayer(rasterData, variable) {
     console.log('Creating grid cell layer...');
-    console.log('rasterData:', {
-        firstLat: rasterData.firstLat,
-        lastLat: rasterData.lastLat,
-        nRows: rasterData.nRows,
-        nCols: rasterData.nCols,
-        latStep: rasterData.latStep,
-        lonStep: rasterData.lonStep
-    });
+    console.log('rasterData keys:', Object.keys(rasterData));
+    console.log('latMin:', rasterData.latMin, 'latMax:', rasterData.latMax);
+    console.log('lonMin:', rasterData.lonMin, 'lonMax:', rasterData.lonMax);
+    console.log('southEdge:', rasterData.southEdge, 'northEdge:', rasterData.northEdge);
     
     const canvas = document.createElement('canvas');
-    const nCols = rasterData.nCols;  // 50
-    const nRows = rasterData.nRows;  // 40
-    const cellPixelSize = 6;  // 6 pixels per cell (300×240 canvas)
+    const nCols = rasterData.nCols;
+    const nRows = rasterData.nRows;
+    const cellPixelSize = 6;
     
-    canvas.width = nCols * cellPixelSize;   // 300
-    canvas.height = nRows * cellPixelSize;  // 240
-    
-    console.log('Canvas size:', canvas.width, 'x', canvas.height);
+    canvas.width = nCols * cellPixelSize;
+    canvas.height = nRows * cellPixelSize;
     
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
@@ -404,15 +417,14 @@ class WeatherMap {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw cells
-    // Row 0 = 22.5°N (NORTH) → TOP of canvas
-    // Row 39 = -36°S (SOUTH) → BOTTOM of canvas
-    // NO FLIPPING NEEDED - Row 0 is already north
+    // Row 0 = 22.5°N (north) → TOP of canvas
+    // Row 39 = -36°S (south) → BOTTOM of canvas
     for (let row = 0; row < nRows; row++) {
         for (let col = 0; col < nCols; col++) {
             const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
             const x = col * cellPixelSize;
-            const y = row * cellPixelSize;  // Row 0 = top (north)
+            const y = row * cellPixelSize;
             
             if (value === null || value === undefined || isNaN(value)) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
@@ -426,27 +438,29 @@ class WeatherMap {
     
     const imageUrl = canvas.toDataURL('image/png');
     
-    // ============================================
-    // BOUNDS: North-to-South grid, 1.5° spacing
-    // ============================================
-    // Row 0 center = 22.5°N → North edge = 22.5 + 0.75 = 23.25
-    // Row 39 center = -36°S → South edge = -36 - 0.75 = -36.75
+    // Use pre-calculated edges from parseWeatherData
+    const southEdge = rasterData.southEdge;
+    const northEdge = rasterData.northEdge;
+    const westEdge = rasterData.westEdge;
+    const eastEdge = rasterData.eastEdge;
     
-    const halfLat = rasterData.latStep / 2;  // 0.75°
-    const halfLon = rasterData.lonStep / 2;  // 0.75°
+    // Safety check for NaN
+    if (isNaN(southEdge) || isNaN(northEdge) || isNaN(westEdge) || isNaN(eastEdge)) {
+        console.error('Invalid edge values, recalculating...');
+        const halfLat = rasterData.latStep / 2;
+        const halfLon = rasterData.lonStep / 2;
+        const southEdge2 = rasterData.latMin - halfLat;
+        const northEdge2 = rasterData.latMax + halfLat;
+        const westEdge2 = rasterData.lonMin - halfLon;
+        const eastEdge2 = rasterData.lonMax + halfLon;
+        console.log('Recalculated:', {southEdge2, northEdge2, westEdge2, eastEdge2});
+    }
     
-    const northEdge = rasterData.northCenter + halfLat;   // 22.5 + 0.75 = 23.25
-    const southEdge = rasterData.southCenter - halfLat;   // -36 - 0.75 = -36.75
-    const westEdge = rasterData.westCenter - halfLon;     // -19.5 - 0.75 = -20.25
-    const eastEdge = rasterData.eastCenter + halfLon;     // 54 + 0.75 = 54.75
-    
-    console.log('Bounds:');
-    console.log('  South:', southEdge.toFixed(2), 'to North:', northEdge.toFixed(2));
-    console.log('  West: ', westEdge.toFixed(2), 'to East: ', eastEdge.toFixed(2));
+    console.log('Using bounds:', [[southEdge, westEdge], [northEdge, eastEdge]]);
     
     const bounds = [
-        [southEdge, westEdge],   // [-36.75, -20.25]
-        [northEdge, eastEdge]    // [23.25, 54.75]
+        [southEdge, westEdge],
+        [northEdge, eastEdge]
     ];
     
     const overlay = L.imageOverlay(imageUrl, bounds, {

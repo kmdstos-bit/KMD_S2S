@@ -151,46 +151,58 @@ class DataLoader {
     }
     
     // Grid info from JSON
-    // lat: [22.5, -36, 1.5] → 40 rows from 22.5°N down to 36°S, step 1.5°
-    // Row 0 = 22.5°N (northernmost)
-    // Row 39 = -36°S (southernmost)
-    // lon: [-19.5, 54, 1.5] → 50 cols from 19.5°W to 54°E, step 1.5°
+    // lat: [22.5, -36, 1.5] → 40 rows from 22.5°N down to 36°S
+    // lon: [-19.5, 54, 1.5] → 50 cols from 19.5°W to 54°E
     
-    const firstLat = grid.lat ? grid.lat[0] : 22.5;    // Row 0: 22.5°N (north)
-    const lastLat = grid.lat ? grid.lat[1] : -36;      // Row 39: -36°S (south)
-    const absLatStep = Math.abs(grid.lat ? grid.lat[2] : 1.5);  // 1.5° (always positive)
+    const firstLat = grid.lat ? grid.lat[0] : 22.5;
+    const lastLat = grid.lat ? grid.lat[1] : -36;
+    const absLatStep = Math.abs(grid.lat ? grid.lat[2] : 1.5);
     
-    const firstLon = grid.lon ? grid.lon[0] : -19.5;   // Col 0: 19.5°W (west)
-    const lastLon = grid.lon ? grid.lon[1] : 54;       // Col 49: 54°E (east)
+    const firstLon = grid.lon ? grid.lon[0] : -19.5;
+    const lastLon = grid.lon ? grid.lon[1] : 54;
     const absLonStep = Math.abs(grid.lon ? grid.lon[2] : 1.5);
     
-    // Determine which is north, south, east, west
-    const northCenter = Math.max(firstLat, lastLat);   // 22.5
-    const southCenter = Math.min(firstLat, lastLat);   // -36
-    const westCenter = Math.min(firstLon, lastLon);    // -19.5
-    const eastCenter = Math.max(firstLon, lastLon);    // 54
+    // Determine north/south/east/west
+    const northCenter = Math.max(firstLat, lastLat);
+    const southCenter = Math.min(firstLat, lastLat);
+    const westCenter = Math.min(firstLon, lastLon);
+    const eastCenter = Math.max(firstLon, lastLon);
+    
+    // Calculate edges (half cell outside centers)
+    const halfLat = absLatStep / 2;
+    const halfLon = absLonStep / 2;
+    
+    const southEdge = southCenter - halfLat;
+    const northEdge = northCenter + halfLat;
+    const westEdge = westCenter - halfLon;
+    const eastEdge = eastCenter + halfLon;
     
     console.log('Grid parsed:');
-    console.log('  Rows:', values.length, '| North:', northCenter, 'to South:', southCenter, '| Step:', absLatStep, '°');
-    console.log('  Cols:', values[0].length, '| West:', westCenter, 'to East:', eastCenter, '| Step:', absLonStep, '°');
-    console.log('  Row 0 =', firstLat, '(top of canvas = north)');
-    console.log('  Row', values.length-1, '=', lastLat, '(bottom of canvas = south)');
+    console.log('  Rows:', values.length, 'Cols:', values[0].length);
+    console.log('  Lat centers:', southCenter, 'to', northCenter);
+    console.log('  Lon centers:', westCenter, 'to', eastCenter);
+    console.log('  Lat edges:', southEdge.toFixed(2), 'to', northEdge.toFixed(2));
+    console.log('  Lon edges:', westEdge.toFixed(2), 'to', eastEdge.toFixed(2));
     
     return {
-        firstLat: firstLat,        // 22.5 - Row 0 center (NORTH)
-        lastLat: lastLat,          // -36 - Row 39 center (SOUTH)
-        northCenter: northCenter,  // 22.5
-        southCenter: southCenter,  // -36
-        firstLon: firstLon,        // -19.5 - Col 0 center (WEST)
-        lastLon: lastLon,          // 54 - Col 49 center (EAST)
-        westCenter: westCenter,
-        eastCenter: eastCenter,
-        nRows: values.length,      // 40
-        nCols: values[0].length,   // 50
+        // Use the SAME property names as before
+        latMin: southCenter,     // -36 (southernmost center)
+        latMax: northCenter,     // 22.5 (northernmost center)
+        lonMin: westCenter,      // -19.5
+        lonMax: eastCenter,      // 54
+        // Also include pre-calculated edges
+        southEdge: southEdge,    // -36.75
+        northEdge: northEdge,    // 23.25
+        westEdge: westEdge,      // -20.25
+        eastEdge: eastEdge,      // 54.75
+        nRows: values.length,    // 40
+        nCols: values[0].length, // 50
         values: values,
-        latStep: absLatStep,       // 1.5
-        lonStep: absLonStep,       // 1.5
+        latStep: absLatStep,     // 1.5
+        lonStep: absLonStep,     // 1.5
+        // Also keep for reference
+        firstRowIsNorth: true,   // Row 0 = north
         metadata: data.metadata || {}
     };
 }
-};
+}

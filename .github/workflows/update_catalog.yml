@@ -1,85 +1,74 @@
-name: Convert GRIB & Update Catalog
+name: Convert NetCDF & Update Catalog
 
 on:
-  schedule:
-    - cron: '0 12 * * *'   # Daily at 12:00 UTC
-  workflow_dispatch:        # Allow manual runs
+  push:
+    branches:
+      - website
+    paths:
+      - 'ncdf_data/**'
+  workflow_dispatch:
 
 jobs:
   convert-and-catalog:
     runs-on: ubuntu-latest
 
     # ----------------------------------------------------------------
-    # Variables — adjust these without touching the rest of the workflow
+    # Configuration — adjust these without touching the rest
     # ----------------------------------------------------------------
     env:
-      DATA_BRANCH: main
-      WEBSITE_BRANCH: website
-      DATA_DIR: data               # root folder on main branch
-      OUTPUT_DIR: data             # output folder on website branch
-      CATALOG_PATH: data/weekly/catalog.json   # path on website branch
+      NCDF_DIR:     ncdf_data          # source NetCDF folder
+      OUTPUT_DIR:   data/weekly        # destination JSON folder
+      CATALOG_PATH: data/weekly/catalog.json       # catalog file (repo root)
 
-      # Comma-separated list of variable names as they appear in filenames
-      # e.g. a file called ...forecast_precip_42days... → "precip"
-      VARIABLES: "temp,precip,wind_speed,rh,mslp"
+      # Comma-separated variable names as they appear in filenames
+      # e.g. ECMWF_s2s_control_forecast_precip_42days_....nc → "precip"
+      VARIABLES: "temp,precip,u10,v10,w500,u700,v700,tcw,cape,d2m,mn2t6,mx2t6"
 
-      # Number of forecast weeks in each GRIB file
+      # Forecast weeks per file
       N_WEEKS: "6"
 
-      # How many forecast dates to retain on the website branch (older ones are deleted)
+      # How many forecast dates to keep (older ones are auto-deleted)
       KEEP_FORECASTS: "7"
 
     steps:
-      # ── 1. Check out data (main branch) ──────────────────────────
-      - name: Check out main branch (data)
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.DATA_BRANCH }}
-          path: main_branch
-
-      # ── 2. Check out website branch ──────────────────────────────
+      # ── 1. Check out website branch ──────────────────────────────
       - name: Check out website branch
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.WEBSITE_BRANCH }}
-          path: website_branch
 
-      # ── 3. Set up Python ─────────────────────────────────────────
+      # ── 2. Set up Python ─────────────────────────────────────────
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # ── 4. Install dependencies ───────────────────────────────────
+      # ── 3. Install dependencies ───────────────────────────────────
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install cfgrib eccodes xarray numpy
+          pip install xarray numpy netCDF4
 
-      # ── 5. Run conversion + catalog update ───────────────────────
-      - name: Convert GRIB files and update catalog
+      # ── 4. Convert NetCDF → JSON and update catalog ───────────────
+      - name: Convert NetCDF and update catalog
         run: |
-          python main_branch/scripts/grib_to_json_and_catalog.py \
-            --data-dir    "main_branch/${{ env.DATA_DIR }}" \
-            --output-dir  "website_branch/${{ env.OUTPUT_DIR }}" \
-            --catalog     "website_branch/${{ env.CATALOG_PATH }}" \
+          python scripts/nc_to_json_and_catalog.py \
+            --ncdf-dir    "${{ env.NCDF_DIR }}" \
+            --output-dir  "${{ env.OUTPUT_DIR }}" \
+            --catalog     "${{ env.CATALOG_PATH }}" \
             --variables   "${{ env.VARIABLES }}" \
             --n-weeks     "${{ env.N_WEEKS }}" \
             --keep        "${{ env.KEEP_FORECASTS }}"
 
-      # ── 6. Commit & push changes to website branch ───────────────
-      - name: Commit and push to website branch
+      # ── 5. Commit and push ────────────────────────────────────────
+      - name: Commit and push changes
         run: |
-          cd website_branch
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add "${{ env.OUTPUT_DIR }}" "${{ env.CATALOG_PATH }}"
 
-          # Only commit if there are actual changes
           if git diff --cached --quiet; then
-            echo "No changes to commit — catalog is already up to date."
+            echo "No changes to commit — everything is up to date."
           else
-            git commit -m "chore: update catalog and JSON data [$(date -u +'%Y-%m-%d %H:%M UTC')]"
-            git push origin ${{ env.WEBSITE_BRANCH }}
+            git commit -m "chore: convert NetCDF → JSON and update catalog [$(date -u +'%Y-%m-%d %H:%M UTC')]"
+            git push origin website
           fi
