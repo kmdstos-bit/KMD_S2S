@@ -10,6 +10,8 @@ class WeatherMap {
         this.currentMin = null;
         this.currentMax = null;
         this.useAutoScale = false;
+        this.useViewportAutoScale = false;  // Default: use all data
+        this._currentRasterData = null; 
         this._lastDataRange = null;
         this._lastVariable = null;
         this._pendingAutoScale = false;
