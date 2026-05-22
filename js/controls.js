@@ -433,31 +433,40 @@ window.openColorPicker = function() {
         return;
     }
     
-    console.log('Opening modal, current display:', modal.style.display);
+    console.log('Opening color picker modal');
     
-    // Force show the modal
+    // Show the modal
     modal.style.display = 'flex';
     modal.classList.add('active');
     
-    console.log('Modal display after:', modal.style.display);
-    console.log('Modal classes:', modal.className);
-    
-    // Sync inputs
+    // Sync inputs from sidebar to modal
     const vminInput = document.getElementById('vmin');
     const vmaxInput = document.getElementById('vmax');
     const modalVmin = document.getElementById('modal-vmin');
     const modalVmax = document.getElementById('modal-vmax');
     
-    if (vminInput && modalVmin) modalVmin.value = vminInput.value;
-    if (vmaxInput && modalVmax) modalVmax.value = vmaxInput.value;
+    if (vminInput && modalVmin) {
+        modalVmin.value = vminInput.value;
+        console.log('Set modal vmin to:', vminInput.value);
+    }
+    if (vmaxInput && modalVmax) {
+        modalVmax.value = vmaxInput.value;
+        console.log('Set modal vmax to:', vmaxInput.value);
+    }
     
-    // Update preview
+    // Update the preview legend inside the modal
     if (window.appInstance && window.appInstance.weatherMap && window.appInstance.variableSelect) {
         const variable = window.appInstance.variableSelect.value;
+        console.log('Current variable:', variable);
         if (variable) {
+            // Call updateLegend which populates both the floating legend and the modal preview
             window.appInstance.weatherMap.updateLegend(variable);
+            console.log('Modal preview updated');
         }
     }
+    
+    console.log('Modal display:', modal.style.display);
+    console.log('Modal has active class:', modal.classList.contains('active'));
 };
 
 window.closeColorPicker = function() {

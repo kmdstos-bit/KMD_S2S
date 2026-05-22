@@ -740,26 +740,65 @@ parseColor(colorStr) {
     if (floatingLegend) {
         let html = '';
         
-        // Title
         html += '<div style="font-size: 0.75em; text-align: center; margin-bottom: 4px; font-weight: 500;">';
-        html += `${CONFIG.variables[variable].label}`;
+        html += `${varConfig.label}`;
         html += '</div>';
         
-        // Color bar
-        html += '<div class="legend-gradient" style="display: flex; height: 15px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3);">';
+        html += '<div style="display: flex; height: 15px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3);">';
         colorScale.forEach(color => {
             html += `<div style="flex: 1; background: ${color};"></div>`;
         });
         html += '</div>';
         
-        // Labels
-        html += '<div class="legend-labels" style="display: flex; justify-content: space-between; font-size: 0.65em; margin-top: 3px; opacity: 0.8;">';
+        html += '<div style="display: flex; justify-content: space-between; font-size: 0.65em; margin-top: 3px; opacity: 0.8;">';
         html += `<span>${range.min}${varConfig.unit}</span>`;
         html += `<span>${range.max}${varConfig.unit}</span>`;
         html += '</div>';
         
         floatingLegend.innerHTML = html;
     }
+    
+    // ============================================
+    // 2. Update the MODAL preview
+    // ============================================
+    const modalPreview = document.getElementById('colorpicker-legend-preview');
+    if (modalPreview) {
+        console.log('Updating modal preview for', variable);
+        console.log('Range:', range.min, 'to', range.max);
+        
+        let modalHtml = '';
+        
+        // Range text
+        modalHtml += '<div style="font-size: 0.85em; text-align: center; margin-bottom: 8px;">';
+        modalHtml += `<strong>${varConfig.label}</strong><br>`;
+        modalHtml += `<span style="opacity: 0.8;">${range.min} to ${range.max} ${varConfig.unit}</span>`;
+        if (this.useAutoScale) {
+            modalHtml += ' <span style="color: #4CAF50; font-size: 0.8em;">(auto)</span>';
+        }
+        modalHtml += '</div>';
+        
+        // Color bar
+        modalHtml += '<div style="display: flex; height: 30px; border-radius: 6px; overflow: hidden; border: 2px solid rgba(255,255,255,0.4);">';
+        colorScale.forEach(color => {
+            modalHtml += `<div style="flex: 1; background: ${color};"></div>`;
+        });
+        modalHtml += '</div>';
+        
+        // Labels
+        modalHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-top: 6px;">';
+        for (let i = 0; i < 5; i++) {
+            const val = range.min + (range.max - range.min) * (i / 4);
+            const formatted = Math.abs(val) < 1 ? val.toFixed(1) : Math.round(val);
+            modalHtml += `<span>${formatted}${varConfig.unit}</span>`;
+        }
+        modalHtml += '</div>';
+        
+        modalPreview.innerHTML = modalHtml;
+        console.log('Modal preview HTML set');
+    } else {
+        console.warn('Modal preview element not found!');
+    }
+}
     
     // ============================================
     // 2. Update the modal preview (if open)
