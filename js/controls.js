@@ -1,22 +1,41 @@
 class UIController {
+    // constructor() {
+    //     this.weatherMap = new WeatherMap();
+    //     this.dataLoader = this.weatherMap.dataLoader;
+        
+    //     this.initDateSelect = document.getElementById('init-date');
+    //     this.variableSelect = document.getElementById('variable');
+    //     this.weekSelect = document.getElementById('week');
+    //     this.weekDates = document.getElementById('week-dates');
+    //     this.opacitySlider = document.getElementById('opacity');
+    //     this.opacityValue = document.getElementById('opacity-value');
+    //     this.currentMin = null;
+    //     this.currentMax = null;
+    //     this.useAutoScale = false;
+        
+    //     this.isUpdating = false;
+        
+    //     this.init();
+    // }
+
     constructor() {
-        this.weatherMap = new WeatherMap();
-        this.dataLoader = this.weatherMap.dataLoader;
-        
-        this.initDateSelect = document.getElementById('init-date');
-        this.variableSelect = document.getElementById('variable');
-        this.weekSelect = document.getElementById('week');
-        this.weekDates = document.getElementById('week-dates');
-        this.opacitySlider = document.getElementById('opacity');
-        this.opacityValue = document.getElementById('opacity-value');
-        this.currentMin = null;
-        this.currentMax = null;
-        this.useAutoScale = false;
-        
-        this.isUpdating = false;
-        
-        this.init();
-    }
+    this.weatherMap = new WeatherMap();
+    this.dataLoader = this.weatherMap.dataLoader;
+    
+    // Store reference globally for modal functions
+    window.appInstance = this;
+    
+    this.initDateSelect = document.getElementById('init-date');
+    this.variableSelect = document.getElementById('variable');
+    this.weekSelect = document.getElementById('week');
+    this.weekDates = document.getElementById('week-dates');
+    this.opacitySlider = document.getElementById('opacity');
+    this.opacityValue = document.getElementById('opacity-value');
+    
+    this.isUpdating = false;
+    
+    this.init();
+}
     
     async init() {
         this.setupEventListeners();
@@ -70,7 +89,7 @@ class UIController {
         });
     }
     
-    // Auto-scale button (all data)
+    // Auto-scale button (sidebar)
     const autoScaleBtn = document.getElementById('auto-scale');
     if (autoScaleBtn) {
         autoScaleBtn.addEventListener('click', async () => {
@@ -80,8 +99,8 @@ class UIController {
             await this.plotData();
         });
     }
-
-    // Viewport auto-scale button (visible area only)
+    
+    // Viewport auto-scale button (sidebar)
     const autoScaleViewportBtn = document.getElementById('auto-scale-viewport');
     if (autoScaleViewportBtn) {
         autoScaleViewportBtn.addEventListener('click', async () => {
@@ -90,9 +109,6 @@ class UIController {
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
         });
-        
-        // Update title based on state
-        autoScaleViewportBtn.title = 'Auto-scale to visible map area only';
     }
     
     // VMin/VMax inputs
@@ -119,10 +135,22 @@ class UIController {
             }
         });
     }
-
-    // Store reference for modal
-    appInstance = this;
-
+    
+    // ============================================
+    // FLOATING LEGEND CLICK
+    // ============================================
+    const floatingLegend = document.getElementById('floating-legend');
+    if (floatingLegend) {
+        floatingLegend.addEventListener('click', () => {
+            console.log('Floating legend clicked');
+            openColorPicker();
+        });
+    }
+    
+    // ============================================
+    // MODAL BUTTONS
+    // ============================================
+    
     // Modal Apply button
     const modalApply = document.getElementById('modal-apply');
     if (modalApply) {
@@ -131,19 +159,15 @@ class UIController {
             const max = parseFloat(document.getElementById('modal-vmax').value);
             
             if (!isNaN(min) && !isNaN(max)) {
-                // Update sidebar inputs
                 document.getElementById('vmin').value = min;
                 document.getElementById('vmax').value = max;
-                
-                // Set manual range and re-plot
                 this.weatherMap.setManualRange(min, max);
                 await this.plotData();
             }
-            
             closeColorPicker();
         });
     }
-
+    
     // Modal Auto All button
     const modalAutoAll = document.getElementById('modal-auto-all');
     if (modalAutoAll) {
@@ -151,15 +175,9 @@ class UIController {
             this.weatherMap.useViewportAutoScale = false;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
-            // Update modal inputs
-            const range = this.weatherMap._lastDataRange;
-            if (range) {
-                document.getElementById('modal-vmin').value = range.min;
-                document.getElementById('modal-vmax').value = range.max;
-            }
         });
     }
-
+    
     // Modal Auto Viewport button
     const modalAutoViewport = document.getElementById('modal-auto-viewport');
     if (modalAutoViewport) {
@@ -167,71 +185,30 @@ class UIController {
             this.weatherMap.useViewportAutoScale = true;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
-            const range = this.weatherMap._lastDataRange;
-            if (range) {
-                document.getElementById('modal-vmin').value = range.min;
-                document.getElementById('modal-vmax').value = range.max;
-            }
         });
     }
     
-    // ============================================
-    // SIDEBAR TOGGLE - Buttons and Keyboard
-    // ============================================
-    
+    // Sidebar toggle
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
-    const expandFloat = document.getElementById('sidebar-expand-float');
     
-    // Toggle function
     const toggleSidebar = () => {
         if (!sidebar) return;
-        
         const isCollapsed = sidebar.classList.toggle('collapsed');
-        
         if (sidebarToggle) {
             sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
-            sidebarToggle.title = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
         }
-        
-        if (expandFloat) {
-            expandFloat.style.display = isCollapsed ? 'block' : 'none';
-        }
-        
         localStorage.setItem('sidebar-collapsed', isCollapsed);
-        
         setTimeout(() => {
             this.weatherMap.leafletMap.invalidateSize();
         }, 350);
     };
     
-    // Restore saved state
-    const savedState = localStorage.getItem('sidebar-collapsed');
-    if (savedState === 'true' && sidebar) {
-        sidebar.classList.add('collapsed');
-        if (sidebarToggle) {
-            sidebarToggle.innerHTML = '▶';
-            sidebarToggle.title = 'Expand sidebar';
-        }
-        if (expandFloat) {
-            expandFloat.style.display = 'block';
-        }
-        setTimeout(() => {
-            this.weatherMap.leafletMap.invalidateSize();
-        }, 500);
-    }
-    
-    // Button click
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', toggleSidebar);
     }
     
-    // Floating expand button
-    if (expandFloat) {
-        expandFloat.addEventListener('click', toggleSidebar);
-    }
-    
-    // Keyboard shortcut: ` (backtick) toggles sidebar
+    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'q' && 
             document.activeElement.tagName !== 'INPUT' &&
@@ -239,25 +216,6 @@ class UIController {
             document.activeElement.tagName !== 'SELECT') {
             e.preventDefault();
             toggleSidebar();
-        }
-    });
-    
-    // ESC key expands sidebar if collapsed
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('collapsed')) {
-            e.preventDefault();
-            sidebar.classList.remove('collapsed');
-            if (sidebarToggle) {
-                sidebarToggle.innerHTML = '◀';
-                sidebarToggle.title = 'Collapse sidebar';
-            }
-            if (expandFloat) {
-                expandFloat.style.display = 'none';
-            }
-            localStorage.setItem('sidebar-collapsed', 'false');
-            setTimeout(() => {
-                this.weatherMap.leafletMap.invalidateSize();
-            }, 350);
         }
     });
 }
@@ -464,32 +422,43 @@ class UIController {
 }
 
 // ============================================
-// COLOR PICKER MODAL FUNCTIONS
+// COLOR PICKER MODAL FUNCTIONS (GLOBAL)
 // ============================================
 
-let appInstance = null;  // Will hold reference to UIController
-
-function openColorPicker() {
-    document.getElementById('colorpicker-modal').classList.add('active');
+// Make these globally accessible
+window.openColorPicker = function() {
+    const modal = document.getElementById('colorpicker-modal');
+    if (!modal) return;
+    
+    modal.classList.add('active');
     
     // Sync modal inputs with sidebar inputs
-    const vmin = document.getElementById('vmin').value;
-    const vmax = document.getElementById('vmax').value;
-    document.getElementById('modal-vmin').value = vmin;
-    document.getElementById('modal-vmax').value = vmax;
+    const vminInput = document.getElementById('vmin');
+    const vmaxInput = document.getElementById('vmax');
+    const modalVmin = document.getElementById('modal-vmin');
+    const modalVmax = document.getElementById('modal-vmax');
     
-    // Update the preview
-    if (appInstance && appInstance.weatherMap) {
+    if (vminInput && modalVmin) modalVmin.value = vminInput.value;
+    if (vmaxInput && modalVmax) modalVmax.value = vmaxInput.value;
+    
+    // Update the preview legend in the modal
+    if (appInstance && appInstance.weatherMap && appInstance.variableSelect) {
         const variable = appInstance.variableSelect.value;
         if (variable) {
             appInstance.weatherMap.updateLegend(variable);
         }
     }
-}
+    
+    console.log('Color picker opened');
+};
 
-function closeColorPicker() {
-    document.getElementById('colorpicker-modal').classList.remove('active');
-}
+window.closeColorPicker = function() {
+    const modal = document.getElementById('colorpicker-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+    console.log('Color picker closed');
+};
 
 // ESC key closes modal
 document.addEventListener('keydown', (e) => {
@@ -501,7 +470,17 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Initialize when page loads
+// Click overlay to close
+const overlay = document.getElementById('colorpicker-overlay');
+if (overlay) {
+    overlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeColorPicker();
+    });
+}
+
+// Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
     const app = new UIController();
+    window.appInstance = app;  // Ensure global reference
 });

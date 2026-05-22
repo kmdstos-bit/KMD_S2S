@@ -158,9 +158,10 @@
             border-radius: 10px; cursor: pointer; backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             min-width: 200px; transition: all 0.3s;"
-            onclick="document.getElementById('colorpicker-modal').classList.add('active')"
+            onclick="openColorPicker()"
             onmouseover="this.style.background='rgba(30,30,30,0.95)'"
-            onmouseout="this.style.background='rgba(30,30,30,0.85)'">
+            onmouseout="this.style.background='rgba(30,30,30,0.85)'"
+            title="Click to adjust color scale">
         <div style="font-size: 0.7em; opacity: 0.7; text-align: center; margin-bottom: 3px;">Click to adjust</div>
         <div id="floating-legend-content"></div>
     </div>
