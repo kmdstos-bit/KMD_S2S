@@ -740,19 +740,50 @@ updateLegend(variable) {
     if (floatingLegend) {
         let html = '';
         
-        html += '<div style="font-size: 0.75em; text-align: center; margin-bottom: 4px; font-weight: 500;">';
+        // Title
+        html += '<div style="font-size: 0.75em; text-align: center; margin-bottom: 4px; font-weight: 500; color: #ccc;">';
         html += `${varConfig.label}`;
         html += '</div>';
         
-        html += '<div style="display: flex; height: 15px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3);">';
+        // Color bar
+        html += '<div style="display: flex; height: 15px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">';
         colorScale.forEach(color => {
             html += `<div style="flex: 1; background: ${color};"></div>`;
         });
         html += '</div>';
         
-        html += '<div style="display: flex; justify-content: space-between; font-size: 0.65em; margin-top: 3px; opacity: 0.8;">';
-        html += `<span>${range.min}${varConfig.unit}</span>`;
-        html += `<span>${range.max}${varConfig.unit}</span>`;
+        // Labels with multiple ticks - matching the modal style
+        const numTicks = 5;  // 5 labels: min, 25%, 50%, 75%, max
+        html += '<div style="display: flex; justify-content: space-between; font-size: 0.6em; margin-top: 3px; opacity: 0.7; color: #aaa;">';
+        for (let i = 0; i < numTicks; i++) {
+            const value = range.min + (range.max - range.min) * (i / (numTicks - 1));
+            let formattedValue;
+            
+            // Smart formatting
+            if (Math.abs(value) < 0.1 && value !== 0) {
+                formattedValue = value.toFixed(2);
+            } else if (Math.abs(value) < 1) {
+                formattedValue = value.toFixed(1);
+            } else if (Math.abs(value) < 100) {
+                formattedValue = value.toFixed(1);
+            } else {
+                formattedValue = Math.round(value).toString();
+            }
+            
+            // Add unit to first and last
+            if (i === 0 || i === numTicks - 1) {
+                formattedValue += varConfig.unit;
+            }
+            
+            html += `<span>${formattedValue}</span>`;
+        }
+        html += '</div>';
+        
+        // Tiny tick marks row (visual only)
+        html += '<div style="display: flex; justify-content: space-between; padding: 0 1px; margin-top: -2px;">';
+        for (let i = 0; i < numTicks; i++) {
+            html += '<div style="width: 1px; height: 3px; background: rgba(255,255,255,0.3);"></div>';
+        }
         html += '</div>';
         
         floatingLegend.innerHTML = html;
@@ -764,7 +795,6 @@ updateLegend(variable) {
     const modalPreview = document.getElementById('colorpicker-legend-preview');
     if (modalPreview) {
         console.log('Updating modal preview for', variable);
-        console.log('Range:', range.min, 'to', range.max);
         
         let modalHtml = '';
         
@@ -773,30 +803,58 @@ updateLegend(variable) {
         modalHtml += `<strong>${varConfig.label}</strong><br>`;
         modalHtml += `<span style="opacity: 0.8;">${range.min} to ${range.max} ${varConfig.unit}</span>`;
         if (this.useAutoScale) {
-            modalHtml += ' <span style="color: #4CAF50; font-size: 0.8em;">(auto)</span>';
+            modalHtml += ' <span style="color: #5b9bd5; font-size: 0.8em;">(auto)</span>';
         }
         modalHtml += '</div>';
         
         // Color bar
-        modalHtml += '<div style="display: flex; height: 30px; border-radius: 6px; overflow: hidden; border: 2px solid rgba(255,255,255,0.4);">';
+        modalHtml += '<div style="display: flex; height: 30px; border-radius: 6px; overflow: hidden; border: 2px solid rgba(255,255,255,0.2);">';
         colorScale.forEach(color => {
             modalHtml += `<div style="flex: 1; background: ${color};"></div>`;
         });
         modalHtml += '</div>';
         
-        // Labels
-        modalHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-top: 6px;">';
-        for (let i = 0; i < 5; i++) {
-            const val = range.min + (range.max - range.min) * (i / 4);
-            const formatted = Math.abs(val) < 1 ? val.toFixed(1) : Math.round(val);
-            modalHtml += `<span>${formatted}${varConfig.unit}</span>`;
+        // Labels - 5 values
+        const numModalTicks = 5;
+        modalHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-top: 6px; opacity: 0.9;">';
+        for (let i = 0; i < numModalTicks; i++) {
+            const value = range.min + (range.max - range.min) * (i / (numModalTicks - 1));
+            let formattedValue;
+            
+            if (Math.abs(value) < 0.1 && value !== 0) {
+                formattedValue = value.toFixed(2);
+            } else if (Math.abs(value) < 1) {
+                formattedValue = value.toFixed(1);
+            } else if (Math.abs(value) < 100) {
+                formattedValue = value.toFixed(1);
+            } else {
+                formattedValue = Math.round(value).toString();
+            }
+            
+            if (i === 0 || i === numModalTicks - 1) {
+                formattedValue += ` ${varConfig.unit}`;
+            }
+            
+            modalHtml += `<span>${formattedValue}</span>`;
+        }
+        modalHtml += '</div>';
+        
+        // Additional intermediate labels (smaller, lighter)
+        const numExtraTicks = 9;
+        modalHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.65em; margin-top: 2px; opacity: 0.5;">';
+        for (let i = 0; i < numExtraTicks; i++) {
+            const value = range.min + (range.max - range.min) * (i / (numExtraTicks - 1));
+            const formattedValue = Math.abs(value) < 10 ? value.toFixed(1) : Math.round(value).toString();
+            
+            if (i % 2 === 0) {
+                modalHtml += `<span>${formattedValue}</span>`;
+            } else {
+                modalHtml += '<span></span>';
+            }
         }
         modalHtml += '</div>';
         
         modalPreview.innerHTML = modalHtml;
-        console.log('Modal preview HTML set');
-    } else {
-        console.warn('Modal preview element not found!');
     }
 }
 

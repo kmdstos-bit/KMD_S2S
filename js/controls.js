@@ -78,14 +78,33 @@ class UIController {
             }
         });
         
-        // Week change
-        this.weekSelect.addEventListener('change', async (e) => {
-            if (this.isUpdating) return;
-            const week = e.target.value;
-            if (week) {
+        // Week SLIDER change
+        const weekSlider = document.getElementById('week-slider');
+        if (weekSlider) {
+            weekSlider.addEventListener('input', (e) => {
+                const week = parseInt(e.target.value);
+                // Update label in real-time as slider moves
+                const currentWeekLabel = document.getElementById('current-week-label');
+                if (currentWeekLabel) {
+                    currentWeekLabel.textContent = `Week ${week}`;
+                }
+                // Update the hidden select for backward compatibility
+                const weekSelect = document.getElementById('week');
+                if (weekSelect) weekSelect.value = week;
+                // Update date display
+                this.updateWeekDates(week);
+            });
+            
+            // Only re-plot when slider stops (change event)
+            weekSlider.addEventListener('change', async (e) => {
+                if (this.isUpdating) return;
+                const week = parseInt(e.target.value);
+                // Update hidden select
+                const weekSelect = document.getElementById('week');
+                if (weekSelect) weekSelect.value = week;
                 await this.onWeekChange(week);
-            }
-        });
+            });
+        }
         
         // Opacity change
         this.opacitySlider.addEventListener('input', (e) => {
@@ -93,6 +112,7 @@ class UIController {
             this.opacityValue.textContent = `${opacity}%`;
             this.weatherMap.setLayerOpacity(opacity);
         });
+        
         
         // Reset view button
         const resetBtn = document.getElementById('reset-view');
@@ -345,6 +365,7 @@ class UIController {
         
         const weeks = this.dataLoader.getAvailableWeeks(initDate, variable);
         
+        // Update hidden select
         this.weekSelect.innerHTML = '<option value="">Select week</option>';
         
         if (weeks.length === 0) {
@@ -359,42 +380,34 @@ class UIController {
             this.weekSelect.appendChild(option);
         });
         
-        if (weeks.includes(1)) {
-            this.weekSelect.value = 1;
-        } else {
-            this.weekSelect.value = weeks[0];
+        // Update slider range
+        const weekSlider = document.getElementById('week-slider');
+        if (weekSlider) {
+            weekSlider.min = Math.min(...weeks);
+            weekSlider.max = Math.max(...weeks);
+            weekSlider.step = 1;
+            
+            // Update labels
+            const weekMinLabel = document.getElementById('week-min-label');
+            const weekMaxLabel = document.getElementById('week-max-label');
+            if (weekMinLabel) weekMinLabel.textContent = `W${Math.min(...weeks)}`;
+            if (weekMaxLabel) weekMaxLabel.textContent = `W${Math.max(...weeks)}`;
         }
         
-        this.updateWeekDates(this.weekSelect.value);
-    }
-    
-    updateWeekDates(week) {
-        const initDate = this.initDateSelect.value;
-        if (!initDate || !week) return;
+        // Auto-select Week 1
+        const defaultWeek = weeks.includes(1) ? 1 : weeks[0];
+        this.weekSelect.value = defaultWeek;
         
-        let date;
-        if (initDate.includes('-')) {
-            date = new Date(initDate);
-        } else if (initDate.length === 8) {
-            const year = initDate.substring(0, 4);
-            const month = initDate.substring(4, 6);
-            const day = initDate.substring(6, 8);
-            date = new Date(year, month - 1, day);
+        // Set slider to default week
+        if (weekSlider) {
+            weekSlider.value = defaultWeek;
+            const currentWeekLabel = document.getElementById('current-week-label');
+            if (currentWeekLabel) {
+                currentWeekLabel.textContent = `Week ${defaultWeek}`;
+            }
         }
         
-        if (date && !isNaN(date.getTime())) {
-            const startDate = new Date(date);
-            startDate.setDate(startDate.getDate() + (week - 1) * 7);
-            
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 6);
-            
-            const options = { month: 'short', day: 'numeric' };
-            const endOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-            
-            this.weekDates.textContent = 
-                `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', endOptions)}`;
-        }
+        this.updateWeekDates(defaultWeek);
     }
     
     async autoSelectAndPlot() {
