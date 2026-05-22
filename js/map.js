@@ -443,87 +443,86 @@ autoScaleToData(values, variable, rasterData) {
     // GRID CELL LAYER
     // ============================================
     
-   createGridCellLayer(rasterData, variable) {
-    console.log('Creating grid cell layer with ImageOverlay...');
-    
-    const nCols = rasterData.nCols;
-    const nRows = rasterData.nRows;
-    const values = rasterData.values;
-    const latStep = rasterData.latStep || 1.5;
-    const lonStep = rasterData.lonStep || 1.5;
-    const latMax = rasterData.latMax;
-    const lonMin = rasterData.lonMin;
-    const colorScale = this.getColorScale(variable);
-    const range = this.getCurrentRange(variable);
-    
-    // Make each cell multiple pixels for clarity
-    const cellPixelSize = 6;
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = nCols * cellPixelSize;
-    canvas.height = nRows * cellPixelSize;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-    
-    // Clear the entire canvas first
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw each cell - NO borders, NO strokes, just filled rectangles
-    for (let row = 0; row < nRows; row++) {
-        for (let col = 0; col < nCols; col++) {
-            const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
-            
-            const x = col * cellPixelSize;
-            const y = row * cellPixelSize;
-            
-            if (value === null || value === undefined || isNaN(value)) {
-                // Skip no-data cells entirely (leave transparent)
-                continue;
+    createGridCellLayer(rasterData, variable) {
+        console.log('Creating grid cell layer (GridLayer method)...');
+
+        const colorScale = this.getColorScale(variable);
+        const range = this.getCurrentRange(variable);
+        const values = rasterData.values;
+        const latStep = rasterData.latStep;   // 1.5
+        const lonStep = rasterData.lonStep;   // 1.5
+        const latMax = rasterData.latMax;     // northernmost cell center
+        const lonMin = rasterData.lonMin;     // westernmost cell center
+        const nRows = rasterData.nRows;
+        const nCols = rasterData.nCols;
+        const opacity = 0.9;
+
+        // Capture 'this' context for use inside the GridLayer
+        const weatherMap = this;
+
+        const gridLayer = L.GridLayer.extend({
+            createTile(coords) {
+                const tile = document.createElement('canvas');
+                const tileSize = this.getTileSize();
+                tile.width = tileSize.x;
+                tile.height = tileSize.y;
+                const ctx = tile.getContext('2d');
+
+                // Pixel bounds of this tile in the current zoom level
+                const map = this._map;
+                const tileBounds = this._tileCoordsToBounds(coords);
+
+                // For each grid cell, check if it overlaps this tile and draw it
+                for (let row = 0; row < nRows; row++) {
+                    const cellLatN = latMax - row * latStep + latStep / 2;  // north edge
+                    const cellLatS = latMax - row * latStep - latStep / 2;  // south edge
+
+                    // Quick lat cull
+                    if (cellLatS > tileBounds.getNorth()) continue;
+                    if (cellLatN < tileBounds.getSouth()) continue;
+
+                    for (let col = 0; col < nCols; col++) {
+                        const val = (values[row] && values[row][col] !== undefined)
+                            ? values[row][col] : null;
+                        if (val === null || val === undefined || isNaN(val)) continue;
+
+                        const cellLonW = lonMin + col * lonStep - lonStep / 2;
+                        const cellLonE = lonMin + col * lonStep + lonStep / 2;
+
+                        // Quick lon cull
+                        if (cellLonE < tileBounds.getWest()) continue;
+                        if (cellLonW > tileBounds.getEast()) continue;
+
+                        // Project cell corners to pixel space (within this tile)
+                        const tileOrigin = map.project(
+                            [tileBounds.getNorth(), tileBounds.getWest()], coords.z
+                        );
+                        const nwPx = map.project([cellLatN, cellLonW], coords.z);
+                        const sePx = map.project([cellLatS, cellLonE], coords.z);
+
+                        const x = Math.floor(nwPx.x - tileOrigin.x);
+                        const y = Math.floor(nwPx.y - tileOrigin.y);
+                        const w = Math.ceil(sePx.x - nwPx.x);
+                        const h = Math.ceil(sePx.y - nwPx.y);
+
+                        if (w <= 0 || h <= 0) continue;
+
+                        const [r, g, b, a] = weatherMap.valueToColor(
+                            val, range.min, range.max, colorScale
+                        );
+                        ctx.globalAlpha = (a !== undefined ? a : 1) * opacity;
+                        ctx.fillStyle = `rgb(${r},${g},${b})`;
+                        ctx.fillRect(x, y, w, h);
+                    }
+                }
+
+                ctx.globalAlpha = 1.0;
+                return tile;
             }
-            
-            const [r, g, b, a] = this.valueToColor(value, range.min, range.max, colorScale);
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a !== undefined ? a : 1})`;
-            
-            // Fill the cell - slightly larger to prevent any gaps
-            ctx.fillRect(x, y, cellPixelSize + 0.5, cellPixelSize + 0.5);
-        }
+        });
+
+        return new gridLayer({ tileSize: 256, opacity: 1.0 });
     }
-    
-    const imageUrl = canvas.toDataURL('image/png');
-    
-    // Calculate proper bounds
-    const halfLat = latStep / 2;
-    const halfLon = lonStep / 2;
-    
-    const southEdge = rasterData.latMin - halfLat;
-    const northEdge = latMax + halfLat;
-    const westEdge = lonMin - halfLon;
-    const eastEdge = lonMin + (nCols - 1) * lonStep + halfLon;
-    
-    console.log('Image overlay bounds:', { southEdge, northEdge, westEdge, eastEdge });
-    
-    const bounds = [[southEdge, westEdge], [northEdge, eastEdge]];
-    
-    const overlay = L.imageOverlay(imageUrl, bounds, {
-        opacity: 0.9,
-        interactive: false,
-        zIndex: 1,
-        className: 'weather-grid-overlay'
-    });
-    
-    // Force pixelated rendering
-    overlay.on('add', () => {
-        const img = overlay.getElement();
-        if (img) {
-            img.style.imageRendering = 'pixelated';
-            img.style.setProperty('image-rendering', 'pixelated', 'important');
-            img.style.setProperty('-ms-interpolation-mode', 'nearest-neighbor', 'important');
-        }
-    });
-    
-    return overlay;
-}
     
     // ============================================
     // COLOR UTILITIES
