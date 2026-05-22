@@ -116,7 +116,7 @@ const CONFIG = {
             defaultMax: 0.1,
             absoluteMin: -1,
             absoluteMax: 1,
-            step: 0.01
+            step: 0.001
         },
             u700: {
             label: "Weekly Mean 700hPa U-Wind",

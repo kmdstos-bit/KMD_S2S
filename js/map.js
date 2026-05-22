@@ -502,8 +502,8 @@ autoScaleToData(values, variable, rasterData) {
 
                     const x = Math.floor(nwPx.x - tileOrigin.x);
                     const y = Math.floor(nwPx.y - tileOrigin.y);
-                    const w = Math.ceil(sePx.x - nwPx.x) + 1;
-                    const h = Math.ceil(sePx.y - nwPx.y) + 1;
+                    const w = Math.ceil(sePx.x - tileOrigin.x) - Math.floor(nwPx.x - tileOrigin.x) + 2;
+                    const h = Math.ceil(sePx.y - tileOrigin.y) - Math.floor(nwPx.y - tileOrigin.y) + 2
 
                     if (w <= 0 || h <= 0) continue;
 
