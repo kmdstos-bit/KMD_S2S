@@ -428,11 +428,21 @@ class UIController {
 // Make these globally accessible
 window.openColorPicker = function() {
     const modal = document.getElementById('colorpicker-modal');
-    if (!modal) return;
+    if (!modal) {
+        console.error('Modal not found!');
+        return;
+    }
     
+    console.log('Opening modal, current display:', modal.style.display);
+    
+    // Force show the modal
+    modal.style.display = 'flex';
     modal.classList.add('active');
     
-    // Sync modal inputs with sidebar inputs
+    console.log('Modal display after:', modal.style.display);
+    console.log('Modal classes:', modal.className);
+    
+    // Sync inputs
     const vminInput = document.getElementById('vmin');
     const vmaxInput = document.getElementById('vmax');
     const modalVmin = document.getElementById('modal-vmin');
@@ -441,23 +451,21 @@ window.openColorPicker = function() {
     if (vminInput && modalVmin) modalVmin.value = vminInput.value;
     if (vmaxInput && modalVmax) modalVmax.value = vmaxInput.value;
     
-    // Update the preview legend in the modal
-    if (appInstance && appInstance.weatherMap && appInstance.variableSelect) {
-        const variable = appInstance.variableSelect.value;
+    // Update preview
+    if (window.appInstance && window.appInstance.weatherMap && window.appInstance.variableSelect) {
+        const variable = window.appInstance.variableSelect.value;
         if (variable) {
-            appInstance.weatherMap.updateLegend(variable);
+            window.appInstance.weatherMap.updateLegend(variable);
         }
     }
-    
-    console.log('Color picker opened');
 };
 
 window.closeColorPicker = function() {
     const modal = document.getElementById('colorpicker-modal');
     if (modal) {
+        modal.style.display = 'none';
         modal.classList.remove('active');
     }
-    console.log('Color picker closed');
 };
 
 // ESC key closes modal

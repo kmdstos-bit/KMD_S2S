@@ -17,7 +17,7 @@ body {
 
 #sidebar {
     width: 350px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4a4a4a 0%, #353535 100%);
     color: white;
     padding: 20px;
     overflow-y: auto;
@@ -255,11 +255,11 @@ img[src*="data:image"] {
 
 /* Color Picker Modal */
 #colorpicker-modal {
-    display: none;
+    display: none !important;  /* Hidden by default */
 }
 
 #colorpicker-modal.active {
-    display: flex;
+    display: flex !important;  /* Show when active */
 }
 
 #colorpicker-panel {
