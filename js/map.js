@@ -443,8 +443,8 @@ autoScaleToData(values, variable, rasterData) {
     // GRID CELL LAYER
     // ============================================
     
-    createGridCellLayer(rasterData, variable) {
-    console.log('Creating grid cell layer with Leaflet GridLayer...');
+   createGridCellLayer(rasterData, variable) {
+    console.log('Creating grid cell layer with ImageOverlay...');
     
     const nCols = rasterData.nCols;
     const nRows = rasterData.nRows;
@@ -455,94 +455,75 @@ autoScaleToData(values, variable, rasterData) {
     const lonMin = rasterData.lonMin;
     const colorScale = this.getColorScale(variable);
     const range = this.getCurrentRange(variable);
-    const opacity = 0.9;
-    const weatherMap = this;
     
-    const gridLayer = L.GridLayer.extend({
-        createTile(coords) {
-            const tile = document.createElement('canvas');
-            const tileSize = this.getTileSize();
-            // Make tile slightly larger to prevent edge artifacts
-            const padding = 2;
-            tile.width = tileSize.x + padding * 2;
-            tile.height = tileSize.y + padding * 2;
+    // Make each cell multiple pixels for clarity
+    const cellPixelSize = 6;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = nCols * cellPixelSize;
+    canvas.height = nRows * cellPixelSize;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    
+    // Clear the entire canvas first
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw each cell - NO borders, NO strokes, just filled rectangles
+    for (let row = 0; row < nRows; row++) {
+        for (let col = 0; col < nCols; col++) {
+            const value = (values[row] && values[row][col] !== undefined) ? values[row][col] : null;
             
-            const ctx = tile.getContext('2d');
-            ctx.imageSmoothingEnabled = false;
+            const x = col * cellPixelSize;
+            const y = row * cellPixelSize;
             
-            const map = this._map;
-            const tileBounds = this._tileCoordsToBounds(coords);
-            
-            // Expand tile bounds slightly
-            const latRange = tileBounds.getNorth() - tileBounds.getSouth();
-            const lonRange = tileBounds.getEast() - tileBounds.getWest();
-            const expandedBounds = L.latLngBounds(
-                [tileBounds.getSouth() - latRange * 0.01, tileBounds.getWest() - lonRange * 0.01],
-                [tileBounds.getNorth() + latRange * 0.01, tileBounds.getEast() + lonRange * 0.01]
-            );
-            
-            const tileOrigin = map.project(
-                [expandedBounds.getNorth(), expandedBounds.getWest()], coords.z
-            );
-            
-            // Translate context to account for padding
-            ctx.translate(padding, padding);
-            
-            // Calculate pixel overlap - make cells slightly larger to cover gaps
-            const pixelOverlap = 1.5;
-            
-            for (let row = 0; row < nRows; row++) {
-                const cellLatN = latMax - row * latStep + latStep / 2;
-                const cellLatS = latMax - row * latStep - latStep / 2;
-                
-                if (cellLatS > expandedBounds.getNorth()) continue;
-                if (cellLatN < expandedBounds.getSouth()) continue;
-                
-                for (let col = 0; col < nCols; col++) {
-                    const val = (values[row] && values[row][col] !== undefined)
-                        ? values[row][col] : null;
-                    if (val === null || val === undefined || isNaN(val)) continue;
-                    
-                    const cellLonW = lonMin + col * lonStep - lonStep / 2;
-                    const cellLonE = lonMin + col * lonStep + lonStep / 2;
-                    
-                    if (cellLonE < expandedBounds.getWest()) continue;
-                    if (cellLonW > expandedBounds.getEast()) continue;
-                    
-                    // Project cell corners
-                    const nwPx = map.project([cellLatN, cellLonW], coords.z);
-                    const sePx = map.project([cellLatS, cellLonE], coords.z);
-                    
-                    // Calculate pixel coordinates with generous overlap
-                    const x = Math.floor(Math.min(nwPx.x, sePx.x) - tileOrigin.x) - pixelOverlap;
-                    const y = Math.floor(Math.min(nwPx.y, sePx.y) - tileOrigin.y) - pixelOverlap;
-                    const w = Math.ceil(Math.max(nwPx.x, sePx.x) - tileOrigin.x) - 
-                              Math.floor(Math.min(nwPx.x, sePx.x) - tileOrigin.x) + pixelOverlap * 2;
-                    const h = Math.ceil(Math.max(nwPx.y, sePx.y) - tileOrigin.y) - 
-                              Math.floor(Math.min(nwPx.y, sePx.y) - tileOrigin.y) + pixelOverlap * 2;
-                    
-                    if (w <= 0 || h <= 0) continue;
-                    
-                    // Get color
-                    const [r, g, b, a] = weatherMap.valueToColor(
-                        val, range.min, range.max, colorScale
-                    );
-                    
-                    // Draw filled cell - NO STROKE
-                    ctx.globalAlpha = (a !== undefined ? a : 1) * opacity;
-                    ctx.fillStyle = `rgb(${r},${g},${b})`;
-                    ctx.fillRect(x, y, Math.ceil(w), Math.ceil(h));
-                }
+            if (value === null || value === undefined || isNaN(value)) {
+                // Skip no-data cells entirely (leave transparent)
+                continue;
             }
             
-            ctx.globalAlpha = 1.0;
-            return tile;
+            const [r, g, b, a] = this.valueToColor(value, range.min, range.max, colorScale);
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a !== undefined ? a : 1})`;
+            
+            // Fill the cell - slightly larger to prevent any gaps
+            ctx.fillRect(x, y, cellPixelSize + 0.5, cellPixelSize + 0.5);
+        }
+    }
+    
+    const imageUrl = canvas.toDataURL('image/png');
+    
+    // Calculate proper bounds
+    const halfLat = latStep / 2;
+    const halfLon = lonStep / 2;
+    
+    const southEdge = rasterData.latMin - halfLat;
+    const northEdge = latMax + halfLat;
+    const westEdge = lonMin - halfLon;
+    const eastEdge = lonMin + (nCols - 1) * lonStep + halfLon;
+    
+    console.log('Image overlay bounds:', { southEdge, northEdge, westEdge, eastEdge });
+    
+    const bounds = [[southEdge, westEdge], [northEdge, eastEdge]];
+    
+    const overlay = L.imageOverlay(imageUrl, bounds, {
+        opacity: 0.9,
+        interactive: false,
+        zIndex: 1,
+        className: 'weather-grid-overlay'
+    });
+    
+    // Force pixelated rendering
+    overlay.on('add', () => {
+        const img = overlay.getElement();
+        if (img) {
+            img.style.imageRendering = 'pixelated';
+            img.style.setProperty('image-rendering', 'pixelated', 'important');
+            img.style.setProperty('-ms-interpolation-mode', 'nearest-neighbor', 'important');
         }
     });
     
-    return new gridLayer({ tileSize: 256, opacity: 1.0 });
+    return overlay;
 }
-
     
     // ============================================
     // COLOR UTILITIES

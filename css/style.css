@@ -518,9 +518,3 @@ img[src*="data:image"] {
     display: inline-block;
     transition: all 0.2s;
 }
-
-.leaflet-tile {
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-}
