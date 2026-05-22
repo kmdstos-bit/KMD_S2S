@@ -476,7 +476,7 @@ autoScaleToData(values, variable, rasterData) {
                 );
                 
                 // Small overlap in pixels to prevent gaps between cells
-                const pixelOverlap = 1;
+                const pixelOverlap = 0;
                 
                 for (let row = 0; row < nRows; row++) {
                     // Cell edges in lat/lon
