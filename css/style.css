@@ -262,6 +262,7 @@ img[src*="data:image"] {
     display: flex !important;  /* Show when active */
 }
 
+/* Animation */
 #colorpicker-panel {
     animation: slideUp 0.3s ease;
 }
@@ -269,11 +270,11 @@ img[src*="data:image"] {
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(30px) scale(0.95);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
