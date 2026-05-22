@@ -1,41 +1,22 @@
 class UIController {
-    // constructor() {
-    //     this.weatherMap = new WeatherMap();
-    //     this.dataLoader = this.weatherMap.dataLoader;
-        
-    //     this.initDateSelect = document.getElementById('init-date');
-    //     this.variableSelect = document.getElementById('variable');
-    //     this.weekSelect = document.getElementById('week');
-    //     this.weekDates = document.getElementById('week-dates');
-    //     this.opacitySlider = document.getElementById('opacity');
-    //     this.opacityValue = document.getElementById('opacity-value');
-    //     this.currentMin = null;
-    //     this.currentMax = null;
-    //     this.useAutoScale = false;
-        
-    //     this.isUpdating = false;
-        
-    //     this.init();
-    // }
-
     constructor() {
-    this.weatherMap = new WeatherMap();
-    this.dataLoader = this.weatherMap.dataLoader;
-    
-    // Store reference globally for modal functions
-    window.appInstance = this;
-    
-    this.initDateSelect = document.getElementById('init-date');
-    this.variableSelect = document.getElementById('variable');
-    this.weekSelect = document.getElementById('week');
-    this.weekDates = document.getElementById('week-dates');
-    this.opacitySlider = document.getElementById('opacity');
-    this.opacityValue = document.getElementById('opacity-value');
-    
-    this.isUpdating = false;
-    
-    this.init();
-}
+        this.weatherMap = new WeatherMap();
+        this.dataLoader = this.weatherMap.dataLoader;
+        
+        // Store reference globally for modal functions
+        window.appInstance = this;
+        
+        this.initDateSelect = document.getElementById('init-date');
+        this.variableSelect = document.getElementById('variable');
+        this.weekSelect = document.getElementById('week');
+        this.weekDates = document.getElementById('week-dates');
+        this.opacitySlider = document.getElementById('opacity');
+        this.opacityValue = document.getElementById('opacity-value');
+        
+        this.isUpdating = false;
+        
+        this.init();
+    }
     
     async init() {
         this.setupEventListeners();
@@ -44,181 +25,230 @@ class UIController {
         this.updateTimestamp();
     }
     
+    // ============================================
+    // SYNC HELPER
+    // ============================================
+    
+    syncModalInputs() {
+        const variable = this.variableSelect.value;
+        if (!variable) return;
+        
+        const range = this.weatherMap.getCurrentRange(variable);
+        
+        // Update modal inputs
+        const modalVmin = document.getElementById('modal-vmin');
+        const modalVmax = document.getElementById('modal-vmax');
+        if (modalVmin) modalVmin.value = range.min;
+        if (modalVmax) modalVmax.value = range.max;
+        
+        // Update sidebar inputs
+        const vminInput = document.getElementById('vmin');
+        const vmaxInput = document.getElementById('vmax');
+        if (vminInput) vminInput.value = range.min;
+        if (vmaxInput) vmaxInput.value = range.max;
+        
+        // Update both legends
+        this.weatherMap.updateLegend(variable);
+        
+        console.log('Synced inputs to:', range.min, '-', range.max);
+    }
+    
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    
     setupEventListeners() {
-    // Variable change
-    this.variableSelect.addEventListener('change', async (e) => {
-        if (this.isUpdating) return;
-        const variable = e.target.value;
-        if (variable) {
-            console.log(`Variable selected: ${variable}`);
-            this.weatherMap.updateVariableDefaults(variable);
-            await this.onVariableChange(variable);
-        }
-    });
-    
-    // Init date change
-    this.initDateSelect.addEventListener('change', async (e) => {
-        if (this.isUpdating) return;
-        const date = e.target.value;
-        if (date) {
-            await this.onInitDateChange(date);
-        }
-    });
-    
-    // Week change
-    this.weekSelect.addEventListener('change', async (e) => {
-        if (this.isUpdating) return;
-        const week = e.target.value;
-        if (week) {
-            await this.onWeekChange(week);
-        }
-    });
-    
-    // Opacity change
-    this.opacitySlider.addEventListener('input', (e) => {
-        const opacity = e.target.value;
-        this.opacityValue.textContent = `${opacity}%`;
-        this.weatherMap.setLayerOpacity(opacity);
-    });
-    
-    // Reset view button
-    const resetBtn = document.getElementById('reset-view');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            this.weatherMap.resetView();
+        // Variable change
+        this.variableSelect.addEventListener('change', async (e) => {
+            if (this.isUpdating) return;
+            const variable = e.target.value;
+            if (variable) {
+                console.log(`Variable selected: ${variable}`);
+                this.weatherMap.updateVariableDefaults(variable);
+                await this.onVariableChange(variable);
+            }
         });
-    }
-    
-    // Auto-scale button (sidebar)
-    const autoScaleBtn = document.getElementById('auto-scale');
-    if (autoScaleBtn) {
-        autoScaleBtn.addEventListener('click', async () => {
-            console.log('🔄 Auto-scale (all data)');
+        
+        // Init date change
+        this.initDateSelect.addEventListener('change', async (e) => {
+            if (this.isUpdating) return;
+            const date = e.target.value;
+            if (date) {
+                await this.onInitDateChange(date);
+            }
+        });
+        
+        // Week change
+        this.weekSelect.addEventListener('change', async (e) => {
+            if (this.isUpdating) return;
+            const week = e.target.value;
+            if (week) {
+                await this.onWeekChange(week);
+            }
+        });
+        
+        // Opacity change
+        this.opacitySlider.addEventListener('input', (e) => {
+            const opacity = e.target.value;
+            this.opacityValue.textContent = `${opacity}%`;
+            this.weatherMap.setLayerOpacity(opacity);
+        });
+        
+        // Reset view button
+        const resetBtn = document.getElementById('reset-view');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.weatherMap.resetView();
+            });
+        }
+        
+        // ============================================
+        // AUTO-SCALE HELPERS
+        // ============================================
+        
+        const autoScaleAll = async (source) => {
+            console.log(`Auto-scale all data (${source})`);
             this.weatherMap.useViewportAutoScale = false;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
-        });
-    }
-    
-    // Viewport auto-scale button (sidebar)
-    const autoScaleViewportBtn = document.getElementById('auto-scale-viewport');
-    if (autoScaleViewportBtn) {
-        autoScaleViewportBtn.addEventListener('click', async () => {
-            console.log('🔄 Auto-scale (viewport only)');
+            this.syncModalInputs();
+        };
+        
+        const autoScaleViewport = async (source) => {
+            console.log(`Auto-scale viewport (${source})`);
             this.weatherMap.useViewportAutoScale = true;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
-        });
-    }
-    
-    // VMin/VMax inputs
-    const vminInput = document.getElementById('vmin');
-    if (vminInput) {
-        vminInput.addEventListener('change', async () => {
-            const min = parseFloat(vminInput.value);
-            const max = parseFloat(document.getElementById('vmax').value);
-            if (!isNaN(min) && !isNaN(max)) {
-                this.weatherMap.setManualRange(min, max);
-                await this.plotData();
+            this.syncModalInputs();
+        };
+        
+        // Sidebar auto-scale buttons
+        const autoScaleBtn = document.getElementById('auto-scale');
+        if (autoScaleBtn) {
+            autoScaleBtn.addEventListener('click', () => autoScaleAll('sidebar'));
+        }
+        
+        const autoScaleViewportBtn = document.getElementById('auto-scale-viewport');
+        if (autoScaleViewportBtn) {
+            autoScaleViewportBtn.addEventListener('click', () => autoScaleViewport('sidebar'));
+        }
+        
+        // VMin/VMax inputs
+        const vminInput = document.getElementById('vmin');
+        if (vminInput) {
+            vminInput.addEventListener('change', async () => {
+                const min = parseFloat(vminInput.value);
+                const max = parseFloat(document.getElementById('vmax').value);
+                if (!isNaN(min) && !isNaN(max)) {
+                    this.weatherMap.setManualRange(min, max);
+                    await this.plotData();
+                    this.syncModalInputs();
+                }
+            });
+        }
+        
+        const vmaxInput = document.getElementById('vmax');
+        if (vmaxInput) {
+            vmaxInput.addEventListener('change', async () => {
+                const min = parseFloat(document.getElementById('vmin').value);
+                const max = parseFloat(vmaxInput.value);
+                if (!isNaN(min) && !isNaN(max)) {
+                    this.weatherMap.setManualRange(min, max);
+                    await this.plotData();
+                    this.syncModalInputs();
+                }
+            });
+        }
+        
+        // ============================================
+        // FLOATING LEGEND CLICK
+        // ============================================
+        const floatingLegend = document.getElementById('floating-legend');
+        if (floatingLegend) {
+            floatingLegend.addEventListener('click', () => {
+                console.log('Floating legend clicked');
+                openColorPicker();
+            });
+        }
+        
+        // ============================================
+        // MODAL BUTTONS
+        // ============================================
+        
+        // Modal Apply button
+        const modalApply = document.getElementById('modal-apply');
+        if (modalApply) {
+            modalApply.addEventListener('click', async () => {
+                const min = parseFloat(document.getElementById('modal-vmin').value);
+                const max = parseFloat(document.getElementById('modal-vmax').value);
+                
+                if (!isNaN(min) && !isNaN(max)) {
+                    // Turn off auto-scale since user manually set values
+                    this.weatherMap.useAutoScale = false;
+                    this.weatherMap.currentMin = min;
+                    this.weatherMap.currentMax = max;
+                    
+                    // Update sidebar inputs
+                    document.getElementById('vmin').value = min;
+                    document.getElementById('vmax').value = max;
+                    
+                    // Apply and re-plot
+                    this.weatherMap.setManualRange(min, max);
+                    await this.plotData();
+                }
+                closeColorPicker();
+            });
+        }
+        
+        // Modal Auto All button
+        const modalAutoAll = document.getElementById('modal-auto-all');
+        if (modalAutoAll) {
+            modalAutoAll.addEventListener('click', () => autoScaleAll('modal'));
+        }
+        
+        // Modal Auto Viewport button
+        const modalAutoViewport = document.getElementById('modal-auto-viewport');
+        if (modalAutoViewport) {
+            modalAutoViewport.addEventListener('click', () => autoScaleViewport('modal'));
+        }
+        
+        // ============================================
+        // SIDEBAR TOGGLE
+        // ============================================
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        
+        const toggleSidebar = () => {
+            if (!sidebar) return;
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            if (sidebarToggle) {
+                sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
             }
-        });
-    }
-    
-    const vmaxInput = document.getElementById('vmax');
-    if (vmaxInput) {
-        vmaxInput.addEventListener('change', async () => {
-            const min = parseFloat(document.getElementById('vmin').value);
-            const max = parseFloat(vmaxInput.value);
-            if (!isNaN(min) && !isNaN(max)) {
-                this.weatherMap.setManualRange(min, max);
-                await this.plotData();
-            }
-        });
-    }
-    
-    // ============================================
-    // FLOATING LEGEND CLICK
-    // ============================================
-    const floatingLegend = document.getElementById('floating-legend');
-    if (floatingLegend) {
-        floatingLegend.addEventListener('click', () => {
-            console.log('Floating legend clicked');
-            openColorPicker();
-        });
-    }
-    
-    // ============================================
-    // MODAL BUTTONS
-    // ============================================
-    
-    // Modal Apply button
-    const modalApply = document.getElementById('modal-apply');
-    if (modalApply) {
-        modalApply.addEventListener('click', async () => {
-            const min = parseFloat(document.getElementById('modal-vmin').value);
-            const max = parseFloat(document.getElementById('modal-vmax').value);
-            
-            if (!isNaN(min) && !isNaN(max)) {
-                document.getElementById('vmin').value = min;
-                document.getElementById('vmax').value = max;
-                this.weatherMap.setManualRange(min, max);
-                await this.plotData();
-            }
-            closeColorPicker();
-        });
-    }
-    
-    // Modal Auto All button
-    const modalAutoAll = document.getElementById('modal-auto-all');
-    if (modalAutoAll) {
-        modalAutoAll.addEventListener('click', async () => {
-            this.weatherMap.useViewportAutoScale = false;
-            this.weatherMap._pendingAutoScale = true;
-            await this.plotData();
-        });
-    }
-    
-    // Modal Auto Viewport button
-    const modalAutoViewport = document.getElementById('modal-auto-viewport');
-    if (modalAutoViewport) {
-        modalAutoViewport.addEventListener('click', async () => {
-            this.weatherMap.useViewportAutoScale = true;
-            this.weatherMap._pendingAutoScale = true;
-            await this.plotData();
-        });
-    }
-    
-    // Sidebar toggle
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    
-    const toggleSidebar = () => {
-        if (!sidebar) return;
-        const isCollapsed = sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebar-collapsed', isCollapsed);
+            setTimeout(() => {
+                this.weatherMap.leafletMap.invalidateSize();
+            }, 350);
+        };
+        
         if (sidebarToggle) {
-            sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
+            sidebarToggle.addEventListener('click', toggleSidebar);
         }
-        localStorage.setItem('sidebar-collapsed', isCollapsed);
-        setTimeout(() => {
-            this.weatherMap.leafletMap.invalidateSize();
-        }, 350);
-    };
-    
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', toggleSidebar);
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'q' && 
+                document.activeElement.tagName !== 'INPUT' &&
+                document.activeElement.tagName !== 'TEXTAREA' &&
+                document.activeElement.tagName !== 'SELECT') {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        });
     }
     
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'q' && 
-            document.activeElement.tagName !== 'INPUT' &&
-            document.activeElement.tagName !== 'TEXTAREA' &&
-            document.activeElement.tagName !== 'SELECT') {
-            e.preventDefault();
-            toggleSidebar();
-        }
-    });
-}
+    // ============================================
+    // DATA LOADING
+    // ============================================
     
     async loadInitialData() {
         try {
@@ -267,7 +297,6 @@ class UIController {
         
         if (isNaN(date.getTime())) return dateString;
         
-        // Format as "Monday, 11 May 2026"
         return date.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -307,7 +336,6 @@ class UIController {
     async onWeekChange(week) {
         if (!week || this.isUpdating) return;
         
-        // Show date range for selected week
         this.updateWeekDates(week);
         await this.plotData();
     }
@@ -331,7 +359,6 @@ class UIController {
             this.weekSelect.appendChild(option);
         });
         
-        // Auto-select Week 1
         if (weeks.includes(1)) {
             this.weekSelect.value = 1;
         } else {
@@ -342,7 +369,6 @@ class UIController {
     }
     
     updateWeekDates(week) {
-        // Calculate approximate dates for the selected week
         const initDate = this.initDateSelect.value;
         if (!initDate || !week) return;
         
@@ -378,34 +404,30 @@ class UIController {
         const firstDate = dates[0];
         this.initDateSelect.value = firstDate;
         
-        // Auto-select temperature
         this.variableSelect.value = 'temp';
         
-        // Populate weeks
         this.populateWeeks(firstDate, 'temp');
         
-        // Auto-plot
         await this.plotData();
     }
     
     async plotData() {
-    const initDate = this.initDateSelect.value;
-    const variable = this.variableSelect.value;
-    const week = this.weekSelect.value;
-    
-    if (!initDate || !variable || !week) return;
-    
-    this.isUpdating = true;
-    
-    try {
-        // The weatherMap will check _pendingAutoScale inside loadAndDisplayWeather
-        await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week));
-    } catch (error) {
-        console.error('Failed to plot data:', error);
-    } finally {
-        this.isUpdating = false;
+        const initDate = this.initDateSelect.value;
+        const variable = this.variableSelect.value;
+        const week = this.weekSelect.value;
+        
+        if (!initDate || !variable || !week) return;
+        
+        this.isUpdating = true;
+        
+        try {
+            await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week));
+        } catch (error) {
+            console.error('Failed to plot data:', error);
+        } finally {
+            this.isUpdating = false;
+        }
     }
-}
     
     updateTimestamp() {
         fetch(`${CONFIG.dataBaseUrl}/weekly/catalog.json?t=${Date.now()}`)
@@ -425,7 +447,6 @@ class UIController {
 // COLOR PICKER MODAL FUNCTIONS (GLOBAL)
 // ============================================
 
-// Make these globally accessible
 window.openColorPicker = function() {
     const modal = document.getElementById('colorpicker-modal');
     if (!modal) {
@@ -447,26 +468,18 @@ window.openColorPicker = function() {
     
     if (vminInput && modalVmin) {
         modalVmin.value = vminInput.value;
-        console.log('Set modal vmin to:', vminInput.value);
     }
     if (vmaxInput && modalVmax) {
         modalVmax.value = vmaxInput.value;
-        console.log('Set modal vmax to:', vmaxInput.value);
     }
     
     // Update the preview legend inside the modal
     if (window.appInstance && window.appInstance.weatherMap && window.appInstance.variableSelect) {
         const variable = window.appInstance.variableSelect.value;
-        console.log('Current variable:', variable);
         if (variable) {
-            // Call updateLegend which populates both the floating legend and the modal preview
             window.appInstance.weatherMap.updateLegend(variable);
-            console.log('Modal preview updated');
         }
     }
-    
-    console.log('Modal display:', modal.style.display);
-    console.log('Modal has active class:', modal.classList.contains('active'));
 };
 
 window.closeColorPicker = function() {
@@ -488,16 +501,18 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Click overlay to close
-const overlay = document.getElementById('colorpicker-overlay');
-if (overlay) {
-    overlay.addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeColorPicker();
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('colorpicker-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeColorPicker();
+        });
+    }
+});
 
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
     const app = new UIController();
-    window.appInstance = app;  // Ensure global reference
+    window.appInstance = app;
 });
