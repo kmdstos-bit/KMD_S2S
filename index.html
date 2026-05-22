@@ -177,15 +177,15 @@
     
     <!-- Color Picker Panel -->
     <div id="colorpicker-panel" style="position: relative; z-index: 1; 
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #373737 0%, #373737 100%);
             color: white; padding: 30px; border-radius: 16px; min-width: 380px; max-width: 420px;
             border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
         
-        <h3 style="margin: 0 0 20px 0; font-size: 1.3em; text-align: center;">🎨 Color Scale Settings</h3>
+        <h3 style="margin: 0 0 20px 0; font-size: 1.3em; text-align: center;">Color Scale Settings</h3>
         
         <!-- Legend preview inside modal -->
         <div id="colorpicker-legend-preview" style="margin-bottom: 20px; padding: 10px; 
-                background: rgba(0,0,0,0.2); border-radius: 8px;">
+                background: rgba(63, 63, 63, 0.2); border-radius: 8px;">
             <p style="text-align: center; opacity: 0.6; margin: 0;">Loading...</p>
         </div>
         
@@ -214,19 +214,19 @@
                     font-size: 0.9em; transition: all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.25)'"
                     onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                📊 All Data
+                📊 Auto-scale to All Data
             </button>
             <button id="modal-auto-viewport" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.15); 
                     border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer;
                     font-size: 0.9em; transition: all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.25)'"
                     onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                🖼️ Viewport
+                🖼️ Auto-scale to Visible Area 
             </button>
         </div>
         
         <!-- Apply button -->
-        <button id="modal-apply" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); 
+        <button id="modal-apply" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #515050, #434343); 
                 border: none; border-radius: 10px; color: white; font-size: 1em; font-weight: 600; cursor: pointer;
                 transition: all 0.2s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);"
                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102,126,234,0.6)'"
