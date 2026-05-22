@@ -728,7 +728,7 @@ parseColor(colorStr) {
         }
     }
     
-   updateLegend(variable) {
+updateLegend(variable) {
     const varConfig = CONFIG.variables[variable];
     const colorScale = this.getColorScale(variable);
     const range = this.getCurrentRange(variable);
@@ -797,41 +797,6 @@ parseColor(colorStr) {
         console.log('Modal preview HTML set');
     } else {
         console.warn('Modal preview element not found!');
-    }
-}
-    
-    // ============================================
-    // 2. Update the modal preview (if open)
-    // ============================================
-    const modalPreview = document.getElementById('colorpicker-legend-preview');
-    if (modalPreview) {
-        let modalHtml = '';
-        
-        modalHtml += '<div style="font-size: 0.8em; text-align: center; margin-bottom: 4px; opacity: 0.8;">';
-        modalHtml += `Current: ${range.min} to ${range.max} ${varConfig.unit}`;
-        if (this.useAutoScale) {
-            modalHtml += ' <span style="color: #4CAF50;">(auto)</span>';
-        }
-        modalHtml += '</div>';
-        
-        modalHtml += '<div style="display: flex; height: 25px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3);">';
-        colorScale.forEach(color => {
-            modalHtml += `<div style="flex: 1; background: ${color};"></div>`;
-        });
-        modalHtml += '</div>';
-        
-        modalHtml += '<div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-top: 4px;">';
-        modalHtml += `<span>${range.min}</span>`;
-        modalHtml += `<span>${range.max}</span>`;
-        modalHtml += '</div>';
-        
-        modalPreview.innerHTML = modalHtml;
-        
-        // Sync input values
-        const vminInput = document.getElementById('modal-vmin');
-        const vmaxInput = document.getElementById('modal-vmax');
-        if (vminInput) vminInput.value = range.min;
-        if (vmaxInput) vmaxInput.value = range.max;
     }
 }
 
