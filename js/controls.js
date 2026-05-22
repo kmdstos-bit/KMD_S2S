@@ -410,6 +410,35 @@ class UIController {
         this.updateWeekDates(defaultWeek);
     }
     
+    updateWeekDates(week) {
+        const initDate = this.initDateSelect.value;
+        if (!initDate || !week) return;
+        
+        let date;
+        if (initDate.includes('-')) {
+            date = new Date(initDate);
+        } else if (initDate.length === 8) {
+            const year = initDate.substring(0, 4);
+            const month = initDate.substring(4, 6);
+            const day = initDate.substring(6, 8);
+            date = new Date(year, month - 1, day);
+        }
+        
+        if (date && !isNaN(date.getTime())) {
+            const startDate = new Date(date);
+            startDate.setDate(startDate.getDate() + (week - 1) * 7);
+            
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 6);
+            
+            const options = { month: 'short', day: 'numeric' };
+            const endOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+            
+            this.weekDates.textContent = 
+                `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', endOptions)}`;
+        }
+    }
+    
     async autoSelectAndPlot() {
         const dates = this.dataLoader.getAvailableDates();
         if (dates.length === 0) return;
