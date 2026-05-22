@@ -38,7 +38,7 @@ const CONFIG = {
             colorScheme: 'temperature',
             // These are the DEFAULT ranges (forecaster-trusted values)
             defaultMin: 15,
-            defaultMax: 40,
+            defaultMax: 35,
             // Allowable range for the sliders
             absoluteMin: -20,
             absoluteMax: 55,
@@ -102,7 +102,7 @@ const CONFIG = {
             colorScheme: 'temperature',
             // These are the DEFAULT ranges (forecaster-trusted values)
             defaultMin: 15,
-            defaultMax: 40,
+            defaultMax: 30,
             // Allowable range for the sliders
             absoluteMin: -20,
             absoluteMax: 55,

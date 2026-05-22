@@ -242,3 +242,70 @@ img[src*="data:image"] {
 #sidebar-expand-float:hover {
     background: linear-gradient(135deg, #7b8ff7 0%, #8b5fc0 100%) !important;
 }
+
+/* Floating Legend */
+#floating-legend {
+    transition: all 0.3s ease;
+}
+
+#floating-legend:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+}
+
+/* Color Picker Modal */
+#colorpicker-modal {
+    display: none;
+}
+
+#colorpicker-modal.active {
+    display: flex;
+}
+
+#colorpicker-panel {
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Legend inside the floating box */
+#floating-legend-content .legend-gradient {
+    height: 15px;
+    border-radius: 3px;
+    margin: 5px 0;
+}
+
+#floating-legend-content .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65em;
+    opacity: 0.8;
+}
+
+/* Modal legend preview */
+#colorpicker-legend-preview .legend-gradient {
+    height: 25px;
+    border-radius: 6px;
+    margin: 8px 0;
+}
+
+#colorpicker-legend-preview .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75em;
+    opacity: 0.9;
+}
+
+/* Hide old legend */
+.legend {
+    display: none;
+}

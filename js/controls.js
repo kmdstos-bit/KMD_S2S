@@ -119,6 +119,61 @@ class UIController {
             }
         });
     }
+
+    // Store reference for modal
+    appInstance = this;
+
+    // Modal Apply button
+    const modalApply = document.getElementById('modal-apply');
+    if (modalApply) {
+        modalApply.addEventListener('click', async () => {
+            const min = parseFloat(document.getElementById('modal-vmin').value);
+            const max = parseFloat(document.getElementById('modal-vmax').value);
+            
+            if (!isNaN(min) && !isNaN(max)) {
+                // Update sidebar inputs
+                document.getElementById('vmin').value = min;
+                document.getElementById('vmax').value = max;
+                
+                // Set manual range and re-plot
+                this.weatherMap.setManualRange(min, max);
+                await this.plotData();
+            }
+            
+            closeColorPicker();
+        });
+    }
+
+    // Modal Auto All button
+    const modalAutoAll = document.getElementById('modal-auto-all');
+    if (modalAutoAll) {
+        modalAutoAll.addEventListener('click', async () => {
+            this.weatherMap.useViewportAutoScale = false;
+            this.weatherMap._pendingAutoScale = true;
+            await this.plotData();
+            // Update modal inputs
+            const range = this.weatherMap._lastDataRange;
+            if (range) {
+                document.getElementById('modal-vmin').value = range.min;
+                document.getElementById('modal-vmax').value = range.max;
+            }
+        });
+    }
+
+    // Modal Auto Viewport button
+    const modalAutoViewport = document.getElementById('modal-auto-viewport');
+    if (modalAutoViewport) {
+        modalAutoViewport.addEventListener('click', async () => {
+            this.weatherMap.useViewportAutoScale = true;
+            this.weatherMap._pendingAutoScale = true;
+            await this.plotData();
+            const range = this.weatherMap._lastDataRange;
+            if (range) {
+                document.getElementById('modal-vmin').value = range.min;
+                document.getElementById('modal-vmax').value = range.max;
+            }
+        });
+    }
     
     // ============================================
     // SIDEBAR TOGGLE - Buttons and Keyboard
@@ -407,6 +462,44 @@ class UIController {
             .catch(error => console.error('Failed to fetch timestamp:', error));
     }
 }
+
+// ============================================
+// COLOR PICKER MODAL FUNCTIONS
+// ============================================
+
+let appInstance = null;  // Will hold reference to UIController
+
+function openColorPicker() {
+    document.getElementById('colorpicker-modal').classList.add('active');
+    
+    // Sync modal inputs with sidebar inputs
+    const vmin = document.getElementById('vmin').value;
+    const vmax = document.getElementById('vmax').value;
+    document.getElementById('modal-vmin').value = vmin;
+    document.getElementById('modal-vmax').value = vmax;
+    
+    // Update the preview
+    if (appInstance && appInstance.weatherMap) {
+        const variable = appInstance.variableSelect.value;
+        if (variable) {
+            appInstance.weatherMap.updateLegend(variable);
+        }
+    }
+}
+
+function closeColorPicker() {
+    document.getElementById('colorpicker-modal').classList.remove('active');
+}
+
+// ESC key closes modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('colorpicker-modal');
+        if (modal && modal.classList.contains('active')) {
+            closeColorPicker();
+        }
+    }
+});
 
 // Initialize when page loads
 window.addEventListener('DOMContentLoaded', () => {
