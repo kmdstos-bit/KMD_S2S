@@ -444,98 +444,104 @@ autoScaleToData(values, variable, rasterData) {
     // ============================================
     
     createGridCellLayer(rasterData, variable) {
-        console.log('Creating grid cell layer with Leaflet GridLayer...');
-        
-        const nCols = rasterData.nCols;
-        const nRows = rasterData.nRows;
-        const values = rasterData.values;
-        const latStep = rasterData.latStep || 1.5;
-        const lonStep = rasterData.lonStep || 1.5;
-        const latMax = rasterData.latMax;  // northernmost cell center
-        const lonMin = rasterData.lonMin;  // westernmost cell center
-        const colorScale = this.getColorScale(variable);
-        const range = this.getCurrentRange(variable);
-        const opacity = 0.9;
-        const weatherMap = this;
-        
-        const gridLayer = L.GridLayer.extend({
-            createTile(coords) {
-                const tile = document.createElement('canvas');
-                const tileSize = this.getTileSize();
-                tile.width = tileSize.x;
-                tile.height = tileSize.y;
-                const ctx = tile.getContext('2d');
+    console.log('Creating grid cell layer with Leaflet GridLayer...');
+    
+    const nCols = rasterData.nCols;
+    const nRows = rasterData.nRows;
+    const values = rasterData.values;
+    const latStep = rasterData.latStep || 1.5;
+    const lonStep = rasterData.lonStep || 1.5;
+    const latMax = rasterData.latMax;
+    const lonMin = rasterData.lonMin;
+    const colorScale = this.getColorScale(variable);
+    const range = this.getCurrentRange(variable);
+    const opacity = 0.9;
+    const weatherMap = this;
+    
+    const gridLayer = L.GridLayer.extend({
+        createTile(coords) {
+            const tile = document.createElement('canvas');
+            const tileSize = this.getTileSize();
+            // Make tile slightly larger to prevent edge artifacts
+            const padding = 2;
+            tile.width = tileSize.x + padding * 2;
+            tile.height = tileSize.y + padding * 2;
+            
+            const ctx = tile.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            
+            const map = this._map;
+            const tileBounds = this._tileCoordsToBounds(coords);
+            
+            // Expand tile bounds slightly
+            const latRange = tileBounds.getNorth() - tileBounds.getSouth();
+            const lonRange = tileBounds.getEast() - tileBounds.getWest();
+            const expandedBounds = L.latLngBounds(
+                [tileBounds.getSouth() - latRange * 0.01, tileBounds.getWest() - lonRange * 0.01],
+                [tileBounds.getNorth() + latRange * 0.01, tileBounds.getEast() + lonRange * 0.01]
+            );
+            
+            const tileOrigin = map.project(
+                [expandedBounds.getNorth(), expandedBounds.getWest()], coords.z
+            );
+            
+            // Translate context to account for padding
+            ctx.translate(padding, padding);
+            
+            // Calculate pixel overlap - make cells slightly larger to cover gaps
+            const pixelOverlap = 1.5;
+            
+            for (let row = 0; row < nRows; row++) {
+                const cellLatN = latMax - row * latStep + latStep / 2;
+                const cellLatS = latMax - row * latStep - latStep / 2;
                 
-                // Disable anti-aliasing for crisp cell edges
-                ctx.imageSmoothingEnabled = false;
+                if (cellLatS > expandedBounds.getNorth()) continue;
+                if (cellLatN < expandedBounds.getSouth()) continue;
                 
-                const map = this._map;
-                const tileBounds = this._tileCoordsToBounds(coords);
-                const tileOrigin = map.project(
-                    [tileBounds.getNorth(), tileBounds.getWest()], coords.z
-                );
-                
-                // Small overlap in pixels to prevent gaps between cells
-                const pixelOverlap = 0;
-                
-                for (let row = 0; row < nRows; row++) {
-                    // Cell edges in lat/lon
-                    const cellLatN = latMax - row * latStep + latStep / 2;
-                    const cellLatS = latMax - row * latStep - latStep / 2;
+                for (let col = 0; col < nCols; col++) {
+                    const val = (values[row] && values[row][col] !== undefined)
+                        ? values[row][col] : null;
+                    if (val === null || val === undefined || isNaN(val)) continue;
                     
-                    // Skip if completely outside tile
-                    if (cellLatS > tileBounds.getNorth()) continue;
-                    if (cellLatN < tileBounds.getSouth()) continue;
+                    const cellLonW = lonMin + col * lonStep - lonStep / 2;
+                    const cellLonE = lonMin + col * lonStep + lonStep / 2;
                     
-                    for (let col = 0; col < nCols; col++) {
-                        const val = (values[row] && values[row][col] !== undefined)
-                            ? values[row][col] : null;
-                        if (val === null || val === undefined || isNaN(val)) continue;
-                        
-                        const cellLonW = lonMin + col * lonStep - lonStep / 2;
-                        const cellLonE = lonMin + col * lonStep + lonStep / 2;
-                        
-                        // Skip if completely outside tile
-                        if (cellLonE < tileBounds.getWest()) continue;
-                        if (cellLonW > tileBounds.getEast()) continue;
-                        
-                        // Project cell corners to pixel space
-                        const nwPx = map.project([cellLatN, cellLonW], coords.z);
-                        const nePx = map.project([cellLatN, cellLonE], coords.z);
-                        const swPx = map.project([cellLatS, cellLonW], coords.z);
-                        const sePx = map.project([cellLatS, cellLonE], coords.z);
-                        
-                        // Calculate pixel bounds with overlap
-                        const x = Math.floor(Math.min(nwPx.x, swPx.x) - tileOrigin.x) - pixelOverlap;
-                        const y = Math.floor(Math.min(nwPx.y, nePx.y) - tileOrigin.y) - pixelOverlap;
-                        const right = Math.ceil(Math.max(nePx.x, sePx.x) - tileOrigin.x) + pixelOverlap;
-                        const bottom = Math.ceil(Math.max(swPx.y, sePx.y) - tileOrigin.y) + pixelOverlap;
-                        
-                        const w = right - x;
-                        const h = bottom - y;
-                        
-                        if (w <= 0 || h <= 0) continue;
-                        
-                        // Draw the cell
-                        const [r, g, b, a] = weatherMap.valueToColor(
-                            val, range.min, range.max, colorScale
-                        );
-                        ctx.globalAlpha = (a !== undefined ? a : 1) * opacity;
-                        ctx.fillStyle = `rgb(${r},${g},${b})`;
-                        ctx.fillRect(x, y, w, h);
-                        
-                        // REMOVED: no stroke/border on cells
-                        // This was causing the visible edges
-                    }
+                    if (cellLonE < expandedBounds.getWest()) continue;
+                    if (cellLonW > expandedBounds.getEast()) continue;
+                    
+                    // Project cell corners
+                    const nwPx = map.project([cellLatN, cellLonW], coords.z);
+                    const sePx = map.project([cellLatS, cellLonE], coords.z);
+                    
+                    // Calculate pixel coordinates with generous overlap
+                    const x = Math.floor(Math.min(nwPx.x, sePx.x) - tileOrigin.x) - pixelOverlap;
+                    const y = Math.floor(Math.min(nwPx.y, sePx.y) - tileOrigin.y) - pixelOverlap;
+                    const w = Math.ceil(Math.max(nwPx.x, sePx.x) - tileOrigin.x) - 
+                              Math.floor(Math.min(nwPx.x, sePx.x) - tileOrigin.x) + pixelOverlap * 2;
+                    const h = Math.ceil(Math.max(nwPx.y, sePx.y) - tileOrigin.y) - 
+                              Math.floor(Math.min(nwPx.y, sePx.y) - tileOrigin.y) + pixelOverlap * 2;
+                    
+                    if (w <= 0 || h <= 0) continue;
+                    
+                    // Get color
+                    const [r, g, b, a] = weatherMap.valueToColor(
+                        val, range.min, range.max, colorScale
+                    );
+                    
+                    // Draw filled cell - NO STROKE
+                    ctx.globalAlpha = (a !== undefined ? a : 1) * opacity;
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, Math.ceil(w), Math.ceil(h));
                 }
-                
-                ctx.globalAlpha = 1.0;
-                return tile;
             }
-        });
-        
-        return new gridLayer({ tileSize: 256, opacity: 1.0 });
-    }
+            
+            ctx.globalAlpha = 1.0;
+            return tile;
+        }
+    });
+    
+    return new gridLayer({ tileSize: 256, opacity: 1.0 });
+}
 
     
     // ============================================
