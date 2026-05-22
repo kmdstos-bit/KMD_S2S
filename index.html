@@ -21,16 +21,18 @@
 </head>
 <body>
     <div id="app">
-        <!-- Sidebar Controls -->
-       <div id="sidebar">
-    <div class="sidebar-header" style="margin-bottom: 10px; padding-bottom: 5px;">
+
+    <div id="sidebar">
+    <div class="sidebar-header">
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 0;">
-            <h2 style="margin: 0; padding: 0; font-size: 1.3em;">🌍 Africa S2S Viewer</h2>
-            <button id="sidebar-toggle" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
-                    color: white; font-size: 1.2em; cursor: pointer; padding: 3px 8px; border-radius: 4px; 
-                    transition: all 0.3s; min-width: 40px; line-height: 1;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.4)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+            <h2 style="margin: 0; padding: 0; font-size: 1.3em; color: #fff; font-weight: 600;">
+                🌍 Africa S2S Viewer
+            </h2>
+            <button id="sidebar-toggle" style="background: #333; border: 1px solid #444; 
+                    color: #ccc; font-size: 1.1em; cursor: pointer; padding: 4px 10px; border-radius: 6px; 
+                    transition: all 0.2s; min-width: 36px; line-height: 1;"
+                    onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
+                    onmouseout="this.style.background='#333'; this.style.color='#ccc'"
                     title="Toggle sidebar">
                 ◀
             </button>
@@ -82,58 +84,58 @@
                 <span id="opacity-value">70%</span>
             </div>
 
-            <!-- Color Scale Controls -->
-            <div class="control-group" id="color-scale-controls">
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Color Scale Range</span>
-                    <div style="display: flex; gap: 5px;">
-                        <button id="auto-scale" style="padding: 3px 8px; font-size: 0.75em; 
-                                background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
-                                border-radius: 4px; color: white; cursor: pointer;">
-                            Auto
-                        </button>
-                        <button id="auto-scale-viewport" style="padding: 3px 6px; font-size: 0.65em; 
-                                background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); 
-                                border-radius: 4px; color: white; cursor: pointer;"
-                                title="Auto-scale to visible area only">
-                            🖼️
-                        </button>
-                    </div>
-                </label>
-                
-                <div style="display: flex; gap: 10px; margin-top: 8px;">
-                    <div style="flex: 1;">
-                        <label for="vmin" style="font-size: 0.8em;">Min</label>
-                        <input type="number" id="vmin" style="width: 100%; padding: 6px; 
-                            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
-                            border-radius: 4px; color: white;" step="any">
-                    </div>
-                    <div style="flex: 1;">
-                        <label for="vmax" style="font-size: 0.8em;">Max</label>
-                        <input type="number" id="vmax" style="width: 100%; padding: 6px; 
-                            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
-                            border-radius: 4px; color: white;" step="any">
-                    </div>
+           <div class="control-group" id="color-scale-controls">
+            <label style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Color Scale Range</span>
+                <div style="display: flex; gap: 5px;">
+                    <button id="auto-scale" style="padding: 4px 10px; font-size: 0.75em; 
+                            background: #333; border: 1px solid #444; 
+                            border-radius: 4px; color: #ccc; cursor: pointer;"
+                            onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
+                            onmouseout="this.style.background='#333'; this.style.color='#ccc'">
+                        Auto
+                    </button>
+                    <button id="auto-scale-viewport" style="padding: 4px 8px; font-size: 0.7em; 
+                            background: #333; border: 1px solid #444; 
+                            border-radius: 4px; color: #ccc; cursor: pointer;"
+                            onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
+                            onmouseout="this.style.background='#333'; this.style.color='#ccc'"
+                            title="Auto-scale to visible area only">
+                        🖼️
+                    </button>
                 </div>
-                
-                <div style="margin-top: 5px; font-size: 0.7em; opacity: 0.7;" id="data-range-info"></div>
+            </label>
+            
+            <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <div style="flex: 1;">
+                    <label for="vmin" style="font-size: 0.7em; color: #999;">Min</label>
+                    <input type="number" id="vmin" style="width: 100%; padding: 6px; 
+                        background: #1e1e1e; border: 1px solid #444; 
+                        border-radius: 4px; color: #e0e0e0;" step="any">
+                </div>
+                <div style="flex: 1;">
+                    <label for="vmax" style="font-size: 0.7em; color: #999;">Max</label>
+                    <input type="number" id="vmax" style="width: 100%; padding: 6px; 
+                        background: #1e1e1e; border: 1px solid #444; 
+                        border-radius: 4px; color: #e0e0e0;" step="any">
+                </div>
             </div>
+            
+            <div style="margin-top: 5px; font-size: 0.7em; opacity: 0.7; color: #888;" id="data-range-info"></div>
+        </div>
 
             <div class="control-group">
                 <button id="reset-view" style="width: 100%; padding: 10px; 
-                        background: rgba(255,255,255,0.2); 
-                        border: 2px solid rgba(255,255,255,0.3); 
-                        border-radius: 6px; color: white; 
+                        background: #333; border: 1px solid #444; 
+                        border-radius: 6px; color: #ccc; 
                         cursor: pointer; font-size: 0.9em;
-                        transition: background 0.3s;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        transition: all 0.2s;"
+                        onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
+                        onmouseout="this.style.background='#333'; this.style.color='#ccc'">
                     🔍 Reset View
                 </button>
             </div>
                         
-
-            
             <div class="info-box">
                 <p><strong>Data Source:</strong> ECMWF S2S</p>
                 <p><strong>Resolution:</strong> 0.5°</p>

@@ -42,8 +42,8 @@ LON_DIM  = "longitude"
 TIME_DIM = "step"        # forecast-step dimension (weeks 1-6)
 
 # Africa bounding box
-LAT_MIN, LAT_MAX = -40,  40
-LON_MIN, LON_MAX = -25,  55
+LAT_MIN, LAT_MAX = -90,  90
+LON_MIN, LON_MAX = -180,  180
 
 # Per-variable metadata + possible internal NetCDF variable names.
 # To add a new variable: add an entry here, then include its name
