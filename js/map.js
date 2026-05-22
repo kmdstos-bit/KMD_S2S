@@ -455,7 +455,7 @@ autoScaleToData(values, variable, rasterData) {
         const lonMin = rasterData.lonMin;     // westernmost cell center
         const nRows = rasterData.nRows;
         const nCols = rasterData.nCols;
-        const opacity = 0.9;
+        const opacity = 1;
 
         // Capture 'this' context for use inside the GridLayer
         const weatherMap = this;
@@ -512,7 +512,19 @@ autoScaleToData(values, variable, rasterData) {
                         );
                         ctx.globalAlpha = (a !== undefined ? a : 1) * opacity;
                         ctx.fillStyle = `rgb(${r},${g},${b})`;
-                        ctx.fillRect(x, y, w, h);
+                        const x1 = nwPx.x - tileOrigin.x;
+                        const y1 = nwPx.y - tileOrigin.y;
+                        const x2 = sePx.x - tileOrigin.x;
+                        const y2 = sePx.y - tileOrigin.y;
+
+                        ctx.fillRect(
+                            Math.round(x1),
+                            Math.round(y1),
+                            Math.round(x2 - x1) + 1,
+                            Math.round(y2 - y1) + 1
+                        );
+
+                        ctx.imageSmoothingEnabled = false;
                     }
                 }
 
