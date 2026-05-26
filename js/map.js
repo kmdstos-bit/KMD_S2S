@@ -76,6 +76,14 @@ class WeatherMap {
             const zoom = this.leafletMap.getZoom();
             document.querySelector('.coord-display').innerHTML = 
                 `📍 ${lat}°, ${lng}° | Zoom: ${zoom}`;
+
+            // Look up hovered grid cell value and update colorbar marker
+            const hoveredVal = this.getValueAtLatLng(e.latlng.lat, e.latlng.lng);
+            this.updateLegendHoverMarker(hoveredVal);
+        });
+
+        this.leafletMap.on('mouseout', () => {
+            this.updateLegendHoverMarker(null);
         });
     }
 
@@ -444,97 +452,144 @@ autoScaleToData(values, variable, rasterData) {
     // ============================================
     
     createGridCellLayer(rasterData, variable) {
-        console.log('Creating grid cell layer (GridLayer method)...');
+    console.log('Creating grid cell layer (GridLayer method)...');
 
-        const colorScale = this.getColorScale(variable);
-        const range = this.getCurrentRange(variable);
-        const values = rasterData.values;
-        const latStep = rasterData.latStep;   // 1.5
-        const lonStep = rasterData.lonStep;   // 1.5
-        const latMax = rasterData.latMax;     // northernmost cell center
-        const lonMin = rasterData.lonMin;     // westernmost cell center
-        const nRows = rasterData.nRows;
-        const nCols = rasterData.nCols;
-        const opacity = 1;
+    const colorScale = this.getColorScale(variable);
+    const range = this.getCurrentRange(variable);
+    const values = rasterData.values;
+    const latStep = rasterData.latStep;
+    const lonStep = rasterData.lonStep;
+    const latMax = rasterData.latMax;
+    const lonMin = rasterData.lonMin;
+    const nRows = rasterData.nRows;
+    const nCols = rasterData.nCols;
+    const weatherMap = this;
 
-        // Capture 'this' context for use inside the GridLayer
-        const weatherMap = this;
+    const gridLayer = L.GridLayer.extend({
+        createTile(coords) {
+            const tile = document.createElement('canvas');
+            const tileSize = this.getTileSize();
+            tile.width = tileSize.x;
+            tile.height = tileSize.y;
+            const ctx = tile.getContext('2d');
+            
+            // Disable anti-aliasing to prevent edge blur
+            ctx.imageSmoothingEnabled = false;
 
-        const gridLayer = L.GridLayer.extend({
-            createTile(coords) {
-                const tile = document.createElement('canvas');
-                const tileSize = this.getTileSize();
-                tile.width = tileSize.x;
-                tile.height = tileSize.y;
-                const ctx = tile.getContext('2d');
+            const map = this._map;
+            const tileBounds = this._tileCoordsToBounds(coords);
+            const tileOrigin = map.project(
+                [tileBounds.getNorth(), tileBounds.getWest()], coords.z
+            );
 
-                // Pixel bounds of this tile in the current zoom level
-                const map = this._map;
-                const tileBounds = this._tileCoordsToBounds(coords);
+            // ============================================
+            // TWO-PASS RENDERING to fix transparency seams
+            // ============================================
+            
+            // Pass 1: Draw all FULLY OPAQUE cells first
+            for (let row = 0; row < nRows; row++) {
+                const cellLatN = latMax - row * latStep + latStep / 2;
+                const cellLatS = latMax - row * latStep - latStep / 2;
+                
+                if (cellLatS > tileBounds.getNorth()) continue;
+                if (cellLatN < tileBounds.getSouth()) continue;
 
-                // For each grid cell, check if it overlaps this tile and draw it
-                for (let row = 0; row < nRows; row++) {
-                    const cellLatN = latMax - row * latStep + latStep / 2;  // north edge
-                    const cellLatS = latMax - row * latStep - latStep / 2;  // south edge
+                for (let col = 0; col < nCols; col++) {
+                    const val = (values[row] && values[row][col] !== undefined)
+                        ? values[row][col] : null;
+                    if (val === null || val === undefined || isNaN(val)) continue;
 
-                    // Quick lat cull
-                    if (cellLatS > tileBounds.getNorth()) continue;
-                    if (cellLatN < tileBounds.getSouth()) continue;
+                    const cellLonW = lonMin + col * lonStep - lonStep / 2;
+                    const cellLonE = lonMin + col * lonStep + lonStep / 2;
+                    
+                    if (cellLonE < tileBounds.getWest()) continue;
+                    if (cellLonW > tileBounds.getEast()) continue;
 
-                    for (let col = 0; col < nCols; col++) {
-                        const val = (values[row] && values[row][col] !== undefined)
-                            ? values[row][col] : null;
-                        if (val === null || val === undefined || isNaN(val)) continue;
+                    const [r, g, b, a] = weatherMap.valueToColor(
+                        val, range.min, range.max, colorScale
+                    );
+                    
+                    // Skip semi-transparent cells in first pass
+                    if (a < 0.99) continue;
 
-                        const cellLonW = lonMin + col * lonStep - lonStep / 2;
-                        const cellLonE = lonMin + col * lonStep + lonStep / 2;
+                    const nwPx = map.project([cellLatN, cellLonW], coords.z);
+                    const sePx = map.project([cellLatS, cellLonE], coords.z);
 
-                        // Quick lon cull
-                        if (cellLonE < tileBounds.getWest()) continue;
-                        if (cellLonW > tileBounds.getEast()) continue;
+                    const x = nwPx.x - tileOrigin.x;
+                    const y = nwPx.y - tileOrigin.y;
+                    const w = sePx.x - nwPx.x;
+                    const h = sePx.y - nwPx.y;
 
-                        // Project cell corners to pixel space (within this tile)
-                        const tileOrigin = map.project(
-                            [tileBounds.getNorth(), tileBounds.getWest()], coords.z
-                        );
-                        const nwPx = map.project([cellLatN, cellLonW], coords.z);
-                        const sePx = map.project([cellLatS, cellLonE], coords.z);
+                    if (w <= 0 || h <= 0) continue;
 
-                        const x = Math.floor(nwPx.x - tileOrigin.x);
-                        const y = Math.floor(nwPx.y - tileOrigin.y);
-                        const w = Math.ceil(sePx.x - nwPx.x);
-                        const h = Math.ceil(sePx.y - nwPx.y);
-
-                        if (w <= 0 || h <= 0) continue;
-
-                        const [r, g, b, a] = weatherMap.valueToColor(
-                            val, range.min, range.max, colorScale
-                        );
-                        ctx.globalAlpha = (a !== undefined ? a : 1) * opacity;
-                        ctx.fillStyle = `rgb(${r},${g},${b})`;
-                        const x1 = nwPx.x - tileOrigin.x;
-                        const y1 = nwPx.y - tileOrigin.y;
-                        const x2 = sePx.x - tileOrigin.x;
-                        const y2 = sePx.y - tileOrigin.y;
-
-                        ctx.fillRect(
-                            Math.round(x1),
-                            Math.round(y1),
-                            Math.round(x2 - x1) + 1,
-                            Math.round(y2 - y1) + 1
-                        );
-
-                        ctx.imageSmoothingEnabled = false;
-                    }
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(
+                        Math.floor(x),
+                        Math.floor(y),
+                        Math.ceil(w) + 1,
+                        Math.ceil(h) + 1
+                    );
                 }
-
-                ctx.globalAlpha = 1.0;
-                return tile;
             }
-        });
+            
+            // Pass 2: Draw SEMI-TRANSPARENT cells 
+            // Use 'lighter' composite operation to blend without seams
+            for (let row = 0; row < nRows; row++) {
+                const cellLatN = latMax - row * latStep + latStep / 2;
+                const cellLatS = latMax - row * latStep - latStep / 2;
+                
+                if (cellLatS > tileBounds.getNorth()) continue;
+                if (cellLatN < tileBounds.getSouth()) continue;
 
-        return new gridLayer({ tileSize: 256, opacity: 1.0 });
-    }
+                for (let col = 0; col < nCols; col++) {
+                    const val = (values[row] && values[row][col] !== undefined)
+                        ? values[row][col] : null;
+                    if (val === null || val === undefined || isNaN(val)) continue;
+
+                    const cellLonW = lonMin + col * lonStep - lonStep / 2;
+                    const cellLonE = lonMin + col * lonStep + lonStep / 2;
+                    
+                    if (cellLonE < tileBounds.getWest()) continue;
+                    if (cellLonW > tileBounds.getEast()) continue;
+
+                    const [r, g, b, a] = weatherMap.valueToColor(
+                        val, range.min, range.max, colorScale
+                    );
+                    
+                    // Skip fully opaque cells (already drawn)
+                    if (a >= 0.99) continue;
+                    // Skip fully transparent cells
+                    if (a <= 0.01) continue;
+
+                    const nwPx = map.project([cellLatN, cellLonW], coords.z);
+                    const sePx = map.project([cellLatS, cellLonE], coords.z);
+
+                    const x = nwPx.x - tileOrigin.x;
+                    const y = nwPx.y - tileOrigin.y;
+                    const w = sePx.x - nwPx.x;
+                    const h = sePx.y - nwPx.y;
+
+                    if (w <= 0 || h <= 0) continue;
+
+                    // Draw semi-transparent cell with slight overlap
+                    ctx.globalAlpha = a;
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(
+                        Math.floor(x) - 1,
+                        Math.floor(y) - 1,
+                        Math.ceil(w) + 2,
+                        Math.ceil(h) + 2
+                    );
+                }
+            }
+
+            ctx.globalAlpha = 1.0;
+            return tile;
+        }
+    });
+
+    return new gridLayer({ tileSize: 256, opacity: 1.0 });
+}
     
     // ============================================
     // COLOR UTILITIES
@@ -731,6 +786,64 @@ parseColor(colorStr) {
         }
     }
     
+// ============================================
+// HOVER VALUE LOOKUP
+// ============================================
+
+getValueAtLatLng(lat, lng) {
+    if (!this._currentRasterData) return null;
+    const rd = this._currentRasterData;
+    const row = Math.round((rd.latMax - lat) / rd.latStep);
+    const col = Math.round((lng - rd.lonMin) / rd.lonStep);
+    if (row < 0 || row >= rd.nRows || col < 0 || col >= rd.nCols) return null;
+    const val = rd.values[row] && rd.values[row][col];
+    if (val === null || val === undefined || isNaN(val)) return null;
+    return val;
+}
+
+updateLegendHoverMarker(value) {
+    const marker = document.getElementById('legend-hover-marker');
+    const bubble = document.getElementById('legend-hover-bubble');
+    const bar = document.getElementById('legend-colorbar');
+    if (!marker || !bubble || !bar) return;
+
+    if (value === null || value === undefined) {
+        marker.style.display = 'none';
+        bubble.style.display = 'none';
+        return;
+    }
+
+    const variable = this._lastVariable;
+    if (!variable) return;
+    const range = this.getCurrentRange(variable);
+    const unit = CONFIG.variables[variable] ? CONFIG.variables[variable].unit : '';
+
+    // Clamp position to 0–100%
+    let pct = (value - range.min) / (range.max - range.min);
+    pct = Math.max(0, Math.min(1, pct));
+    const leftPct = (pct * 100).toFixed(2) + '%';
+
+    marker.style.left = leftPct;
+    marker.style.display = 'block';
+
+    // Format value
+    let formatted;
+    if (Math.abs(value) < 0.01 && value !== 0) formatted = value.toFixed(3);
+    else if (Math.abs(value) < 1) formatted = value.toFixed(2);
+    else if (Math.abs(value) < 100) formatted = value.toFixed(1);
+    else formatted = Math.round(value).toString();
+
+    bubble.textContent = `${formatted} ${unit}`;
+
+    // Keep bubble inside legend bounds
+    const barWidth = bar.offsetWidth;
+    const bubbleWidth = bubble.offsetWidth;
+    const rawLeft = pct * barWidth - bubbleWidth / 2;
+    const clampedLeft = Math.max(0, Math.min(barWidth - bubbleWidth, rawLeft));
+    bubble.style.left = clampedLeft + 'px';
+    bubble.style.display = 'block';
+}
+
 updateLegend(variable) {
     const varConfig = CONFIG.variables[variable];
     const colorScale = this.getColorScale(variable);
@@ -748,16 +861,22 @@ updateLegend(variable) {
         html += `${varConfig.label}`;
         html += '</div>';
         
-        // Color bar
+        // Color bar with hover marker container
+        html += '<div id="legend-colorbar" style="position: relative; margin-bottom: 18px;">';
         html += '<div style="display: flex; height: 15px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">';
         colorScale.forEach(color => {
             html += `<div style="flex: 1; background: ${color};"></div>`;
         });
         html += '</div>';
+        // Marker line
+        html += '<div id="legend-hover-marker" style="display:none; position:absolute; top:-4px; width:2px; height:23px; background:white; border-radius:1px; box-shadow:0 0 3px rgba(0,0,0,0.8); pointer-events:none; transform:translateX(-50%);"></div>';
+        // Value bubble
+        html += '<div id="legend-hover-bubble" style="display:none; position:absolute; top:20px; background:rgba(20,20,20,0.92); color:#fff; font-size:0.7em; font-weight:600; padding:2px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.25); white-space:nowrap; pointer-events:none; transform:none;"></div>';
+        html += '</div>';
         
         // Labels with multiple ticks - matching the modal style
         const numTicks = 5;  // 5 labels: min, 25%, 50%, 75%, max
-        html += '<div style="display: flex; justify-content: space-between; font-size: 0.6em; margin-top: 3px; opacity: 0.7; color: #aaa;">';
+        html += '<div style="display: flex; justify-content: space-between; font-size: 0.6em; margin-top: 0px; opacity: 0.7; color: #aaa;">';
         for (let i = 0; i < numTicks; i++) {
             const value = range.min + (range.max - range.min) * (i / (numTicks - 1));
             let formattedValue;
