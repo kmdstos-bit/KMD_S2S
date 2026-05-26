@@ -27,7 +27,12 @@ class WeatherMap {
             minZoom: CONFIG.mapDefaults.minZoom,
             zoomControl: true,
             zoomSnap: 0.25,
-            zoomDelta: 0.5
+            zoomDelta: 0.5,
+            maxBounds: [
+            [-45, -35],   // Southwest
+            [22, 75]      // Northeast
+        ],
+            maxBoundsViscosity: 0.8  // Smooth resistance at edges
         });
 
         // Create custom pane for borders (highest z-index)
@@ -710,9 +715,9 @@ parseColor(colorStr) {
         ],
         precip: [
             'rgba(0,0,0,0)',
-            'rgba(180,220,255,0.3)',
+            'rgba(180,220,255,0.5)',
             'rgba(140,200,255,0.5)',
-            'rgba(100,180,255,0.7)',
+            'rgba(100,180,255,0.5)',
             '#87ceeb',
             '#60b8d8',
             '#40a0c8',
@@ -841,6 +846,7 @@ updateLegendHoverMarker(value) {
     const rawLeft = pct * barWidth - bubbleWidth / 2;
     const clampedLeft = Math.max(0, Math.min(barWidth - bubbleWidth, rawLeft));
     bubble.style.left = clampedLeft + 'px';
+    bubble.style.bottom = '20px';
     bubble.style.display = 'block';
 }
 
@@ -862,26 +868,30 @@ updateLegend(variable) {
         html += '</div>';
         
         // Color bar with hover marker container
-        html += '<div id="legend-colorbar" style="position: relative; margin-bottom: 18px;">';
+        html += '<div id="legend-colorbar" style="position: relative;">';
         html += '<div style="display: flex; height: 15px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">';
         colorScale.forEach(color => {
             html += `<div style="flex: 1; background: ${color};"></div>`;
         });
         html += '</div>';
-        // Marker line
-        html += '<div id="legend-hover-marker" style="display:none; position:absolute; top:-4px; width:2px; height:23px; background:white; border-radius:1px; box-shadow:0 0 3px rgba(0,0,0,0.8); pointer-events:none; transform:translateX(-50%);"></div>';
-        // Value bubble
-        html += '<div id="legend-hover-bubble" style="display:none; position:absolute; top:20px; background:rgba(20,20,20,0.92); color:#fff; font-size:0.7em; font-weight:600; padding:2px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.25); white-space:nowrap; pointer-events:none; transform:none;"></div>';
+        // Marker line — spans bar + tick row below
+        html += '<div id="legend-hover-marker" style="display:none; position:absolute; top:-3px; width:2px; height:22px; background:white; border-radius:1px; box-shadow:0 0 3px rgba(0,0,0,0.8); pointer-events:none; transform:translateX(-50%); z-index:10;"></div>';
+        // Value bubble — floats above the bar
+        html += '<div id="legend-hover-bubble" style="display:none; position:absolute; bottom:20px; background:rgba(20,20,20,0.92); color:#fff; font-size:0.7em; font-weight:600; padding:2px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.25); white-space:nowrap; pointer-events:none; z-index:11;"></div>';
+
+        // Tiny tick marks row (visual only)
+        html += '<div style="display: flex; justify-content: space-between; padding: 0 1px; margin-top: 0px;">';
+        const numTicks = 5;
+        for (let i = 0; i < numTicks; i++) {
+            html += '<div style="width: 1px; height: 3px; background: rgba(255,255,255,0.3);"></div>';
+        }
         html += '</div>';
-        
-        // Labels with multiple ticks - matching the modal style
-        const numTicks = 5;  // 5 labels: min, 25%, 50%, 75%, max
-        html += '<div style="display: flex; justify-content: space-between; font-size: 0.6em; margin-top: 0px; opacity: 0.7; color: #aaa;">';
+
+        // Labels directly below ticks
+        html += '<div style="display: flex; justify-content: space-between; font-size: 0.6em; margin-top: 1px; opacity: 0.7; color: #aaa;">';
         for (let i = 0; i < numTicks; i++) {
             const value = range.min + (range.max - range.min) * (i / (numTicks - 1));
             let formattedValue;
-            
-            // Smart formatting
             if (Math.abs(value) < 0.1 && value !== 0) {
                 formattedValue = value.toFixed(2);
             } else if (Math.abs(value) < 1) {
@@ -891,22 +901,14 @@ updateLegend(variable) {
             } else {
                 formattedValue = Math.round(value).toString();
             }
-            
-            // Add unit to first and last
             if (i === 0 || i === numTicks - 1) {
                 formattedValue += varConfig.unit;
             }
-            
             html += `<span>${formattedValue}</span>`;
         }
         html += '</div>';
-        
-        // Tiny tick marks row (visual only)
-        html += '<div style="display: flex; justify-content: space-between; padding: 0 1px; margin-top: -2px;">';
-        for (let i = 0; i < numTicks; i++) {
-            html += '<div style="width: 1px; height: 3px; background: rgba(255,255,255,0.3);"></div>';
-        }
-        html += '</div>';
+
+        html += '</div>'; // close #legend-colorbar
         
         floatingLegend.innerHTML = html;
     }
