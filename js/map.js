@@ -29,10 +29,35 @@ class WeatherMap {
             zoomSnap: 0.25,
             zoomDelta: 0.5,
             maxBounds: [
-            [-35, -35],   // Southwest
-            [22, 75]      // Northeast
-        ],
+                [-35, -35],   // Southwest
+                [22, 75]      // Northeast
+            ],
             maxBoundsViscosity: 0.8  // Smooth resistance at edges
+        });
+
+        // Enforce maxBounds on zoom — Leaflet's maxBounds only restricts panning,
+        // not zooming, so we calculate the minimum zoom that keeps the view within
+        // bounds and enforce it dynamically.
+        const mapBounds = L.latLngBounds([[-35, -35], [22, 75]]);
+
+        const enforceMinZoom = () => {
+            const minZoom = this.leafletMap.getBoundsZoom(mapBounds, true);
+            this.leafletMap.setMinZoom(minZoom);
+        };
+
+        this.leafletMap.whenReady(() => {
+            enforceMinZoom();
+        });
+
+        this.leafletMap.on('zoomend', () => {
+            const minZoom = this.leafletMap.getBoundsZoom(mapBounds, true);
+            if (this.leafletMap.getZoom() < minZoom) {
+                this.leafletMap.setZoom(minZoom, { animate: true });
+            }
+        });
+
+        this.leafletMap.on('resize', () => {
+            enforceMinZoom();
         });
 
         // Create custom pane for borders (highest z-index)
