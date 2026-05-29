@@ -29,7 +29,7 @@ class WeatherMap {
             zoomSnap: 0.25,
             zoomDelta: 0.5,
             maxBounds: [
-            [-45, -35],   // Southwest
+            [-35, -35],   // Southwest
             [22, 75]      // Northeast
         ],
             maxBoundsViscosity: 0.8  // Smooth resistance at edges
@@ -715,7 +715,7 @@ parseColor(colorStr) {
         ],
         precip: [
             'rgba(0,0,0,0)',
-            'rgba(180, 220, 255, 0)',
+            'rgb(168, 210, 250)',
             'rgb(140, 199, 255)',
             'rgb(100, 180, 255)',
             '#87ceeb',
