@@ -27,7 +27,7 @@ class WeatherMap {
             minZoom: CONFIG.mapDefaults.minZoom,
             zoomControl: true,
             zoomSnap: 0.25,
-            zoomDelta: 0.5,
+            zoomDelta: 0.25,
             maxBounds: [
                 [-35, -35],   // Southwest
                 [22, 75]      // Northeast
@@ -740,7 +740,7 @@ parseColor(colorStr) {
         ],
         precip: [
             'rgba(0,0,0,0)',
-            'rgb(168, 210, 250)',
+            'rgba(168, 210, 250, 0)',
             'rgb(140, 199, 255)',
             'rgb(100, 180, 255)',
             '#87ceeb',
