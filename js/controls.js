@@ -110,7 +110,7 @@ class UIController {
                 } else {
                     opt.textContent = `${lt.label} (not available)`;
                     opt.disabled = true;
-                    opt.style.color = '#666';
+                    opt.style.color = '#252525';
                 }
 
                 if (id === previousId && exists) restoredPrevious = true;
