@@ -3,267 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Africa S2S Viewer</title>
-    
-   <title>Africa S2S Weather Viewer</title>
-    
-    <!-- Favicon - shows in browser tab -->
+    <title>Africa S2S Weather Viewer</title>
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🌍</text></svg>">
-    
-    <!-- Also add for Apple devices -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🌍</text></svg>">
 
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="app">
+<div id="app">
 
     <div id="sidebar">
-    <div class="sidebar-header">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 0;">
-            <h2 style="margin: 0; padding: 0; font-size: 1.3em; color: #fff; font-weight: 600;">
-                🌍 Africa S2S Viewer
-            </h2>
-            <button id="sidebar-toggle" style="background: #333; border: 1px solid #444; 
-                    color: #ccc; font-size: 1.1em; cursor: pointer; padding: 4px 10px; border-radius: 6px; 
-                    transition: all 0.2s; min-width: 36px; line-height: 1;"
-                    onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
-                    onmouseout="this.style.background='#333'; this.style.color='#ccc'"
-                    title="Toggle sidebar">
-                ◀
-            </button>
-        </div>
-    </div>
 
-    <!-- Hint text - moved closer -->
-    <div style="font-size: 0.65em; opacity: 0.5; text-align: center; margin: -5px 0 10px 0; padding: 0; line-height: 1;">
-        Press q to toggle sidebar
-    </div>
-            
-            <div class="control-group">
-                <label for="init-date">Initialization Date:</label>
-                <select id="init-date">
-                    <option value="">Loading...</option>
-                </select>
+        <!-- Header -->
+        <div class="sidebar-header">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:0; padding:0;">
+                <h2 style="margin:0; padding:0; font-size:1.3em; color:#fff; font-weight:600;">
+                    🌍 Africa S2S Viewer
+                </h2>
+                <button id="sidebar-toggle"
+                        style="background:#333; border:1px solid #444; color:#ccc; font-size:1.1em;
+                               cursor:pointer; padding:4px 10px; border-radius:6px; transition:all 0.2s;
+                               min-width:36px; line-height:1;"
+                        onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
+                        onmouseout="this.style.background='#333'; this.style.color='#ccc'"
+                        title="Toggle sidebar">◀</button>
             </div>
-            
-          <div class="control-group">
-            <label for="variable">Variable:</label>
-            <select id="variable">
+        </div>
+
+        <div style="font-size:0.65em; opacity:0.5; text-align:center; margin:-5px 0 10px 0; padding:0; line-height:1;">
+            Press q to toggle sidebar
+        </div>
+
+        <!-- Init Date -->
+        <div class="control-group">
+            <label for="init-date">Initialization Date:</label>
+            <select id="init-date">
+                <option value="">Loading…</option>
+            </select>
+        </div>
+
+        <!-- ── Variable + Layer type (visually grouped) ─────────────── -->
+        <div class="control-group" style="padding-bottom:8px !important;">
+            <label style="margin-bottom:4px !important;">Display</label>
+
+            <!-- Variable -->
+            <label for="variable" style="font-size:0.72em; color:#888; margin-bottom:4px !important; text-transform:none; letter-spacing:0;">Variable</label>
+            <select id="variable" style="margin-bottom:8px;">
                 <option value="">Select variable</option>
                 <option value="temp">Weekly Mean Temperature (°C)</option>
                 <option value="precip">Weekly Total Precipitation (mm)</option>
                 <option value="tcw">Weekly Mean Total Column Water (kg/m²)</option>
                 <option value="cape">Weekly Mean CAPE (J/kg)</option>
-                <option value="d2m">Weekly Mean Relative Dewpoint Temperature (°C)</option>
+                <option value="d2m">Weekly Mean Dewpoint Temperature (°C)</option>
                 <option value="mx2t6">Weekly Mean Max Temperature (°C)</option>
                 <option value="mn2t6">Weekly Mean Min Temperature (°C)</option>
-                <option value="w500">Weekly Mean 500hPa Vertical Wind (m/s)</option>
+                <option value="w500">Weekly Mean 500hPa Vertical Wind (Pa/s)</option>
                 <option value="u10">Weekly Mean 10m U-Wind (m/s)</option>
                 <option value="v10">Weekly Mean 10m V-Wind (m/s)</option>
                 <option value="u700">Weekly Mean 700hPa U-Wind (m/s)</option>
                 <option value="v700">Weekly Mean 700hPa V-Wind (m/s)</option>
             </select>
-        </div>
-            
-            <div class="control-group">
-                <label for="week-slider">Forecast Week:</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span id="week-min-label" style="font-size: 0.7em; opacity: 0.6; min-width: 20px;">W1</span>
-                    <input type="range" id="week-slider" min="1" max="6" value="1" step="1" 
-                        style="flex: 1;">
-                    <span id="week-max-label" style="font-size: 0.7em; opacity: 0.6; min-width: 20px;">W6</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-                    <span id="current-week-label" style="font-size: 0.85em; font-weight: 600; color: #5b9bd5;">Week 1</span>
-                </div>
-                <div id="week-dates" style="font-size: 0.75em; margin-top: 3px; opacity: 0.7; color: #999;"></div>
-                
-                <!-- Hidden select for backward compatibility -->
-                <select id="week" style="display: none;">
-                    <option value="">Select week</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label>Layer Opacity:</label>
-                <input type="range" id="opacity" min="0" max="100" value="70">
-                <span id="opacity-value">70%</span>
-            </div>
 
-           <div class="control-group" id="color-scale-controls">
-            <label style="display: flex; justify-content: space-between; align-items: center;">
+            <!-- Layer type -->
+            <label for="layer-type" style="font-size:0.72em; color:#888; margin-bottom:4px !important; text-transform:none; letter-spacing:0;">Ensemble statistic</label>
+            <select id="layer-type">
+                <option value="mean">Ensemble Mean</option>
+            </select>
+
+            <!-- Subtle note -->
+            <div id="layer-type-note" style="font-size:0.65em; color:#666; margin-top:5px; line-height:1.4; display:none;">
+                ⚠️ Statistics not yet available for this date/variable combination.
+            </div>
+        </div>
+
+        <!-- Forecast Week -->
+        <div class="control-group">
+            <label for="week-slider">Forecast Week:</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="week-min-label" style="font-size:0.7em; opacity:0.6; min-width:20px;">W1</span>
+                <input type="range" id="week-slider" min="1" max="6" value="1" step="1" style="flex:1;">
+                <span id="week-max-label" style="font-size:0.7em; opacity:0.6; min-width:20px;">W6</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                <span id="current-week-label" style="font-size:0.85em; font-weight:600; color:#5b9bd5;">Week 1</span>
+            </div>
+            <div id="week-dates" style="font-size:0.75em; margin-top:3px; opacity:0.7; color:#999;"></div>
+
+            <!-- Hidden select for backward compatibility -->
+            <select id="week" style="display:none;">
+                <option value="">Select week</option>
+            </select>
+        </div>
+
+        <!-- Opacity -->
+        <div class="control-group">
+            <label>Layer Opacity:</label>
+            <input type="range" id="opacity" min="0" max="100" value="70">
+            <span id="opacity-value">70%</span>
+        </div>
+
+        <!-- Color Scale -->
+        <div class="control-group" id="color-scale-controls">
+            <label style="display:flex; justify-content:space-between; align-items:center;">
                 <span>Color Scale Range</span>
-                <div style="display: flex; gap: 5px;">
-                    <button id="auto-scale" style="padding: 4px 10px; font-size: 0.75em; 
-                            background: #333; border: 1px solid #444; 
-                            border-radius: 4px; color: #ccc; cursor: pointer;"
+                <div style="display:flex; gap:5px;">
+                    <button id="auto-scale"
+                            style="padding:4px 10px; font-size:0.75em; background:#333; border:1px solid #444;
+                                   border-radius:4px; color:#ccc; cursor:pointer;"
                             onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
-                            onmouseout="this.style.background='#333'; this.style.color='#ccc'">
-                        Auto
-                    </button>
-                    <button id="auto-scale-viewport" style="padding: 4px 8px; font-size: 0.7em; 
-                            background: #333; border: 1px solid #444; 
-                            border-radius: 4px; color: #ccc; cursor: pointer;"
+                            onmouseout="this.style.background='#333'; this.style.color='#ccc'">Auto</button>
+                    <button id="auto-scale-viewport"
+                            style="padding:4px 8px; font-size:0.7em; background:#333; border:1px solid #444;
+                                   border-radius:4px; color:#ccc; cursor:pointer;"
                             onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
                             onmouseout="this.style.background='#333'; this.style.color='#ccc'"
-                            title="Auto-scale to visible area only">
-                        🖼️
-                    </button>
+                            title="Auto-scale to visible area only">🖼️</button>
                 </div>
             </label>
-            
-            <div style="display: flex; gap: 10px; margin-top: 8px;">
-                <div style="flex: 1;">
-                    <label for="vmin" style="font-size: 0.7em; color: #999;">Min</label>
-                    <input type="number" id="vmin" style="width: 100%; padding: 6px; 
-                        background: #1e1e1e; border: 1px solid #444; 
-                        border-radius: 4px; color: #e0e0e0;" step="any">
+            <div style="display:flex; gap:10px; margin-top:8px;">
+                <div style="flex:1;">
+                    <label for="vmin" style="font-size:0.7em; color:#999;">Min</label>
+                    <input type="number" id="vmin" style="width:100%; padding:6px; background:#1e1e1e;
+                           border:1px solid #444; border-radius:4px; color:#e0e0e0;" step="any">
                 </div>
-                <div style="flex: 1;">
-                    <label for="vmax" style="font-size: 0.7em; color: #999;">Max</label>
-                    <input type="number" id="vmax" style="width: 100%; padding: 6px; 
-                        background: #1e1e1e; border: 1px solid #444; 
-                        border-radius: 4px; color: #e0e0e0;" step="any">
+                <div style="flex:1;">
+                    <label for="vmax" style="font-size:0.7em; color:#999;">Max</label>
+                    <input type="number" id="vmax" style="width:100%; padding:6px; background:#1e1e1e;
+                           border:1px solid #444; border-radius:4px; color:#e0e0e0;" step="any">
                 </div>
             </div>
-            
-            <div style="margin-top: 5px; font-size: 0.7em; opacity: 0.7; color: #888;" id="data-range-info"></div>
+            <div id="data-range-info" style="margin-top:5px; font-size:0.7em; opacity:0.7; color:#888;"></div>
         </div>
 
-            <div class="control-group">
-                <button id="reset-view" style="width: 100%; padding: 10px; 
-                        background: #333; border: 1px solid #444; 
-                        border-radius: 6px; color: #ccc; 
-                        cursor: pointer; font-size: 0.9em;
-                        transition: all 0.2s;"
-                        onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
-                        onmouseout="this.style.background='#333'; this.style.color='#ccc'">
-                    🔍 Reset View
-                </button>
-            </div>
-                        
-            <div class="info-box">
-                <p><strong>Data Source:</strong> ECMWF S2S</p>
-                <p><strong>Resolution:</strong> 0.5°</p>
-                <p><strong>Forecast Range:</strong> Week 1-6</p>
-                <p id="update-time">Last updated: Loading...</p>
-            </div>
+        <!-- Reset View -->
+        <div class="control-group">
+            <button id="reset-view"
+                    style="width:100%; padding:10px; background:#333; border:1px solid #444;
+                           border-radius:6px; color:#ccc; cursor:pointer; font-size:0.9em; transition:all 0.2s;"
+                    onmouseover="this.style.background='#3a3a3a'; this.style.color='#fff'"
+                    onmouseout="this.style.background='#333'; this.style.color='#ccc'">
+                🔍 Reset View
+            </button>
         </div>
-        
-        <!-- Map Container -->
-        <div id="map"></div>
-        
-        <!-- Loading Indicator -->
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Loading data...</p>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <p><strong>Data Source:</strong> ECMWF S2S</p>
+            <p><strong>Resolution:</strong> ~1.5°</p>
+            <p><strong>Forecast Range:</strong> Week 1–6</p>
+            <p id="update-time">Last updated: Loading…</p>
         </div>
+
+    </div><!-- /sidebar -->
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Loading -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading data…</p>
     </div>
 
-    <!-- Floating Legend - Bottom Right -->
-    <div id="floating-legend" style="position: absolute; bottom: 30px; right: 10px; z-index: 1000;
-            background: rgba(30, 30, 30, 0.85); color: white; padding: 10px 15px;
-            border-radius: 10px; cursor: pointer; backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            min-width: 200px; transition: all 0.3s;"
-            onclick="openColorPicker()"
-            onmouseover="this.style.background='rgba(30,30,30,0.95)'"
-            onmouseout="this.style.background='rgba(30,30,30,0.85)'"
-            title="Click to adjust color scale">
-        <div style="font-size: 0.7em; opacity: 0.7; text-align: center; margin-bottom: 3px;">Click to adjust</div>
-        <div id="floating-legend-content"></div>
-    </div>
+</div><!-- /app -->
 
-    <!-- Color Picker Modal -->
-<div id="colorpicker-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: 9999; justify-content: center; align-items: center;">
-    
-    <!-- Blur overlay -->
-    <div id="colorpicker-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 0;"
-            onclick="closeColorPicker()"></div>
-    
-    <!-- Color Picker Panel -->
-    <div id="colorpicker-panel" style="position: relative; z-index: 1; 
-            background: linear-gradient(135deg, #373737 0%, #373737 100%);
-            color: white; padding: 30px; border-radius: 16px; min-width: 380px; max-width: 420px;
-            border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
-        
-        <h3 style="margin: 0 0 20px 0; font-size: 1.3em; text-align: center;">Color Scale Settings</h3>
-        
-        <!-- Legend preview inside modal -->
-        <div id="colorpicker-legend-preview" style="margin-bottom: 20px; padding: 10px; 
-                background: rgba(63, 63, 63, 0.2); border-radius: 8px;">
-            <p style="text-align: center; opacity: 0.6; margin: 0;">Loading...</p>
+<!-- Floating Legend -->
+<div id="floating-legend"
+     style="position:absolute; bottom:30px; right:10px; z-index:1000;
+            background:rgba(30,30,30,0.85); color:white; padding:10px 15px;
+            border-radius:10px; cursor:pointer; backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,0.2); box-shadow:0 4px 15px rgba(0,0,0,0.4);
+            min-width:200px; transition:all 0.3s;"
+     onclick="openColorPicker()"
+     onmouseover="this.style.background='rgba(30,30,30,0.95)'"
+     onmouseout="this.style.background='rgba(30,30,30,0.85)'"
+     title="Click to adjust color scale">
+    <div style="font-size:0.7em; opacity:0.7; text-align:center; margin-bottom:3px;">Click to adjust</div>
+    <div id="floating-legend-content"></div>
+</div>
+
+<!-- Color Picker Modal -->
+<div id="colorpicker-modal"
+     style="position:fixed; top:0; left:0; width:100%; height:100%;
+            z-index:9999; justify-content:center; align-items:center;">
+
+    <div id="colorpicker-overlay"
+         style="position:absolute; top:0; left:0; width:100%; height:100%;
+                background:rgba(0,0,0,0.5); backdrop-filter:blur(8px);
+                -webkit-backdrop-filter:blur(8px); z-index:0;"
+         onclick="closeColorPicker()"></div>
+
+    <div id="colorpicker-panel"
+         style="position:relative; z-index:1;
+                background:linear-gradient(135deg,#373737 0%,#373737 100%);
+                color:white; padding:30px; border-radius:16px; min-width:380px; max-width:420px;
+                border:1px solid rgba(255,255,255,0.2); box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+
+        <h3 style="margin:0 0 20px 0; font-size:1.3em; text-align:center;">Color Scale Settings</h3>
+
+        <div id="colorpicker-legend-preview"
+             style="margin-bottom:20px; padding:10px; background:rgba(63,63,63,0.2); border-radius:8px;">
+            <p style="text-align:center; opacity:0.6; margin:0;">Loading…</p>
         </div>
-        
-        <!-- VMin / VMax inputs -->
-        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-            <div style="flex: 1;">
-                <label for="modal-vmin" style="display: block; font-size: 0.8em; opacity: 0.8; margin-bottom: 5px;">Min Value</label>
+
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="flex:1;">
+                <label for="modal-vmin" style="display:block; font-size:0.8em; opacity:0.8; margin-bottom:5px;">Min Value</label>
                 <input type="number" id="modal-vmin" step="any"
-                    style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); 
-                    border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; 
-                    font-size: 1em; box-sizing: border-box;">
+                       style="width:100%; padding:10px; background:rgba(255,255,255,0.1);
+                              border:1px solid rgba(255,255,255,0.3); border-radius:8px;
+                              color:white; font-size:1em; box-sizing:border-box;">
             </div>
-            <div style="flex: 1;">
-                <label for="modal-vmax" style="display: block; font-size: 0.8em; opacity: 0.8; margin-bottom: 5px;">Max Value</label>
+            <div style="flex:1;">
+                <label for="modal-vmax" style="display:block; font-size:0.8em; opacity:0.8; margin-bottom:5px;">Max Value</label>
                 <input type="number" id="modal-vmax" step="any"
-                    style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); 
-                    border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; 
-                    font-size: 1em; box-sizing: border-box;">
+                       style="width:100%; padding:10px; background:rgba(255,255,255,0.1);
+                              border:1px solid rgba(255,255,255,0.3); border-radius:8px;
+                              color:white; font-size:1em; box-sizing:border-box;">
             </div>
         </div>
-        
-        <!-- Auto-scale buttons -->
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button id="modal-auto-all" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.15); 
-                    border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer;
-                    font-size: 0.9em; transition: all 0.2s;"
+
+        <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <button id="modal-auto-all"
+                    style="flex:1; padding:12px; background:rgba(255,255,255,0.15);
+                           border:1px solid rgba(255,255,255,0.3); border-radius:8px; color:white;
+                           cursor:pointer; font-size:0.9em; transition:all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.25)'"
                     onmouseout="this.style.background='rgba(255,255,255,0.15)'">
                 📊 Auto-scale to All Data
             </button>
-            <button id="modal-auto-viewport" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.15); 
-                    border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; cursor: pointer;
-                    font-size: 0.9em; transition: all 0.2s;"
+            <button id="modal-auto-viewport"
+                    style="flex:1; padding:12px; background:rgba(255,255,255,0.15);
+                           border:1px solid rgba(255,255,255,0.3); border-radius:8px; color:white;
+                           cursor:pointer; font-size:0.9em; transition:all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.25)'"
                     onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                🖼️ Auto-scale to Visible Area 
+                🖼️ Auto-scale to Visible Area
             </button>
         </div>
-        
-        <!-- Apply button -->
-        <button id="modal-apply" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #515050, #434343); 
-                border: none; border-radius: 10px; color: white; font-size: 1em; font-weight: 600; cursor: pointer;
-                transition: all 0.2s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);"
+
+        <button id="modal-apply"
+                style="width:100%; padding:14px; background:linear-gradient(135deg,#515050,#434343);
+                       border:none; border-radius:10px; color:white; font-size:1em; font-weight:600;
+                       cursor:pointer; transition:all 0.2s; box-shadow:0 4px 15px rgba(102,126,234,0.4);"
                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102,126,234,0.6)'"
                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102,126,234,0.4)'">
             ✅ Apply Changes
         </button>
-        
-        <!-- Close hint -->
-        <p style="text-align: center; font-size: 0.7em; opacity: 0.5; margin: 12px 0 0 0;">
+
+        <p style="text-align:center; font-size:0.7em; opacity:0.5; margin:12px 0 0 0;">
             Click outside or press ESC to cancel
         </p>
     </div>
 </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <!-- Leaflet Plugins -->
-    <!-- <script src="https://unpkg.com/leaflet-canvaslayer-field@1.0.0/dist/leaflet-canvaslayer-field.min.js"></script> -->
-    
-    <!-- Custom JS -->
-    <script src="js/config.js"></script>
-    <script src="js/data-loader.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/controls.js"></script>
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/config.js"></script>
+<script src="js/data-loader.js"></script>
+<script src="js/map.js"></script>
+<script src="js/controls.js"></script>
 </body>
 </html>

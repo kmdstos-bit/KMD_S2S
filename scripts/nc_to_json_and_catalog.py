@@ -27,6 +27,7 @@ import shutil
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+import glob
 
 import numpy as np
 import xarray as xr
@@ -110,7 +111,7 @@ VAR_METADATA = {
         "nc_names": ["mx2t6"],
     },
 }
-
+        
 # Unit conversions applied after loading (add lambdas as needed)
 UNIT_CONVERSIONS = {
     "temp":  lambda v: v - 273.15 if np.nanmax(v) > 100   else v,   # K → °C
@@ -347,6 +348,7 @@ def main():
     variables = [v.strip() for v in args.variables.split(",")]
     n_weeks   = args.n_weeks
     keep      = args.keep
+    global VAR_METADATA
 
     # Warn about any variables not defined in VAR_METADATA
     unknown = [v for v in variables if v not in VAR_METADATA]
@@ -371,6 +373,41 @@ def main():
     print(f"Found {len(date_dirs)} date folder(s): {[d.name for d in date_dirs]}")
 
     for date_dir in date_dirs:
+        types=['anomclim','chance2xseed','tercilecat']
+        descriptions=['chance to exceed','anomaly from','<-- below normal  above normal -->']
+
+        for descript,name in zip(descriptions,types):
+            files=glob.glob(f'{date_dir}\\*{name}*')
+            print(f'{ncdf_dir}\\*{name}*')
+            gather=[file.split('forecast')[1].split('42')[0][1:-1] for file in files]
+
+            for ens_var in gather:
+                variable=ens_var.split(name)[1].split('_')[1]
+                percentile=ens_var.split('_P')[-1]
+                try: 
+                    int(percentile)
+                    description=f'{descript} {percentile}th %ile'
+                except:
+                    description=descript
+                if name != 'anomclim':
+                    unit='%'
+                else:
+                    unit=VAR_METADATA[variable]['unit']
+                append_dict={ens_var:
+                    {
+                        "label":    description,
+                        "unit":     unit,
+                        "nc_names": VAR_METADATA[variable]['nc_names'],
+                    }
+                }
+                VAR_METADATA= VAR_METADATA | append_dict
+        print(append_dict)
+        keys = list(VAR_METADATA.keys())
+        idx = keys.index('mn2t6')
+        keys_after = keys[idx + 1:]
+
+        variables= variables + keys_after
+
         init_date = folder_to_init_date(date_dir.name)   # "2026-05-11" → "20260511"
 
         for variable in variables:

@@ -2,158 +2,219 @@ class UIController {
     constructor() {
         this.weatherMap = new WeatherMap();
         this.dataLoader = this.weatherMap.dataLoader;
-        
-        // Store reference globally for modal functions
         window.appInstance = this;
-        
-        this.initDateSelect = document.getElementById('init-date');
-        this.variableSelect = document.getElementById('variable');
-        this.weekSelect = document.getElementById('week');
-        this.weekDates = document.getElementById('week-dates');
-        this.opacitySlider = document.getElementById('opacity');
-        this.opacityValue = document.getElementById('opacity-value');
-        
+
+        this.initDateSelect  = document.getElementById('init-date');
+        this.variableSelect  = document.getElementById('variable');
+        this.layerTypeSelect = document.getElementById('layer-type');
+        this.weekSelect      = document.getElementById('week');
+        this.weekDates       = document.getElementById('week-dates');
+        this.opacitySlider   = document.getElementById('opacity');
+        this.opacityValue    = document.getElementById('opacity-value');
+
         this.isUpdating = false;
-        
+
         this.init();
     }
-    
+
+    // ============================================
+    // INIT
+    // ============================================
+
     async init() {
         this.setupEventListeners();
         await this.loadInitialData();
         await this.autoSelectAndPlot();
         this.updateTimestamp();
     }
-    
+
     // ============================================
-    // SYNC HELPER
+    // HELPERS
     // ============================================
-    
+
+    getActiveLayerType() {
+        return this.layerTypeSelect ? this.layerTypeSelect.value || 'mean' : 'mean';
+    }
+
     syncModalInputs() {
-        const variable = this.variableSelect.value;
+        const variable    = this.variableSelect.value;
+        const layerTypeId = this.getActiveLayerType();
         if (!variable) return;
-        
-        const range = this.weatherMap.getCurrentRange(variable);
-        
-        // Update modal inputs
+
+        const range = this.weatherMap.getCurrentRange(variable, layerTypeId);
+
         const modalVmin = document.getElementById('modal-vmin');
         const modalVmax = document.getElementById('modal-vmax');
         if (modalVmin) modalVmin.value = range.min;
         if (modalVmax) modalVmax.value = range.max;
-        
-        // Update sidebar inputs
+
         const vminInput = document.getElementById('vmin');
         const vmaxInput = document.getElementById('vmax');
         if (vminInput) vminInput.value = range.min;
         if (vmaxInput) vmaxInput.value = range.max;
-        
-        // Update both legends
-        this.weatherMap.updateLegend(variable);
-        
-        console.log('Synced inputs to:', range.min, '-', range.max);
+
+        this.weatherMap.updateLegend(variable, layerTypeId);
     }
-    
+
+    // ============================================
+    // LAYER TYPE DROPDOWN
+    // ============================================
+
+    /**
+     * Rebuild the Layer Type <select> for the given variable and date.
+     * Options that exist on the server are enabled; others are greyed out.
+     */
+    async populateLayerTypes(varKey, initDate) {
+        if (!this.layerTypeSelect) return;
+
+        // While we're checking availability show a loading state
+        this.layerTypeSelect.innerHTML = '<option value="mean">Loading…</option>';
+        this.layerTypeSelect.disabled = true;
+
+        // Get which types exist for this date+variable (async HEAD checks)
+        let availability;
+        try {
+            availability = await this.dataLoader.getAvailableLayerTypes(initDate, varKey);
+        } catch {
+            availability = [{ id: 'mean', exists: true }];
+        }
+
+        // Remember current selection so we can restore it if still available
+        const previousId = this.layerTypeSelect.dataset.lastValue || 'mean';
+
+        this.layerTypeSelect.innerHTML = '';
+
+        // Group the options by their group label
+        const groups = {};
+        availability.forEach(({ id, exists }) => {
+            const lt = CONFIG.layerTypes[id];
+            if (!lt) return;
+            if (!groups[lt.group]) groups[lt.group] = [];
+            groups[lt.group].push({ id, exists, lt });
+        });
+
+        let firstAvailableId = 'mean';
+        let restoredPrevious = false;
+
+        Object.entries(groups).forEach(([groupLabel, items]) => {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = groupLabel;
+
+            items.forEach(({ id, exists, lt }) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+
+                if (exists) {
+                    opt.textContent = lt.label;
+                    if (id !== 'mean' && firstAvailableId === 'mean') firstAvailableId = id;
+                } else {
+                    opt.textContent = `${lt.label} (not available)`;
+                    opt.disabled = true;
+                    opt.style.color = '#666';
+                }
+
+                if (id === previousId && exists) restoredPrevious = true;
+                optgroup.appendChild(opt);
+            });
+
+            this.layerTypeSelect.appendChild(optgroup);
+        });
+
+        // Set value: restore previous selection if still available, else 'mean'
+        this.layerTypeSelect.value = restoredPrevious ? previousId : 'mean';
+        this.layerTypeSelect.dataset.lastValue = this.layerTypeSelect.value;
+        this.layerTypeSelect.disabled = false;
+    }
+
     // ============================================
     // EVENT LISTENERS
     // ============================================
-    
+
     setupEventListeners() {
-        // Variable change
+
+        // ── Variable ───────────────────────────────────────────────────
         this.variableSelect.addEventListener('change', async (e) => {
             if (this.isUpdating) return;
             const variable = e.target.value;
-            if (variable) {
-                console.log(`Variable selected: ${variable}`);
-                this.weatherMap.updateVariableDefaults(variable);
-                await this.onVariableChange(variable);
+            if (!variable) return;
+            this.weatherMap.updateVariableDefaults(variable, 'mean');
+            // Reset layer type to mean when variable changes, then repopulate
+            if (this.layerTypeSelect) {
+                this.layerTypeSelect.dataset.lastValue = 'mean';
             }
+            await this.onVariableChange(variable);
         });
-        
-        // Init date change
+
+        // ── Layer type ─────────────────────────────────────────────────
+        if (this.layerTypeSelect) {
+            this.layerTypeSelect.addEventListener('change', async (e) => {
+                if (this.isUpdating) return;
+                const layerTypeId = e.target.value;
+                if (!layerTypeId) return;
+                this.layerTypeSelect.dataset.lastValue = layerTypeId;
+
+                const variable = this.variableSelect.value;
+                if (variable) {
+                    this.weatherMap.updateVariableDefaults(variable, layerTypeId);
+                    await this.plotData();
+                    this.syncModalInputs();
+                }
+            });
+        }
+
+        // ── Init date ──────────────────────────────────────────────────
         this.initDateSelect.addEventListener('change', async (e) => {
             if (this.isUpdating) return;
             const date = e.target.value;
-            if (date) {
-                await this.onInitDateChange(date);
-            }
+            if (date) await this.onInitDateChange(date);
         });
-        
-        // Week SLIDER change
+
+        // ── Week slider ────────────────────────────────────────────────
         const weekSlider = document.getElementById('week-slider');
         if (weekSlider) {
             weekSlider.addEventListener('input', (e) => {
                 const week = parseInt(e.target.value);
-                // Update label in real-time as slider moves
-                const currentWeekLabel = document.getElementById('current-week-label');
-                if (currentWeekLabel) {
-                    currentWeekLabel.textContent = `Week ${week}`;
-                }
-                // Update the hidden select for backward compatibility
-                const weekSelect = document.getElementById('week');
-                if (weekSelect) weekSelect.value = week;
-                // Update date display
+                const lbl = document.getElementById('current-week-label');
+                if (lbl) lbl.textContent = `Week ${week}`;
+                if (this.weekSelect) this.weekSelect.value = week;
                 this.updateWeekDates(week);
             });
-            
-            // Only re-plot when slider stops (change event)
             weekSlider.addEventListener('change', async (e) => {
                 if (this.isUpdating) return;
                 const week = parseInt(e.target.value);
-                // Update hidden select
-                const weekSelect = document.getElementById('week');
-                if (weekSelect) weekSelect.value = week;
+                if (this.weekSelect) this.weekSelect.value = week;
                 await this.onWeekChange(week);
             });
         }
-        
-        // Opacity change
+
+        // ── Opacity ────────────────────────────────────────────────────
         this.opacitySlider.addEventListener('input', (e) => {
-            const opacity = e.target.value;
-            this.opacityValue.textContent = `${opacity}%`;
-            this.weatherMap.setLayerOpacity(opacity);
+            this.opacityValue.textContent = `${e.target.value}%`;
+            this.weatherMap.setLayerOpacity(e.target.value);
         });
-        
-        
-        // Reset view button
+
+        // ── Reset view ─────────────────────────────────────────────────
         const resetBtn = document.getElementById('reset-view');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.weatherMap.resetView();
-            });
-        }
-        
-        // ============================================
-        // AUTO-SCALE HELPERS
-        // ============================================
-        
+        if (resetBtn) resetBtn.addEventListener('click', () => this.weatherMap.resetView());
+
+        // ── Auto-scale helpers ─────────────────────────────────────────
         const autoScaleAll = async (source) => {
-            console.log(`Auto-scale all data (${source})`);
             this.weatherMap.useViewportAutoScale = false;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
             this.syncModalInputs();
         };
-        
         const autoScaleViewport = async (source) => {
-            console.log(`Auto-scale viewport (${source})`);
             this.weatherMap.useViewportAutoScale = true;
             this.weatherMap._pendingAutoScale = true;
             await this.plotData();
             this.syncModalInputs();
         };
-        
-        // Sidebar auto-scale buttons
-        const autoScaleBtn = document.getElementById('auto-scale');
-        if (autoScaleBtn) {
-            autoScaleBtn.addEventListener('click', () => autoScaleAll('sidebar'));
-        }
-        
-        const autoScaleViewportBtn = document.getElementById('auto-scale-viewport');
-        if (autoScaleViewportBtn) {
-            autoScaleViewportBtn.addEventListener('click', () => autoScaleViewport('sidebar'));
-        }
-        
-        // VMin/VMax inputs
+
+        document.getElementById('auto-scale')?.addEventListener('click', () => autoScaleAll('sidebar'));
+        document.getElementById('auto-scale-viewport')?.addEventListener('click', () => autoScaleViewport('sidebar'));
+
+        // ── VMin / VMax inputs ─────────────────────────────────────────
         const vminInput = document.getElementById('vmin');
         if (vminInput) {
             vminInput.addEventListener('change', async () => {
@@ -166,7 +227,6 @@ class UIController {
                 }
             });
         }
-        
         const vmaxInput = document.getElementById('vmax');
         if (vmaxInput) {
             vmaxInput.addEventListener('change', async () => {
@@ -179,84 +239,42 @@ class UIController {
                 }
             });
         }
-        
-        // ============================================
-        // FLOATING LEGEND CLICK
-        // ============================================
-        const floatingLegend = document.getElementById('floating-legend');
-        if (floatingLegend) {
-            floatingLegend.addEventListener('click', () => {
-                console.log('Floating legend clicked');
-                openColorPicker();
-            });
-        }
-        
-        // ============================================
-        // MODAL BUTTONS
-        // ============================================
-        
-        // Modal Apply button
-        const modalApply = document.getElementById('modal-apply');
-        if (modalApply) {
-            modalApply.addEventListener('click', async () => {
-                const min = parseFloat(document.getElementById('modal-vmin').value);
-                const max = parseFloat(document.getElementById('modal-vmax').value);
-                
-                if (!isNaN(min) && !isNaN(max)) {
-                    // Turn off auto-scale since user manually set values
-                    this.weatherMap.useAutoScale = false;
-                    this.weatherMap.currentMin = min;
-                    this.weatherMap.currentMax = max;
-                    
-                    // Update sidebar inputs
-                    document.getElementById('vmin').value = min;
-                    document.getElementById('vmax').value = max;
-                    
-                    // Apply and re-plot
-                    this.weatherMap.setManualRange(min, max);
-                    await this.plotData();
-                }
-                closeColorPicker();
-            });
-        }
-        
-        // Modal Auto All button
-        const modalAutoAll = document.getElementById('modal-auto-all');
-        if (modalAutoAll) {
-            modalAutoAll.addEventListener('click', () => autoScaleAll('modal'));
-        }
-        
-        // Modal Auto Viewport button
-        const modalAutoViewport = document.getElementById('modal-auto-viewport');
-        if (modalAutoViewport) {
-            modalAutoViewport.addEventListener('click', () => autoScaleViewport('modal'));
-        }
-        
-        // ============================================
-        // SIDEBAR TOGGLE
-        // ============================================
-        const sidebar = document.getElementById('sidebar');
+
+        // ── Floating legend ────────────────────────────────────────────
+        document.getElementById('floating-legend')?.addEventListener('click', () => openColorPicker());
+
+        // ── Modal buttons ──────────────────────────────────────────────
+        document.getElementById('modal-apply')?.addEventListener('click', async () => {
+            const min = parseFloat(document.getElementById('modal-vmin').value);
+            const max = parseFloat(document.getElementById('modal-vmax').value);
+            if (!isNaN(min) && !isNaN(max)) {
+                this.weatherMap.useAutoScale = false;
+                this.weatherMap.currentMin = min;
+                this.weatherMap.currentMax = max;
+                document.getElementById('vmin').value = min;
+                document.getElementById('vmax').value = max;
+                await this.plotData();
+            }
+            closeColorPicker();
+        });
+
+        document.getElementById('modal-auto-all')?.addEventListener('click', () => autoScaleAll('modal'));
+        document.getElementById('modal-auto-viewport')?.addEventListener('click', () => autoScaleViewport('modal'));
+
+        // ── Sidebar toggle ─────────────────────────────────────────────
+        const sidebar       = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
-        
         const toggleSidebar = () => {
             if (!sidebar) return;
-            const isCollapsed = sidebar.classList.toggle('collapsed');
-            if (sidebarToggle) {
-                sidebarToggle.innerHTML = isCollapsed ? '▶' : '◀';
-            }
-            localStorage.setItem('sidebar-collapsed', isCollapsed);
-            setTimeout(() => {
-                this.weatherMap.leafletMap.invalidateSize();
-            }, 350);
+            const collapsed = sidebar.classList.toggle('collapsed');
+            if (sidebarToggle) sidebarToggle.innerHTML = collapsed ? '▶' : '◀';
+            localStorage.setItem('sidebar-collapsed', collapsed);
+            setTimeout(() => this.weatherMap.leafletMap.invalidateSize(), 350);
         };
-        
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', toggleSidebar);
-        }
-        
-        // Keyboard shortcuts
+        sidebarToggle?.addEventListener('click', toggleSidebar);
+
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'q' && 
+            if (e.key === 'q' &&
                 document.activeElement.tagName !== 'INPUT' &&
                 document.activeElement.tagName !== 'TEXTAREA' &&
                 document.activeElement.tagName !== 'SELECT') {
@@ -265,11 +283,11 @@ class UIController {
             }
         });
     }
-    
+
     // ============================================
     // DATA LOADING
     // ============================================
-    
+
     async loadInitialData() {
         try {
             document.getElementById('loading').classList.add('active');
@@ -282,279 +300,202 @@ class UIController {
             alert('Failed to load data catalog. Please check your connection.');
         }
     }
-    
+
     populateDates() {
         const dates = this.dataLoader.getAvailableDates();
-        
         this.initDateSelect.innerHTML = '<option value="">Select date</option>';
-        
         dates.forEach(date => {
-            const option = document.createElement('option');
-            option.value = date;
-            option.textContent = this.formatDate(date);
-            this.initDateSelect.appendChild(option);
+            const opt = document.createElement('option');
+            opt.value = date;
+            opt.textContent = this.formatDate(date);
+            this.initDateSelect.appendChild(opt);
         });
-        
-        if (dates.length > 0) {
-            this.initDateSelect.value = dates[0];
-        }
+        if (dates.length > 0) this.initDateSelect.value = dates[0];
     }
-    
+
     formatDate(dateString) {
         let year, month, day;
-        
         if (dateString.includes('-')) {
             [year, month, day] = dateString.split('-');
         } else if (dateString.length === 8) {
-            year = dateString.substring(0, 4);
+            year  = dateString.substring(0, 4);
             month = dateString.substring(4, 6);
-            day = dateString.substring(6, 8);
-        } else {
-            return dateString;
-        }
-        
+            day   = dateString.substring(6, 8);
+        } else return dateString;
         const date = new Date(year, month - 1, day);
-        
         if (isNaN(date.getTime())) return dateString;
-        
-        return date.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        return date.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     }
-    
+
+    // ============================================
+    // CHANGE HANDLERS
+    // ============================================
+
     async onInitDateChange(initDate) {
         if (!initDate || this.isUpdating) return;
-        
-        const selectedVariable = this.variableSelect.value;
-        this.populateWeeks(initDate, selectedVariable);
-        
-        if (selectedVariable) {
-            const week = this.weekSelect.value;
-            if (week) {
-                await this.plotData();
-            }
-        }
+        const variable = this.variableSelect.value;
+        this.populateWeeks(initDate, variable);
+        // Re-check layer type availability for the new date
+        if (variable) await this.populateLayerTypes(variable, initDate);
+        if (variable && this.weekSelect.value) await this.plotData();
     }
-    
+
     async onVariableChange(variable) {
         if (!variable || this.isUpdating) return;
-        
         const initDate = this.initDateSelect.value;
-        
         if (initDate) {
             this.populateWeeks(initDate, variable);
-            const week = this.weekSelect.value;
-            if (week) {
-                await this.plotData();
-            }
+            await this.populateLayerTypes(variable, initDate);
         }
+        if (initDate && this.weekSelect.value) await this.plotData();
     }
-    
+
     async onWeekChange(week) {
         if (!week || this.isUpdating) return;
-        
         this.updateWeekDates(week);
         await this.plotData();
     }
-    
+
     populateWeeks(initDate, variable) {
         if (!initDate || !variable) return;
-        
         const weeks = this.dataLoader.getAvailableWeeks(initDate, variable);
-        
-        // Update hidden select
         this.weekSelect.innerHTML = '<option value="">Select week</option>';
-        
         if (weeks.length === 0) {
             this.weekSelect.innerHTML += '<option value="" disabled>No weeks available</option>';
             return;
         }
-        
         weeks.forEach(week => {
-            const option = document.createElement('option');
-            option.value = week;
-            option.textContent = `Week ${week}`;
-            this.weekSelect.appendChild(option);
+            const opt = document.createElement('option');
+            opt.value = week;
+            opt.textContent = `Week ${week}`;
+            this.weekSelect.appendChild(opt);
         });
-        
-        // Update slider range
+
         const weekSlider = document.getElementById('week-slider');
         if (weekSlider) {
             weekSlider.min = Math.min(...weeks);
             weekSlider.max = Math.max(...weeks);
             weekSlider.step = 1;
-            
-            // Update labels
-            const weekMinLabel = document.getElementById('week-min-label');
-            const weekMaxLabel = document.getElementById('week-max-label');
-            if (weekMinLabel) weekMinLabel.textContent = `W${Math.min(...weeks)}`;
-            if (weekMaxLabel) weekMaxLabel.textContent = `W${Math.max(...weeks)}`;
+            document.getElementById('week-min-label').textContent = `W${Math.min(...weeks)}`;
+            document.getElementById('week-max-label').textContent = `W${Math.max(...weeks)}`;
         }
-        
-        // Auto-select Week 1
+
         const defaultWeek = weeks.includes(1) ? 1 : weeks[0];
         this.weekSelect.value = defaultWeek;
-        
-        // Set slider to default week
         if (weekSlider) {
             weekSlider.value = defaultWeek;
-            const currentWeekLabel = document.getElementById('current-week-label');
-            if (currentWeekLabel) {
-                currentWeekLabel.textContent = `Week ${defaultWeek}`;
-            }
+            const lbl = document.getElementById('current-week-label');
+            if (lbl) lbl.textContent = `Week ${defaultWeek}`;
         }
-        
         this.updateWeekDates(defaultWeek);
     }
-    
+
     updateWeekDates(week) {
         const initDate = this.initDateSelect.value;
         if (!initDate || !week) return;
-        
         let date;
         if (initDate.includes('-')) {
             date = new Date(initDate);
         } else if (initDate.length === 8) {
-            const year = initDate.substring(0, 4);
-            const month = initDate.substring(4, 6);
-            const day = initDate.substring(6, 8);
-            date = new Date(year, month - 1, day);
+            date = new Date(+initDate.substring(0,4), +initDate.substring(4,6) - 1, +initDate.substring(6,8));
         }
-        
         if (date && !isNaN(date.getTime())) {
-            const startDate = new Date(date);
-            startDate.setDate(startDate.getDate() + (week - 1) * 7);
-            
-            const endDate = new Date(startDate);
-            endDate.setDate(endDate.getDate() + 6);
-            
-            const options = { month: 'short', day: 'numeric' };
-            const endOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-            
-            this.weekDates.textContent = 
-                `${startDate.toLocaleDateString('en-US', options)} - ${endDate.toLocaleDateString('en-US', endOptions)}`;
+            const start = new Date(date);
+            start.setDate(start.getDate() + (week - 1) * 7);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 6);
+            this.weekDates.textContent =
+                `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
         }
     }
-    
+
     async autoSelectAndPlot() {
         const dates = this.dataLoader.getAvailableDates();
         if (dates.length === 0) return;
-        
+
         const firstDate = dates[0];
         this.initDateSelect.value = firstDate;
-        
         this.variableSelect.value = 'temp';
-        
+
         this.populateWeeks(firstDate, 'temp');
-        
+        await this.populateLayerTypes('temp', firstDate);
         await this.plotData();
     }
-    
+
     async plotData() {
-        const initDate = this.initDateSelect.value;
-        const variable = this.variableSelect.value;
-        const week = this.weekSelect.value;
-        
+        const initDate    = this.initDateSelect.value;
+        const variable    = this.variableSelect.value;
+        const week        = this.weekSelect.value;
+        const layerTypeId = this.getActiveLayerType();
+
         if (!initDate || !variable || !week) return;
-        
+
         this.isUpdating = true;
-        
         try {
-            await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week));
+            await this.weatherMap.loadAndDisplayWeather(initDate, variable, parseInt(week), layerTypeId);
         } catch (error) {
             console.error('Failed to plot data:', error);
         } finally {
             this.isUpdating = false;
         }
     }
-    
+
     updateTimestamp() {
         fetch(`${CONFIG.dataBaseUrl}/weekly/catalog.json?t=${Date.now()}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data.last_updated) {
-                    const lastUpdate = new Date(data.last_updated);
-                    document.getElementById('update-time').textContent = 
-                        `Last updated: ${lastUpdate.toLocaleString()}`;
+                    document.getElementById('update-time').textContent =
+                        `Last updated: ${new Date(data.last_updated).toLocaleString()}`;
                 }
             })
-            .catch(error => console.error('Failed to fetch timestamp:', error));
+            .catch(err => console.error('Failed to fetch timestamp:', err));
     }
 }
 
 // ============================================
-// COLOR PICKER MODAL FUNCTIONS (GLOBAL)
+// COLOR PICKER MODAL (global functions)
 // ============================================
 
-window.openColorPicker = function() {
+window.openColorPicker = function () {
     const modal = document.getElementById('colorpicker-modal');
-    if (!modal) {
-        console.error('Modal not found!');
-        return;
-    }
-    
-    console.log('Opening color picker modal');
-    
-    // Show the modal
+    if (!modal) return;
     modal.style.display = 'flex';
     modal.classList.add('active');
-    
-    // Sync inputs from sidebar to modal
+
     const vminInput = document.getElementById('vmin');
     const vmaxInput = document.getElementById('vmax');
     const modalVmin = document.getElementById('modal-vmin');
     const modalVmax = document.getElementById('modal-vmax');
-    
-    if (vminInput && modalVmin) {
-        modalVmin.value = vminInput.value;
-    }
-    if (vmaxInput && modalVmax) {
-        modalVmax.value = vmaxInput.value;
-    }
-    
-    // Update the preview legend inside the modal
-    if (window.appInstance && window.appInstance.weatherMap && window.appInstance.variableSelect) {
-        const variable = window.appInstance.variableSelect.value;
-        if (variable) {
-            window.appInstance.weatherMap.updateLegend(variable);
-        }
+    if (vminInput && modalVmin) modalVmin.value = vminInput.value;
+    if (vmaxInput && modalVmax) modalVmax.value = vmaxInput.value;
+
+    if (window.appInstance?.weatherMap && window.appInstance.variableSelect) {
+        const variable    = window.appInstance.variableSelect.value;
+        const layerTypeId = window.appInstance.getActiveLayerType();
+        if (variable) window.appInstance.weatherMap.updateLegend(variable, layerTypeId);
     }
 };
 
-window.closeColorPicker = function() {
+window.closeColorPicker = function () {
     const modal = document.getElementById('colorpicker-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('active');
-    }
+    if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
 };
 
-// ESC key closes modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         const modal = document.getElementById('colorpicker-modal');
-        if (modal && modal.classList.contains('active')) {
-            closeColorPicker();
-        }
+        if (modal?.classList.contains('active')) closeColorPicker();
     }
 });
 
-// Click overlay to close
 document.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('colorpicker-overlay');
-    if (overlay) {
-        overlay.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeColorPicker();
-        });
-    }
+    document.getElementById('colorpicker-overlay')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeColorPicker();
+    });
 });
 
-// Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
-    const app = new UIController();
-    window.appInstance = app;
+    window.appInstance = new UIController();
 });
