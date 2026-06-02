@@ -126,8 +126,8 @@ const CONFIG = {
         precip: { defaultMin: -30,  defaultMax: 30  },
         cape:   { defaultMin: -500, defaultMax: 500 },
         w500:   { defaultMin: -0.3, defaultMax: 0.3 },
-        d2m:   { defaultMin: -500, defaultMax: 500 },
-        tcw:   { defaultMin: -5, defaultMax: 5 },
+        d2m:   { defaultMin: -5, defaultMax: 5 },
+        tcw:   { defaultMin: -10, defaultMax: 10 },
     },
 
     // ─────────────────────────────────────────────────────────────────────

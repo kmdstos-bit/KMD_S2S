@@ -402,7 +402,7 @@ class WeatherMap {
             }
         });
 
-        return new gridLayer({ tileSize: 256, opacity: 1.0 });
+        return new gridLayer({ tileSize: 256, opacity: weatherMap.layerOpacity });;
     }
 
     // ============================================
@@ -588,7 +588,10 @@ class WeatherMap {
     // ============================================
 
     setLayerOpacity(opacity) {
-        if (this.currentLayer) this.currentLayer.setOpacity(opacity / 100);
+    this.layerOpacity = opacity / 100;
+    if (this.currentLayer) {
+        this.currentLayer.setOpacity(this.layerOpacity);
+    }
     }
 
     // ============================================
