@@ -478,19 +478,19 @@ class WeatherMap {
         // dry = brown/red, wet = blue
         if (variable === 'precip') {
             return [
-                '#7f3b08',
-                '#b35806',
-                '#e08214',
-                '#fdb863',
-                '#fee0b6',
-                '#f7f7f7',
-                '#d8daeb',
-                '#b2abd2',
-                '#8073ac',
-                '#542788',
-                '#2b8cbe',
-                '#0868ac',
-                '#084081'
+                '#67001f',
+                '#a50026',
+                '#d73027',
+                '#f46d43',
+                '#fdae61',
+                '#fee090',
+                '#ffffff',
+                '#e0f3f8',
+                '#abd9e9',
+                '#74add1',
+                '#4393c3',
+                '#2166ac',
+                 '#053061',
             ];
         }
 
@@ -515,12 +515,12 @@ class WeatherMap {
 
        if (scheme === 'probability') {
             return [
-                'purple',      // 0
+                '#561dd0',      // 0
                 '#08306b',     // 1
                 '#2171b5',     // 10
                 '#6baed6',     // 25
-                'lightgreen',  // 45
-                'yellow',      // 55
+                '#39e56d',  // 45
+                '#f4fc13',     // 55
                 '#fd8d3c',     // 75
                 '#d7301f',     // 90
                 '#7f0000'      // 99-100

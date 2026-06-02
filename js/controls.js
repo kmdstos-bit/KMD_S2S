@@ -139,9 +139,9 @@ class UIController {
             if (!variable) return;
             this.weatherMap.updateVariableDefaults(variable, 'mean');
             // Reset layer type to mean when variable changes, then repopulate
-            if (this.layerTypeSelect) {
-                this.layerTypeSelect.dataset.lastValue = 'mean';
-            }
+            // if (this.layerTypeSelect) {
+            //     this.layerTypeSelect.dataset.lastValue = 'mean';
+            // }
             await this.onVariableChange(variable);
         });
 
