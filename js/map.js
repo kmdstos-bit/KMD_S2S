@@ -631,11 +631,26 @@ class WeatherMap {
         marker.style.left    = (pct * 100).toFixed(2) + '%';
         marker.style.display = 'block';
 
-        let formatted;
-        if (Math.abs(value) < 0.01 && value !== 0) formatted = value.toFixed(3);
-        else if (Math.abs(value) < 1)               formatted = value.toFixed(2);
-        else if (Math.abs(value) < 100)             formatted = value.toFixed(1);
-        else                                         formatted = Math.round(value).toString();
+    let formatted;
+
+    const abs = Math.abs(value);
+
+    if (abs === 0) {
+        formatted = "0";
+    } 
+    else if (abs < 0.01) {
+        // very small numbers → keep precision but limit noise
+        formatted = value.toPrecision(3);
+    } 
+    else if (abs < 1) {
+        formatted = value.toPrecision(3);
+    } 
+    else if (abs < 100) {
+        formatted = value.toFixed(1);
+    } 
+    else {
+        formatted = Math.round(value).toString();
+    }
 
         bubble.textContent = `${formatted} ${unit}`;
 

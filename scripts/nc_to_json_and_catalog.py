@@ -162,7 +162,7 @@ def grid_info(da: xr.DataArray) -> dict:
 
 def clean_values(values: np.ndarray) -> np.ndarray:
     """Round floats and replace NaN/inf with None for JSON serialisation."""
-    values = np.where(np.isfinite(values), np.round(values.astype(float), 1), np.nan)
+    values = np.where(np.isfinite(values), np.round(values.astype(float), 4), np.nan)
     return np.where(np.isnan(values), None, values)
 
 

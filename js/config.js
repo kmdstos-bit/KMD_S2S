@@ -208,7 +208,7 @@ const CONFIG = {
             defaultMax: 0.1,
             absoluteMin: -1,
             absoluteMax: 1,
-            step: 0.001
+            step: 0.005
         },
         u10: {
             label: 'Weekly Mean 10m U-Wind',
