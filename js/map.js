@@ -33,7 +33,7 @@ class WeatherMap {
             zoomControl: true,
             zoomSnap: 0.25,
             zoomDelta: 0.25,
-            maxBounds: [[-35, -35], [22, 75]],
+            maxBounds: [[-35, -18], [22, 51]],
             maxBoundsViscosity: 0.8
         });
 
@@ -81,7 +81,7 @@ class WeatherMap {
             const lat = e.latlng.lat.toFixed(4);
             const lng = e.latlng.lng.toFixed(4);
             document.querySelector('.coord-display').innerHTML =
-                `📍 ${lat}°, ${lng}° | Zoom: ${this.leafletMap.getZoom()}`;
+                `📍 ${lat}°, ${lng}°}`;
             this.updateLegendHoverMarker(this.getValueAtLatLng(e.latlng.lat, e.latlng.lng));
         });
 
