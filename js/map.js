@@ -81,7 +81,7 @@ class WeatherMap {
             const lat = e.latlng.lat.toFixed(4);
             const lng = e.latlng.lng.toFixed(4);
             document.querySelector('.coord-display').innerHTML =
-                `📍 ${lat}°, ${lng}°}`;
+                `📍 ${lat}°, ${lng}°`;
             this.updateLegendHoverMarker(this.getValueAtLatLng(e.latlng.lat, e.latlng.lng));
         });
 
@@ -551,9 +551,10 @@ class WeatherMap {
                 '#ffff00', '#ffcc00', '#ff9900', '#ff6600',
                 '#ff3300', '#cc0000', '#990000', '#800080'
             ],
-            humidity: [
-                '#fff7fb','#ece7f2','#d0d1e6','#a6bddb',
-                '#74a9cf','#3690c0','#0570b0','#045a8d','#023858','#011428'
+           humidity: [
+                '#ffffcc', '#ffeda0', '#fed976', '#c7e9b4',
+                '#7fcdbb', '#41ab5d', '#238b45', '#2c7fb8',
+                '#225ea8', '#0c2c84'
             ],
             wind: [
                 '#ffffff','#e6f0ff','#cce0ff','#99ccff',
