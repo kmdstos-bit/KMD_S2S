@@ -42,7 +42,7 @@ const CONFIG = {
             defaultMax: null,
         },
         anom_p25: {
-            label: 'Anomaly vs P25 (25th percentile)',
+            label: 'Anomaly from P25',
             group: 'Anomaly vs climate quantile',
             prefix: 'anomclim_{var}_P25',
             unit: null,          // same unit as variable
@@ -51,7 +51,7 @@ const CONFIG = {
             defaultMax: null,
         },
         anom_p50: {
-            label: 'Anomaly vs P50 (median)',
+            label: 'Anomaly from P50',
             group: 'Anomaly vs climate quantile',
             prefix: 'anomclim_{var}_P50',
             unit: null,
@@ -60,7 +60,7 @@ const CONFIG = {
             defaultMax: null,
         },
         anom_p75: {
-            label: 'Anomaly vs P75 (75th percentile)',
+            label: 'Anomaly from P75',
             group: 'Anomaly vs climate quantile',
             prefix: 'anomclim_{var}_P75',
             unit: null,
@@ -78,7 +78,7 @@ const CONFIG = {
             defaultMax: 100,
         },
         chance_p50: {
-            label: 'Chance of exceeding P50 (median)',
+            label: 'Chance of exceeding P50',
             group: 'Exceedance probability',
             prefix: 'chance2xseed_{var}_P50',
             unit: '%',
@@ -96,7 +96,7 @@ const CONFIG = {
             defaultMax: 100,
         },
         tercile: {
-            label: 'Dominant tercile category',
+            label: '<- Below or Above normal->',
             group: 'Tercile',
             prefix: 'tercilecat_{var}',
             unit: '',
@@ -113,6 +113,8 @@ const CONFIG = {
         precip: ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         cape:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         w500:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
+        d2m:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
+        tcw:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         // others default to ['mean'] only
     },
 
@@ -124,6 +126,8 @@ const CONFIG = {
         precip: { defaultMin: -30,  defaultMax: 30  },
         cape:   { defaultMin: -500, defaultMax: 500 },
         w500:   { defaultMin: -0.3, defaultMax: 0.3 },
+        d2m:   { defaultMin: -500, defaultMax: 500 },
+        tcw:   { defaultMin: -5, defaultMax: 5 },
     },
 
     // ─────────────────────────────────────────────────────────────────────
@@ -131,7 +135,7 @@ const CONFIG = {
     // ─────────────────────────────────────────────────────────────────────
     variables: {
         temp: {
-            label: 'Weekly Mean Temperature',
+            label: '2 Metre Temperature',
             unit: '°C',
             colorScheme: 'temperature',
             defaultMin: 15,
@@ -141,7 +145,7 @@ const CONFIG = {
             step: 1
         },
         precip: {
-            label: 'Weekly Total Precipitation',
+            label: 'Total Precipitation',
             unit: 'mm',
             colorScheme: 'precipitation',
             defaultMin: 0,
@@ -151,7 +155,7 @@ const CONFIG = {
             step: 5
         },
         tcw: {
-            label: 'Weekly Mean Total Column Water',
+            label: 'Total Column Water',
             unit: 'kg/m²',
             colorScheme: 'humidity',
             defaultMin: 0,
@@ -161,7 +165,7 @@ const CONFIG = {
             step: 5
         },
         cape: {
-            label: 'Weekly Mean CAPE',
+            label: 'CAPE',
             unit: 'J/kg',
             colorScheme: 'temperature',
             defaultMin: 0,
@@ -171,7 +175,7 @@ const CONFIG = {
             step: 100
         },
         d2m: {
-            label: 'Weekly Mean Dewpoint Temperature',
+            label: '2 Metre Dewpoint Temperature',
             unit: '°C',
             colorScheme: 'humidity',
             defaultMin: 10,
@@ -181,7 +185,7 @@ const CONFIG = {
             step: 1
         },
         mx2t6: {
-            label: 'Weekly Mean Max Temperature',
+            label: 'Max Temperature',
             unit: '°C',
             colorScheme: 'temperature',
             defaultMin: 15,
@@ -191,7 +195,7 @@ const CONFIG = {
             step: 1
         },
         mn2t6: {
-            label: 'Weekly Mean Min Temperature',
+            label: 'Min Temperature',
             unit: '°C',
             colorScheme: 'temperature',
             defaultMin: 15,
@@ -201,7 +205,7 @@ const CONFIG = {
             step: 1
         },
         w500: {
-            label: 'Weekly Mean 500hPa Vertical Wind',
+            label: '500hPa Vertical Wind',
             unit: 'Pa/s',
             colorScheme: 'temperature',
             defaultMin: -0.1,
@@ -211,7 +215,7 @@ const CONFIG = {
             step: 0.005
         },
         u10: {
-            label: 'Weekly Mean 10m U-Wind',
+            label: '10m U-Wind',
             unit: 'm/s',
             colorScheme: 'wind',
             defaultMin: -10,
@@ -221,7 +225,7 @@ const CONFIG = {
             step: 1
         },
         v10: {
-            label: 'Weekly Mean 10m V-Wind',
+            label: '10m V-Wind',
             unit: 'm/s',
             colorScheme: 'wind',
             defaultMin: -10,
@@ -231,7 +235,7 @@ const CONFIG = {
             step: 1
         },
         u700: {
-            label: 'Weekly Mean 700hPa U-Wind',
+            label: '700hPa U-Wind',
             unit: 'm/s',
             colorScheme: 'wind',
             defaultMin: 0,
@@ -241,7 +245,7 @@ const CONFIG = {
             step: 1
         },
         v700: {
-            label: 'Weekly Mean 700hPa V-Wind',
+            label: '700hPa V-Wind',
             unit: 'm/s',
             colorScheme: 'wind',
             defaultMin: -15,
