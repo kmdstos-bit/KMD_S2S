@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-06-02T07:56:29.329896Z",
+  "last_updated": "2026-06-02T09:16:05.633243Z",
   "dates": [
     "20260531",
     "20260530",
@@ -1255,6 +1255,160 @@
           6
         ],
         "count": 6
+      },
+      "anomclim_d2m_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_d2m_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_d2m_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_tcw_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_tcw_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_tcw_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_d2m_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_d2m_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_d2m_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_tcw_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_tcw_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_tcw_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "tercilecat_d2m": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "tercilecat_tcw": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
       }
     },
     "20260531": {
@@ -1611,6 +1765,237 @@
         "count": 6
       },
       "tercilecat_w500": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_cape_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_cape_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_cape_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_d2m_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_d2m_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_d2m_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_tcw_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_tcw_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "anomclim_tcw_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_cape_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_cape_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_cape_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_d2m_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_d2m_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_d2m_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_tcw_P25": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_tcw_P50": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "chance2xseed_tcw_P75": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "tercilecat_cape": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "tercilecat_d2m": {
+        "weeks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "count": 6
+      },
+      "tercilecat_tcw": {
         "weeks": [
           1,
           2,

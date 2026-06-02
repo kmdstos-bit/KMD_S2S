@@ -359,7 +359,7 @@ class WeatherMap {
                         const cellLonE = lonMin + col * lonStep + lonStep / 2;
                         if (cellLonE < tileBounds.getWest()) continue;
                         if (cellLonW > tileBounds.getEast()) continue;
-                        const [r, g, b, a] = weatherMap.valueToColor(val, range.min, range.max, colorScale);
+                        const [r, g, b, a] = weatherMap.valueToColor(val, range.min, range.max, colorScale,layerTypeId);
                         if (a < 0.99) continue;
                         const nwPx = map.project([cellLatN, cellLonW], coords.z);
                         const sePx = map.project([cellLatS, cellLonE], coords.z);
@@ -384,7 +384,7 @@ class WeatherMap {
                         const cellLonE = lonMin + col * lonStep + lonStep / 2;
                         if (cellLonE < tileBounds.getWest()) continue;
                         if (cellLonW > tileBounds.getEast()) continue;
-                        const [r, g, b, a] = weatherMap.valueToColor(val, range.min, range.max, colorScale);
+                        const [r, g, b, a] = weatherMap.valueToColor(val, range.min, range.max, colorScale,layerTypeId);
                         if (a >= 0.99 || a <= 0.01) continue;
                         const nwPx = map.project([cellLatN, cellLonW], coords.z);
                         const sePx = map.project([cellLatS, cellLonE], coords.z);
@@ -409,7 +409,20 @@ class WeatherMap {
     // COLOR UTILITIES
     // ============================================
 
-    valueToColor(value, min, max, colorScale) {
+    valueToColor(value, min, max, colorScale,layerTypeId = null) {
+
+    if (layerTypeId === 'probability') {
+
+        const bounds = [0,1,10,25,45,55,75,90,99,100];
+
+        for (let i = 0; i < bounds.length - 1; i++) {
+            if (value <= bounds[i + 1]) {
+                return this.parseColor(colorScale[i]);
+            }
+        }
+
+        return this.parseColor(colorScale[colorScale.length - 1]);
+    }
         if (min === max) return this.parseColor(colorScale[Math.floor(colorScale.length / 2)]);
         let norm = Math.max(0, Math.min(1, (value - min) / (max - min)));
         const idx   = norm * (colorScale.length - 1);
@@ -460,24 +473,59 @@ class WeatherMap {
 
         // ── Layer-type specific schemes ─────────────────────────────────
         if (scheme === 'anomaly') {
-            // Blue → white → red  (diverging)
+
+        // Precipitation anomaly:
+        // dry = brown/red, wet = blue
+        if (variable === 'precip') {
             return [
-                '#053061', '#2166ac', '#4393c3', '#74add1',
-                '#abd9e9', '#e0f3f8', '#ffffff',
-                '#fee090', '#fdae61', '#f46d43',
-                '#d73027', '#a50026', '#67001f'
+                '#7f3b08',
+                '#b35806',
+                '#e08214',
+                '#fdb863',
+                '#fee0b6',
+                '#f7f7f7',
+                '#d8daeb',
+                '#b2abd2',
+                '#8073ac',
+                '#542788',
+                '#2b8cbe',
+                '#0868ac',
+                '#084081'
             ];
         }
 
-        if (scheme === 'probability') {
-            // White → deep blue  (sequential)
+        // Other anomalies:
+        // below normal = blue, above normal = red
+        return [
+            '#053061',
+            '#2166ac',
+            '#4393c3',
+            '#74add1',
+            '#abd9e9',
+            '#e0f3f8',
+            '#ffffff',
+            '#fee090',
+            '#fdae61',
+            '#f46d43',
+            '#d73027',
+            '#a50026',
+            '#67001f'
+        ];
+    }
+
+       if (scheme === 'probability') {
             return [
-                '#f7fbff', '#deebf7', '#c6dbef',
-                '#9ecae1', '#6baed6', '#4292c6',
-                '#2171b5', '#08519c', '#08306b'
+                'purple',      // 0
+                '#08306b',     // 1
+                '#2171b5',     // 10
+                '#6baed6',     // 25
+                'lightgreen',  // 45
+                'yellow',      // 55
+                '#fd8d3c',     // 75
+                '#d7301f',     // 90
+                '#7f0000'      // 99-100
             ];
         }
-
         if (scheme === 'tercile') {
             // Below(brown) → Normal(grey) → Above(green) — categorical-ish
             return [

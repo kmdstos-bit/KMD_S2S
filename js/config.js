@@ -101,8 +101,8 @@ const CONFIG = {
             prefix: 'tercilecat_{var}',
             unit: '',
             colorScheme: 'tercile',
-            defaultMin: 0,
-            defaultMax: 2,
+            defaultMin: -100,
+            defaultMax: 100,
         },
     },
 
