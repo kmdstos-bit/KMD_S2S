@@ -96,7 +96,7 @@ const CONFIG = {
             defaultMax: 100,
         },
         tercile: {
-            label: '<- Below or Above normal->',
+            label: 'Members Below or Above normal',
             group: 'Tercile',
             prefix: 'tercilecat_{var}',
             unit: '',

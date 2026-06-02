@@ -151,6 +151,15 @@ select, input[type="number"] {
     font-family: inherit;
 }
 
+#layer-type optgroup {
+    background: #252525;
+    color: #5b9bd5;
+    font-weight: 600;
+    font-size: 0.95em;
+    font-family: inherit
+}
+
+
 select:hover, input[type="number"]:hover {
     border-color: rgba(91, 155, 213, 0.4);
     background: rgba(255, 255, 255, 0.06);
