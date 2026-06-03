@@ -380,7 +380,7 @@ def main():
             files=glob.glob(f'{date_dir}\\*{name}*')
             print(f'{ncdf_dir}\\*{name}*')
             gather=[file.split('forecast')[1].split('42')[0][1:-1] for file in files]
-
+            append_dict = {}
             for ens_var in gather:
                 variable=ens_var.split(name)[1].split('_')[1]
                 percentile=ens_var.split('_P')[-1]
