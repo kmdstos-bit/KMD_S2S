@@ -376,20 +376,20 @@ def main():
         types=['anomclim','chance2xseed','tercilecat']
         descriptions=['chance to exceed','anomaly from','<-- below normal  above normal -->']
 
-        for descript,name in zip(descriptions,types):
-            files=glob.glob(f'{date_dir}\\*{name}*')
-            print(f'{ncdf_dir}\\*{name}*')
+        for descript,typ in zip(descriptions,types):
+            files=glob.glob(f'ncdf_data/{date_dir.name}/*{typ}*')
+            print('files')
             gather=[file.split('forecast')[1].split('42')[0][1:-1] for file in files]
             append_dict = {}
             for ens_var in gather:
-                variable=ens_var.split(name)[1].split('_')[1]
+                variable=ens_var.split(typ)[1].split('_')[1]
                 percentile=ens_var.split('_P')[-1]
                 try: 
                     int(percentile)
                     description=f'{descript} {percentile}th %ile'
                 except:
                     description=descript
-                if name != 'anomclim':
+                if typ != 'anomclim':
                     unit='%'
                 else:
                     unit=VAR_METADATA[variable]['unit']

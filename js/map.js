@@ -37,7 +37,7 @@ class WeatherMap {
             maxBoundsViscosity: 0.8
         });
 
-        const mapBounds = L.latLngBounds([[-35, -35], [22, 75]]);
+        const mapBounds = L.latLngBounds([[-35, -18], [22, 51]]);
         const enforceMinZoom = () => {
             const minZoom = this.leafletMap.getBoundsZoom(mapBounds, true);
             this.leafletMap.setMinZoom(minZoom);
