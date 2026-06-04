@@ -416,10 +416,10 @@ class UIController {
 
         const firstDate = dates[0];
         this.initDateSelect.value = firstDate;
-        this.variableSelect.value = 'temp';
+        this.variableSelect.value = 'precip';
 
-        this.populateWeeks(firstDate, 'temp');
-        await this.populateLayerTypes('temp', firstDate);
+        this.populateWeeks(firstDate, 'precip');
+        await this.populateLayerTypes('precip', firstDate);
         await this.plotData();
     }
 
