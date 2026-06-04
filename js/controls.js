@@ -356,9 +356,7 @@ class UIController {
 
         if (initDate) {
             this.populateWeeks(initDate, variable);
-            if (!CONFIG.isWindVariable(variable)) {
-                await this.populateLayerTypes(variable, initDate);
-            }
+            await this.populateLayerTypes(variable, initDate);
         }
         if (initDate && this.weekSelect.value) await this.plotData();
     }
