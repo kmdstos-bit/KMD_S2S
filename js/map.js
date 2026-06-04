@@ -412,10 +412,11 @@ class WeatherMap {
                     velocityScale: 0.006,
                     opacity: 0.97,
                     colorScale: ['#ffffff', '#ccddff', '#99bbff'],
-                    particleAge: 64,
-                    particleMultiplier: 1 / 200,
-                    lineWidth: 1.5,
+                    particleAge: 90,
+                    particleMultiplier: 1 / 120,
+                    lineWidth: 2,
                     frameRate: 20,
+                    velocityScale: 0.008,
                 });
                 this.velocityLayer.addTo(this.leafletMap);
             } else {
@@ -724,12 +725,6 @@ class WeatherMap {
 
         // ── Variable-specific schemes ───────────────────────────────────
         const variableScales = {
-            windspeed: [
-                '#f7fbff', '#deebf7', '#c6dbef', '#9ecae1',
-                '#6baed6', '#4292c6', '#2171b5', '#08519c',
-                '#08306b', '#ffcc00', '#ff9900', '#ff6600',
-                '#ff3300', '#cc0000', '#800000',
-            ],
             temperature: [
                 '#000080','#0000cc','#0033ff','#0066ff',
                 '#0099ff','#00ccff','#00ffff','#00ffcc',
@@ -749,7 +744,7 @@ class WeatherMap {
                 '#7fcdbb', '#41ab5d', '#238b45', '#2c7fb8',
                 '#225ea8', '#0c2c84'
             ],
-            wind: [
+            windspeed: [
                 '#440154','#481b6d','#46327e',
                 '#3f4788','#365c8d','#2e6e8e',
                 '#277f8e','#21918c','#1fa187',

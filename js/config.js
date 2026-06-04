@@ -115,8 +115,6 @@ const CONFIG = {
         w500:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         d2m:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         tcw:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
-        wind10m: ['mean'],
-        wind700: ['mean'],
         // others default to ['mean'] only
     },
 
@@ -221,7 +219,7 @@ const CONFIG = {
             unit: 'm/s',
             colorScheme: 'windspeed',
             defaultMin: 0,
-            defaultMax: 15,
+            defaultMax: 10,
             absoluteMin: 0,
             absoluteMax: 50,
             step: 1,
@@ -234,7 +232,7 @@ const CONFIG = {
             unit: 'm/s',
             colorScheme: 'windspeed',
             defaultMin: 0,
-            defaultMax: 20,
+            defaultMax: 15,
             absoluteMin: 0,
             absoluteMax: 60,
             step: 1,
