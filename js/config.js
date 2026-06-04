@@ -115,6 +115,8 @@ const CONFIG = {
         w500:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         d2m:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
         tcw:   ['mean','anom_p25','anom_p50','anom_p75','chance_p25','chance_p50','chance_p75','tercile'],
+        wind10m: ['mean'],
+        wind700: ['mean'],
         // others default to ['mean'] only
     },
 
@@ -214,45 +216,31 @@ const CONFIG = {
             absoluteMax: 1,
             step: 0.005
         },
-        u10: {
-            label: '10m U-Wind',
+        wind10m: {
+            label: '10m Wind Speed',
             unit: 'm/s',
-            colorScheme: 'wind',
-            defaultMin: -10,
-            defaultMax: 10,
-            absoluteMin: -100,
-            absoluteMax: 100,
-            step: 1
-        },
-        v10: {
-            label: '10m V-Wind',
-            unit: 'm/s',
-            colorScheme: 'wind',
-            defaultMin: -10,
-            defaultMax: 10,
-            absoluteMin: -100,
-            absoluteMax: 100,
-            step: 1
-        },
-        u700: {
-            label: '700hPa U-Wind',
-            unit: 'm/s',
-            colorScheme: 'wind',
+            colorScheme: 'windspeed',
             defaultMin: 0,
             defaultMax: 15,
             absoluteMin: 0,
-            absoluteMax: 100,
-            step: 1
+            absoluteMax: 50,
+            step: 1,
+            isWind: true,
+            uVar: 'u10',
+            vVar: 'v10',
         },
-        v700: {
-            label: '700hPa V-Wind',
+        wind700: {
+            label: '700hPa Wind Speed',
             unit: 'm/s',
-            colorScheme: 'wind',
-            defaultMin: -15,
-            defaultMax: 15,
-            absoluteMin: -100,
-            absoluteMax: 100,
-            step: 1
+            colorScheme: 'windspeed',
+            defaultMin: 0,
+            defaultMax: 20,
+            absoluteMin: 0,
+            absoluteMax: 60,
+            step: 1,
+            isWind: true,
+            uVar: 'u700',
+            vVar: 'v700',
         },
     },
 
@@ -305,6 +293,11 @@ const CONFIG = {
         const lt = this.layerTypes[layerTypeId];
         if (lt && lt.unit !== null) return lt.unit;
         return this.variables[varKey] ? this.variables[varKey].unit : '';
+    },
+
+    /** Return true when varKey is a combined wind variable needing U+V loading. */
+    isWindVariable(varKey) {
+        return !!(this.variables[varKey] && this.variables[varKey].isWind);
     },
 
     // Map defaults

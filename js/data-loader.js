@@ -65,8 +65,10 @@ class DataLoader {
     /**
      * Return which layerTypeIds actually exist on the server for this
      * date + variable combination.  Always includes 'mean'.
+     * Wind variables skip server checks (they only support 'mean').
      */
     async getAvailableLayerTypes(initDate, varKey) {
+        if (CONFIG.isWindVariable(varKey)) return [{ id: 'mean', exists: true }];
         const candidates = CONFIG.getAvailableLayerTypes(varKey);
         const results = await Promise.all(
             candidates.map(async (id) => {
@@ -108,6 +110,38 @@ class DataLoader {
         }
 
         throw new Error(`Could not load layer "${layerTypeId}" for ${varKey} on ${initDate} week ${week}. ${lastError ? lastError.message : ''}`);
+    }
+
+    /**
+     * Load both U and V component files for a wind variable and return
+     * { uData, vData, speedData, rasterData } where speedData.values is
+     * sqrt(u²+v²) and rasterData is the parsed grid info.
+     */
+    async loadWindData(initDate, varKey, week) {
+        const varCfg  = CONFIG.variables[varKey];
+        const uVarKey = varCfg.uVar;   // e.g. 'u10'
+        const vVarKey = varCfg.vVar;   // e.g. 'v10'
+
+        const [uRaw, vRaw] = await Promise.all([
+            this.loadWeatherData(initDate, uVarKey, week, 'mean'),
+            this.loadWeatherData(initDate, vVarKey, week, 'mean'),
+        ]);
+
+        const uData = this.parseWeatherData(uRaw);
+        const vData = this.parseWeatherData(vRaw);
+
+        // Compute wind speed grid
+        const speedValues = uData.values.map((row, r) =>
+            row.map((u, c) => {
+                const v = vData.values[r] && vData.values[r][c];
+                if (u === null || v === null || u === undefined || v === undefined) return null;
+                return Math.sqrt(u * u + v * v);
+            })
+        );
+
+        const speedData = { ...uData, values: speedValues };
+
+        return { uData, vData, speedData };
     }
 
     // ============================================

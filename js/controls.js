@@ -344,9 +344,18 @@ class UIController {
     async onVariableChange(variable) {
         if (!variable || this.isUpdating) return;
         const initDate = this.initDateSelect.value;
+
+        // For wind variables, hide the ensemble statistic section
+        const layerGroup = document.querySelector('.control-group #layer-type')?.closest('.control-group');
+        if (layerGroup) {
+            layerGroup.style.display = CONFIG.isWindVariable(variable) ? 'none' : '';
+        }
+
         if (initDate) {
             this.populateWeeks(initDate, variable);
-            await this.populateLayerTypes(variable, initDate);
+            if (!CONFIG.isWindVariable(variable)) {
+                await this.populateLayerTypes(variable, initDate);
+            }
         }
         if (initDate && this.weekSelect.value) await this.plotData();
     }
@@ -418,6 +427,10 @@ class UIController {
         this.initDateSelect.value = firstDate;
         this.variableSelect.value = 'precip';
 
+        // Ensure layer type section is visible for the default variable
+        const layerGroup = document.querySelector('#layer-type')?.closest('.control-group');
+        if (layerGroup) layerGroup.style.display = '';
+
         this.populateWeeks(firstDate, 'precip');
         await this.populateLayerTypes('precip', firstDate);
         await this.plotData();
@@ -427,7 +440,7 @@ class UIController {
         const initDate    = this.initDateSelect.value;
         const variable    = this.variableSelect.value;
         const week        = this.weekSelect.value;
-        const layerTypeId = this.getActiveLayerType();
+        const layerTypeId = CONFIG.isWindVariable(variable) ? 'mean' : this.getActiveLayerType();
 
         if (!initDate || !variable || !week) return;
 

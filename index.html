@@ -10,6 +10,8 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/style.css">
+    <!-- leaflet-velocity for wind animation -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-velocity@2.1.2/dist/leaflet-velocity.min.css" />
 </head>
 <body>
 <div id="app">
@@ -60,10 +62,8 @@
                 <option value="mx2t6">Weekly Mean Max Temperature (°C)</option>
                 <option value="mn2t6">Weekly Mean Min Temperature (°C)</option>
                 <option value="w500">Weekly Mean 500hPa Vertical Wind (Pa/s)</option>
-                <option value="u10">Weekly Mean 10m U-Wind (m/s)</option>
-                <option value="v10">Weekly Mean 10m V-Wind (m/s)</option>
-                <option value="u700">Weekly Mean 700hPa U-Wind (m/s)</option>
-                <option value="v700">Weekly Mean 700hPa V-Wind (m/s)</option>
+                <option value="wind10m">10m Wind Speed + Animation (m/s)</option>
+                <option value="wind700">700hPa Wind Speed + Animation (m/s)</option>
             </select>
 
             <!-- Layer type -->
@@ -263,6 +263,7 @@
 
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@2.1.2/dist/leaflet-velocity.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/data-loader.js"></script>
 <script src="js/map.js"></script>

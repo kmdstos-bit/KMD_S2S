@@ -2,6 +2,7 @@ class WeatherMap {
     constructor() {
         this.map = null;
         this.currentLayer = null;
+        this.velocityLayer = null;   // leaflet-velocity animation layer
         this.dataLoader = new DataLoader();
         this.leafletMap = null;
         this._hasInitialized = false;
@@ -288,6 +289,11 @@ class WeatherMap {
     // ============================================
 
     async loadAndDisplayWeather(initDate, variable, week, layerTypeId = 'mean') {
+        // Wind variables get a special dual-load path
+        if (CONFIG.isWindVariable(variable)) {
+            return this.loadAndDisplayWind(initDate, variable, week);
+        }
+
         try {
             document.getElementById('loading').classList.add('active');
             const currentCenter = this.leafletMap.getCenter();
@@ -296,6 +302,10 @@ class WeatherMap {
             if (this.currentLayer) {
                 this.leafletMap.removeLayer(this.currentLayer);
                 this.currentLayer = null;
+            }
+            if (this.velocityLayer) {
+                this.leafletMap.removeLayer(this.velocityLayer);
+                this.velocityLayer = null;
             }
 
             const data       = await this.dataLoader.loadWeatherData(initDate, variable, week, layerTypeId);
@@ -342,6 +352,145 @@ class WeatherMap {
             document.getElementById('loading').classList.remove('active');
             alert('Failed to load weather data.\n\nError: ' + error.message);
         }
+    }
+
+    // ============================================
+    // WIND (speed raster + velocity animation)
+    // ============================================
+
+    async loadAndDisplayWind(initDate, variable, week) {
+        try {
+            document.getElementById('loading').classList.add('active');
+            const currentCenter = this.leafletMap.getCenter();
+            const currentZoom   = this.leafletMap.getZoom();
+
+            // Clear existing layers
+            if (this.currentLayer) {
+                this.leafletMap.removeLayer(this.currentLayer);
+                this.currentLayer = null;
+            }
+            if (this.velocityLayer) {
+                this.leafletMap.removeLayer(this.velocityLayer);
+                this.velocityLayer = null;
+            }
+
+            const { uData, vData, speedData } = await this.dataLoader.loadWindData(initDate, variable, week);
+            this._currentRasterData = speedData;
+
+            // Reset colour scale on variable change
+            const variableChanged = this._lastVariable && this._lastVariable !== variable;
+            if (variableChanged) this.updateVariableDefaults(variable, 'mean');
+            if (this._pendingAutoScale) {
+                this.autoScaleToData(speedData.values, variable, speedData, 'mean');
+                this._pendingAutoScale = false;
+            }
+            this._lastVariable  = variable;
+            this._lastLayerType = 'mean';
+
+            // ── 1. Windspeed raster background ────────────────────────
+            this.currentLayer = this.createGridCellLayer(speedData, variable, 'mean');
+            if (this.currentLayer) {
+                this.currentLayer.addTo(this.leafletMap);
+                this.updateLegend(variable, 'mean');
+            }
+
+            // ── 2. Velocity (streamline) animation ────────────────────
+            if (typeof L.velocityLayer !== 'undefined') {
+                const velData = this._buildVelocityData(uData, vData);
+                this.velocityLayer = L.velocityLayer({
+                    displayValues: true,
+                    displayOptions: {
+                        velocityType: variable === 'wind700' ? '700hPa Wind' : '10m Wind',
+                        position: 'bottomleft',
+                        emptyString: 'No wind data',
+                        angleConvention: 'bearingCW',
+                        speedUnit: 'm/s',
+                        displayEmptyString: 'No wind data',
+                    },
+                    data: velData,
+                    maxVelocity: variable === 'wind700' ? 30 : 20,
+                    velocityScale: 0.006,
+                    opacity: 0.97,
+                    colorScale: ['#ffffff', '#ccddff', '#99bbff'],
+                    particleAge: 64,
+                    particleMultiplier: 1 / 200,
+                    lineWidth: 1.5,
+                    frameRate: 20,
+                });
+                this.velocityLayer.addTo(this.leafletMap);
+            } else {
+                console.warn('leaflet-velocity not loaded — wind animation unavailable');
+            }
+
+            if (!this._hasInitialized) {
+                this.leafletMap.fitBounds([
+                    [speedData.southEdge, speedData.westEdge],
+                    [speedData.northEdge, speedData.eastEdge],
+                ]);
+                this._hasInitialized = true;
+            } else {
+                this.leafletMap.setView(currentCenter, currentZoom, { animate: false });
+            }
+
+            document.getElementById('loading').classList.remove('active');
+        } catch (error) {
+            console.error('Wind load error:', error);
+            document.getElementById('loading').classList.remove('active');
+            alert('Failed to load wind data.\n\nError: ' + error.message);
+        }
+    }
+
+    /**
+     * Convert parsed U/V raster data into the GeoJSON-like structure
+     * expected by leaflet-velocity.
+     */
+    _buildVelocityData(uData, vData) {
+        const nRows = uData.nRows;
+        const nCols = uData.nCols;
+        const la1   = uData.latMax;   // first (northernmost) latitude
+        const la2   = uData.latMin;
+        const lo1   = uData.lonMin;
+        const lo2   = uData.lonMax;
+        const dx    = uData.lonStep;
+        const dy    = uData.latStep;
+
+        // leaflet-velocity wants a flat row-major array, north→south
+        const uFlat = [];
+        const vFlat = [];
+        for (let r = 0; r < nRows; r++) {
+            for (let c = 0; c < nCols; c++) {
+                const u = (uData.values[r] && uData.values[r][c] != null) ? uData.values[r][c] : 0;
+                const v = (vData.values[r] && vData.values[r][c] != null) ? vData.values[r][c] : 0;
+                uFlat.push(u);
+                // leaflet-velocity uses meteorological convention (v positive = northward)
+                vFlat.push(v);
+            }
+        }
+
+        return [
+            {
+                header: {
+                    parameterCategory: 2,
+                    parameterNumber: 2,
+                    la1, la2, lo1, lo2,
+                    dx, dy,
+                    nx: nCols,
+                    ny: nRows,
+                },
+                data: uFlat,
+            },
+            {
+                header: {
+                    parameterCategory: 2,
+                    parameterNumber: 3,
+                    la1, la2, lo1, lo2,
+                    dx, dy,
+                    nx: nCols,
+                    ny: nRows,
+                },
+                data: vFlat,
+            },
+        ];
     }
 
     resetView() {
@@ -575,6 +724,12 @@ class WeatherMap {
 
         // ── Variable-specific schemes ───────────────────────────────────
         const variableScales = {
+            windspeed: [
+                '#f7fbff', '#deebf7', '#c6dbef', '#9ecae1',
+                '#6baed6', '#4292c6', '#2171b5', '#08519c',
+                '#08306b', '#ffcc00', '#ff9900', '#ff6600',
+                '#ff3300', '#cc0000', '#800000',
+            ],
             temperature: [
                 '#000080','#0000cc','#0033ff','#0066ff',
                 '#0099ff','#00ccff','#00ffff','#00ffcc',
@@ -602,12 +757,12 @@ class WeatherMap {
             ],
         };
 
-        // Map variable colorScheme keys to the scales above
         const varSchemeMap = {
+            windspeed: 'windspeed',
             temperature: 'temperature',
             precipitation: 'precipitation',
             humidity: 'humidity',
-            wind: 'wind',
+            wind: 'windspeed',
         };
 
         // Also handle variable-name fallbacks (for backward compat)
@@ -615,7 +770,8 @@ class WeatherMap {
             temp: 'temperature', mx2t6: 'temperature', mn2t6: 'temperature', cape: 'temperature',
             precip: 'precipitation',
             tcw: 'humidity', d2m: 'humidity',
-            w500: 'wind', u10: 'wind', v10: 'wind', u700: 'wind', v700: 'wind',
+            w500: 'wind',
+            wind10m: 'windspeed', wind700: 'windspeed',
         };
 
         const resolvedScheme = varSchemeMap[scheme] || varNameMap[variable] || 'temperature';
