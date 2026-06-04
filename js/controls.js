@@ -345,11 +345,14 @@ class UIController {
         if (!variable || this.isUpdating) return;
         const initDate = this.initDateSelect.value;
 
-        // For wind variables, hide the ensemble statistic section
-        const layerGroup = document.querySelector('.control-group #layer-type')?.closest('.control-group');
-        if (layerGroup) {
-            layerGroup.style.display = CONFIG.isWindVariable(variable) ? 'none' : '';
-        }
+        // For wind variables, hide only the layer-type label+select (not the whole group)
+        // const isWind = CONFIG.isWindVariable(variable);
+        // const layerTypeLabel = document.querySelector('label[for="layer-type"]');
+        // const layerTypeSelect = document.getElementById('layer-type');
+        // const layerTypeNote = document.getElementById('layer-type-note');
+        // if (layerTypeLabel)  layerTypeLabel.style.display  = isWind ? 'none' : '';
+        // if (layerTypeSelect) layerTypeSelect.style.display = isWind ? 'none' : '';
+        // if (layerTypeNote)   layerTypeNote.style.display   = 'none';
 
         if (initDate) {
             this.populateWeeks(initDate, variable);
@@ -427,9 +430,11 @@ class UIController {
         this.initDateSelect.value = firstDate;
         this.variableSelect.value = 'precip';
 
-        // Ensure layer type section is visible for the default variable
-        const layerGroup = document.querySelector('#layer-type')?.closest('.control-group');
-        if (layerGroup) layerGroup.style.display = '';
+        // Ensure layer type elements are visible for the default variable (precip)
+        const layerTypeLabel  = document.querySelector('label[for="layer-type"]');
+        const layerTypeSelect = document.getElementById('layer-type');
+        if (layerTypeLabel)  layerTypeLabel.style.display  = '';
+        if (layerTypeSelect) layerTypeSelect.style.display = '';
 
         this.populateWeeks(firstDate, 'precip');
         await this.populateLayerTypes('precip', firstDate);
