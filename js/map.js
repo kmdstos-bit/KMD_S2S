@@ -409,11 +409,11 @@ class WeatherMap {
                     },
                     data: velData,
                     maxVelocity: variable === 'wind700' ? 30 : 20,
-                    velocityScale: 0.006,
-                    opacity: 0.97,
-                    colorScale: ['#ffffff', '#ccddff', '#99bbff'],
+                    velocityScale: 0.01,
+                    opacity: 1,
+                    colorScale: ['#ffffff', '#ffffff'],
                     particleAge: 90,
-                    particleMultiplier: 1 / 120,
+                    particleMultiplier: 1 / 90,
                     lineWidth: 2,
                     frameRate: 20,
                     velocityScale: 0.008,
@@ -749,7 +749,7 @@ class WeatherMap {
                 '#3f4788','#365c8d','#2e6e8e',
                 '#277f8e','#21918c','#1fa187',
                 '#35b779','#6ece58','#90d743',
-                '#a6cd26','#ccd517','#b9a91d'
+                '#b5de2b','#cfe72a','#dfe84a'
             ],
         };
 
