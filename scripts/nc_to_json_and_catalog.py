@@ -300,7 +300,7 @@ def update_catalog(catalog: dict, init_date: str,
     return catalog
 
 
-def prune_old_forecasts(catalog: dict, output_dir: Path,
+def prune_old_forecasts(catalog: dict, output_dir: Path,ncdf_dir: Path,
                         keep: int) -> tuple[dict, bool]:
     """
     Retain only the `keep` most-recent forecast dates.
@@ -317,6 +317,12 @@ def prune_old_forecasts(catalog: dict, output_dir: Path,
         if folder.exists():
             shutil.rmtree(folder)
             print(f"  🗑  Deleted {folder}")
+        
+        nc_folder=ncdf_dir / f'{old_date[:4]}-{old_date[4:6]}-{old_date[6:]}'
+        if nc_folder.exists():
+            shutil.rmtree(nc_folder)
+            print(f"  🗑  Deleted {nc_folder}")
+
         catalog["data"].pop(old_date, None)
 
     catalog["dates"]        = all_dates[:keep]
@@ -440,7 +446,7 @@ def main():
                 any_change = True
 
     # Prune old forecasts
-    catalog, pruned = prune_old_forecasts(catalog, out_dir, keep)
+    catalog, pruned = prune_old_forecasts(catalog, out_dir,ncdf_dir, keep)
     any_change = any_change or pruned
 
     if any_change:
