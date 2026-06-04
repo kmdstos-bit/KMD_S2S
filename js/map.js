@@ -129,8 +129,50 @@ class WeatherMap {
         };
     }
 
-    getDataRange(values, rasterData) {
-        if (this.useViewportAutoScale && rasterData) return this.getVisibleDataRange(values, rasterData);
+    /**
+     * Returns true when the active colorscale is diverging — i.e. it is
+     * centred on zero (white / neutral) and runs to opposing hues on each
+     * side.  We detect this from the layer type's colorScheme so that the
+     * autoscale logic can symmetrise the range around zero instead of just
+     * stretching min→max.
+     *
+     * The schemes that need this treatment are:
+     *   'anomaly'  — blue↔white↔red  /  brown↔white↔green
+     *   'tercile'  — brown↔grey↔green  (also centred on normal = zero)
+     */
+    isDivergingScale(layerTypeId) {
+        const lt = CONFIG.layerTypes[layerTypeId];
+        const scheme = lt && lt.colorScheme;
+        return scheme === 'anomaly' || scheme === 'tercile';
+    }
+
+    /**
+     * Shared rounding/symmetrising logic used by both getDataRange and
+     * getVisibleDataRange.
+     *
+     * For sequential scales: snap min and max outward to a clean step.
+     * For diverging scales:  take the larger of |rawMin| and |rawMax|,
+     *   round it up to a clean step, then set both edges to ±that value so
+     *   that zero always sits exactly at the midpoint of the colour bar.
+     */
+    _buildRange(rawMin, rawMax, isDiverging) {
+        if (isDiverging) {
+            // Extend to whichever extreme is further from zero, so the
+            // neutral midpoint (white) stays pinned at value = 0.
+            const absExtent = Math.max(Math.abs(rawMin), Math.abs(rawMax));
+            const range = absExtent * 2;
+            const step = range < 1 ? 0.1 : range < 10 ? 1 : range < 50 ? 5 : 10;
+            const snapped = Math.ceil(absExtent / step) * step;
+            return { min: -snapped, max: snapped };
+        }
+        // Sequential: just snap each edge outward independently.
+        const range = rawMax - rawMin;
+        const step = range < 1 ? 0.1 : range < 10 ? 1 : range < 50 ? 5 : 10;
+        return { min: Math.floor(rawMin / step) * step, max: Math.ceil(rawMax / step) * step };
+    }
+
+    getDataRange(values, rasterData, layerTypeId) {
+        if (this.useViewportAutoScale && rasterData) return this.getVisibleDataRange(values, rasterData, layerTypeId);
         let min = Infinity, max = -Infinity;
         for (const row of values) {
             if (!row) continue;
@@ -142,12 +184,10 @@ class WeatherMap {
             }
         }
         if (min === Infinity || max === -Infinity) return { min: 0, max: 100 };
-        const range = max - min;
-        let step = range < 1 ? 0.1 : range < 10 ? 1 : range < 50 ? 5 : 10;
-        return { min: Math.floor(min / step) * step, max: Math.ceil(max / step) * step };
+        return this._buildRange(min, max, this.isDivergingScale(layerTypeId));
     }
 
-    getVisibleDataRange(values, rasterData) {
+    getVisibleDataRange(values, rasterData, layerTypeId) {
         const bounds = this.leafletMap.getBounds();
         const latStep = rasterData.latStep || 1.5;
         const lonStep = rasterData.lonStep || 1.5;
@@ -169,7 +209,7 @@ class WeatherMap {
                 lastC = c;
             }
         }
-        if (firstR === -1 || firstC === -1) return this.getDataRange(values, null);
+        if (firstR === -1 || firstC === -1) return this.getDataRange(values, null, layerTypeId);
         let min = Infinity, max = -Infinity;
         for (let r = firstR; r <= lastR; r++) {
             if (!values[r]) continue;
@@ -182,13 +222,11 @@ class WeatherMap {
             }
         }
         if (min === Infinity || max === -Infinity) return { min: 0, max: 100 };
-        const range = max - min;
-        let step = range < 1 ? 0.1 : range < 10 ? 1 : range < 50 ? 5 : 10;
-        return { min: Math.floor(min / step) * step, max: Math.ceil(max / step) * step };
+        return this._buildRange(min, max, this.isDivergingScale(layerTypeId));
     }
 
     autoScaleToData(values, variable, rasterData, layerTypeId) {
-        const dataRange = this.getDataRange(values, rasterData);
+        const dataRange = this.getDataRange(values, rasterData, layerTypeId);
         this._lastDataRange = dataRange;
         this.useAutoScale = true;
         const vminInput = document.getElementById('vmin');
