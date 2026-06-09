@@ -34,11 +34,11 @@ class WeatherMap {
             zoomControl: true,
             zoomSnap: 0.25,
             zoomDelta: 0.25,
-            maxBounds: [[-35, -18], [22, 51]],
+            maxBounds: [[-35, -21], [22.5, 55.5]],
             maxBoundsViscosity: 0.8
         });
 
-        const mapBounds = L.latLngBounds([[-35, -18], [22, 51]]);
+        const mapBounds = L.latLngBounds([[-35, -21], [22.5, 51.5]]);
         const enforceMinZoom = () => {
             const minZoom = this.leafletMap.getBoundsZoom(mapBounds, true);
             this.leafletMap.setMinZoom(minZoom);
