@@ -180,54 +180,68 @@ jobs:
             main_repo/private_plots/**/*.png
             main_repo/private_data/**/*.csv
 
-  email:
+  build-matrix:
     needs: download
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.sheet.outputs.matrix }}
+    steps:
+      - name: Install rclone
+        run: curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONFIG }}" | base64 -d > ~/.config/rclone/rclone.conf
+
+      - name: Fetch subscriber sheet via rclone
+        id: sheet
+        run: |
+          pip install openpyxl -q
+          rclone copy "gdrive:s2s-emails.xlsx" .
+          python3 - <<'EOF'
+          import json, os, collections
+          import openpyxl
+
+          wb = openpyxl.load_workbook("s2s-emails.xlsx")
+          ws = wb.active
+          rows = list(ws.iter_rows(values_only=True))
+          header, *data = rows
+
+          country_emails = collections.defaultdict(set)
+          for row in data:
+              if not row[1]:
+                  continue
+              email = str(row[1]).strip()
+              for country in str(row[2]).split(","):
+                  country = country.strip()
+                  if country and email:
+                      country_emails[country].add(email)
+
+          KNOWN_COUNTRIES = ["Kenya", "Ghana", "Senegal", "Ethiopia"]
+          matrix = [
+              {"country": c, "emails": ",".join(sorted(country_emails[c]))}
+              for c in KNOWN_COUNTRIES
+              if country_emails[c]
+          ]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"matrix={json.dumps({'include': matrix})}\n")
+          EOF
+
+  email:
+    needs: build-matrix
     strategy:
-      matrix:
-        include:
-          - country: Kenya
-            emails: >
-              josh@rhizaresearch.org,
-              genevieve@rhizaresearch.org,
-              chriskngetich@gmail.com,
-              gacherujemimah@gmail.com,
-              mrforecasting@gmail.com,
-              koderaphillips@yahoo.com,
-              marykilavi@yahoo.com,
-              hwkimani1@gmail.com,
-              chrisfunk@ucsb.edu,
-              alec.jong@gmail.com,
-              uiyov@student.kit.edu,
-              sshukla@ucsb.edu
-          - country: Ghana
-            emails: >
-              josh@rhizaresearch.org,
-              genevieve@rhizaresearch.org,
-              C.M.Wainwright@leeds.ac.uk,
-              D.J.Parker@leeds.ac.uk,
-              alec.jong@gmail.com,
-          - country: Senegal
-            emails: >
-              josh@rhizaresearch.org,
-              genevieve@rhizaresearch.org,
-              C.M.Wainwright@leeds.ac.uk,
-              D.J.Parker@leeds.ac.uk,
-              alec.jong@gmail.com,
-          - country: Ethiopia
-            emails: >
-              josh@rhizaresearch.org,
-              genevieve@rhizaresearch.org,
-              katiekowal@uchicago.edu,
-              alec.jong@gmail.com,
+      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Get ECMWF lagged date
         id: ecmwf_date
-        run: echo "::set-output name=date::$(date -d '2 days ago' +'%Y-%m-%d')"
+        run: echo "date=$(date -d '2 days ago' +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Download files as artifact
         uses: actions/download-artifact@v4
@@ -253,7 +267,7 @@ jobs:
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/dekadal_precip.png,
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_precip.png,
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_precip_downscaled_clipped.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_medium_range_precip.png,             
+            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_medium_range_precip.png,
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/imerg_Kenya_dekadal.png,
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/imerg_Kenya_weekly.png,
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/chirps_Kenya_dekadal.png,
