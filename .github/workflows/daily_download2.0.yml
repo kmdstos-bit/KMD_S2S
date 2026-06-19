@@ -59,6 +59,7 @@ jobs:
         env:
           MAIN_PATH: ${{ github.workspace }}/main_repo/
           WEBSITE_PATH: ${{ github.workspace }}/website_branch/
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY}}
 
       - name: Perform downscaling
         continue-on-error: true
@@ -179,6 +180,7 @@ jobs:
             main_repo/plots/**/*.png
             main_repo/private_plots/**/*.png
             main_repo/private_data/**/*.csv
+            main_repo/prompts/*.txt
 
   build-matrix:
     needs: download
@@ -248,6 +250,20 @@ jobs:
         with:
           name: s2s_data
 
+      - name: Read forecast summary
+        id: summary
+        if: matrix.country == 'Kenya'
+        run: |
+            python3 -c "
+            import os
+            with open('prompts/digest_${{ steps.ecmwf_date.outputs.date }}.txt') as f:
+              text = f.read()
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('body<<FORECAST_END\n')
+              out.write(text)
+              out.write('\nFORECAST_END\n')
+            "
+
       - name: Email out generated plots for ${{ matrix.country }}
         uses: dawidd6/action-send-mail@v16
         with:
@@ -258,10 +274,12 @@ jobs:
           subject: Daily S2S Outlook
           to: ${{ matrix.emails }}
           from: "${{ matrix.country }} Data Share <info@dashboards.rhizaresearch.org>"
-          body: >
+          body: |
             Attached are dekadal and weekly outlooks and historical station data related
             to the subseasonal forecast. You can also view the data (except for the station
             data) at ${{ github.server_url }}/${{ github.repository }}.
+
+            ${{ steps.summary.outputs.body || '' }}
           reply_to: genevieve@rhizaresearch.org
           attachments: >
             plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/dekadal_precip.png,

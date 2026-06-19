@@ -6,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime, timedelta
+from google import genai
+from google.genai import types
+import geopandas as gpd
 
 today = datetime.today()
 two_days_earlier = today - timedelta(days=2)
@@ -309,3 +312,74 @@ for data in all_ensemble_data:
             else:
                 ds=ds.sel(cat='above-normal')-ds.sel(cat='below-normal')
                 ds.to_netcdf(f'{website_path}/ECMWF_s2s_forecast_{names[i]}_{var_name}_42days_{latlon_str}.nc')
+
+#Short ai summary production
+region_map = {
+    "Nyandarua": "Highlands East of the Rift Valley","Laikipia": "Highlands East of the Rift Valley","Nyeri": "Highlands East of the Rift Valley",
+    "Kirinyaga": "Highlands East of the Rift Valley","Murang'a": "Highlands East of the Rift Valley","Kiambu": "Highlands East of the Rift Valley",
+    "Meru": "Highlands East of the Rift Valley","Embu": "Highlands East of the Rift Valley","Tharaka-Nithi": "Highlands East of the Rift Valley",
+    "Nairobi": "Highlands East of the Rift Valley","Nandi": "Highlands West of the Rift Valley","Kakamega": "Highlands West of the Rift Valley",
+    "Vihiga": "Highlands West of the Rift Valley","Bungoma": "Highlands West of the Rift Valley","Siaya": "Highlands West of the Rift Valley",
+    "Busia": "Highlands West of the Rift Valley","Baringo": "Highlands West of the Rift Valley","Nakuru": "Highlands West of the Rift Valley",
+    "Trans Nzoia": "Highlands West of the Rift Valley","Uasin Gishu": "Highlands West of the Rift Valley","Elgeyo-Marakwet": "Highlands West of the Rift Valley",
+    "West Pokot": "Highlands West of the Rift Valley","Kisii": "Rift Valley and Lake Victoria Basin","Nyamira": "Rift Valley and Lake Victoria Basin",
+    "Kericho": "Rift Valley and Lake Victoria Basin","Bomet": "Rift Valley and Lake Victoria Basin","Kisumu": "Rift Valley and Lake Victoria Basin",
+    "Homa Bay": "Rift Valley and Lake Victoria Basin","Migori": "Rift Valley and Lake Victoria Basin","Narok": "Rift Valley and Lake Victoria Basin",
+    "Mombasa": "Coast","Kilifi": "Coast","Lamu": "Coast","Kwale": "Coast","Marsabit": "Northeastern Kenya","Mandera": "Northeastern Kenya",
+    "Wajir": "Northeastern Kenya","Garissa": "Northeastern Kenya","Isiolo": "Northeastern Kenya","Machakos": "Southeastern Lowlands"
+    ,"Kitui": "Southeastern Lowlands","Makueni": "Southeastern Lowlands","Kajiado": "Southeastern Lowlands","Taita Taveta": "Southeastern Lowlands",
+    "Tana River": "Southeastern Lowlands","Turkana": "Northwestern Kenya","Samburu": "Northwestern Kenya",
+}
+
+states1=gpd.read_file("Kenya_shapes/ken_admin1.shp")
+states1['region'] = states1['adm1_name'].map(region_map)
+regions = states1.dropna(subset=['region']).dissolve(by='region')
+
+promt_unformat={}
+
+for region in states1['region'].unique():
+    promt_clim=gef.clip_by_overlap(m_climate_big.isel(quantile=50).tp, regions, region, threshold=0.15).mean({'latitude','longitude'})
+    promt_anom=gef.clip_by_overlap(ensemble_stats_tp[1].sel(quantile=50).tp, regions, region, threshold=0.15).mean({'latitude','longitude'})
+    anom_prct=promt_anom/promt_clim.rename({'time':'step'}).assign_coords({'step':promt_anom.step.values})*100
+    promt_aboblnrml=gef.clip_by_overlap(ensemble_stats_tp[2].tp, regions, region, threshold=0.15).mean({'latitude','longitude'})
+    prompt_efi=gef.clip_by_overlap(efi.tp, regions, region, threshold=0.15)
+    
+    anom_prct_dict=[{'anom_prct':round(float(i),2)} for i in anom_prct]
+    promt_anom_dict=[{'anom':round(float(i),2)} for i in promt_anom]
+    promt_aboblnrml_dict=[{'p66':float(promt_aboblnrml.isel(step=i)[1]),
+    'p33':float(promt_aboblnrml.isel(step=i)[0]),} for i in range(6)]
+    promt_efi_dict=gef.zone_stats_per_step(prompt_efi)
+    promt_dict={f"week{i+1}": anom_prct_dict[i] | promt_anom_dict[i] | promt_aboblnrml_dict[i] | promt_efi_dict[i] for i, d in enumerate(gef.zone_stats_per_step(prompt_efi))}
+    promt_unformat[region]=promt_dict
+
+with open(f"{prefix}/prompts/system_prompt.md") as f:
+    system_prompt = f.read()
+
+user_prompt = f"""
+Forecast date: {date_str}
+Country: Kenya
+Month: {two_days_earlier.strftime("%B")}
+Zone statistics (6-week forecast):
+{gef.format_prompt_data(promt_unformat)}
+"""
+
+client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+
+response = client.models.generate_content(
+    model="gemini-3.1-flash-lite",
+    contents=user_prompt,
+    config=types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        max_output_tokens=1000,
+    )
+)
+
+summary = response.text
+
+var_ex='''\n \nLegend:\np33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index'''
+
+with open(f'{prefix}/prompts/digest_{date_str}.txt', 'w') as f:
+    f.write(summary+var_ex)

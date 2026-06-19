@@ -16,3 +16,4 @@ requests
 cdsapi
 ecmwf-opendata
 regionmask
+google-genai

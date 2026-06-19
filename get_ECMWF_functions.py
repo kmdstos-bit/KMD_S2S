@@ -342,13 +342,14 @@ def acum_to_instant(data):
 
 def day_mean_6h_accum(temp_data,variable):
     #function to calculate the day maximmum or mimimum of 6 hour temperature variables
+    steps_in_1D=len(temp_data.sel(step=slice(None,np.timedelta64(86400000000000,'ns'))).step)
     if 'mx2t6' in temp_data.keys():
-        if int(len(np.atleast_1d(temp_data.step.values))/4)>1: 
+        if int(len(np.atleast_1d(temp_data.step.values))/steps_in_1D)>1: 
             arrr=[]
-            for i in range(int(len(temp_data.step)/4)):
-                brudi=temp_data[variable].isel(step=slice(0+i*4,4*(i+1))).max(dim='step')
-                brudi=brudi.assign_coords(step=temp_data.isel(step=4*(i+1)-1).step)
-                arrr.append(brudi)
+            for i in range(int(len(temp_data.step)/steps_in_1D)):
+                day_data=temp_data[variable].isel(step=slice(0+i*steps_in_1D,steps_in_1D*(i+1))).max(dim='step')
+                day_data=day_data.assign_coords(step=temp_data.isel(step=slice(0+i*steps_in_1D,steps_in_1D*(i+1))).step.dt.round('D')[-1])
+                arrr.append(day_data)
             temp_day_max=xr.concat(arrr,dim='step')
             if len(variable)>1:
                 for i in variable:
@@ -359,12 +360,12 @@ def day_mean_6h_accum(temp_data,variable):
             raise ValueError(f'⚠️The dataset contains less than 1 day of data⚠️')
         
     if 'mn2t6' in temp_data.keys():
-        if int(len(np.atleast_1d(temp_data.step.values))/4)>1: 
+        if int(len(np.atleast_1d(temp_data.step.values))/steps_in_1D)>1: 
             arrr=[]
-            for i in range(int(len(temp_data.step)/4)):
-                brudi=temp_data[variable].isel(step=slice(0+i*4,4*(i+1))).min(dim='step')
-                brudi=brudi.assign_coords(step=temp_data.isel(step=4*(i+1)-1).step)
-                arrr.append(brudi)
+            for i in range(int(len(temp_data.step)/steps_in_1D)):
+                day_data=temp_data[variable].isel(step=slice(0+i*steps_in_1D,steps_in_1D*(i+1))).min(dim='step')
+                day_data=day_data.assign_coords(step=temp_data.isel(step=slice(0+i*steps_in_1D,steps_in_1D*(i+1))).step.dt.round('D')[-1])
+                arrr.append(day_data)
             temp_day_min=xr.concat(arrr,dim='step')
             if len(variable)>1:
                 for i in variable:
@@ -387,7 +388,7 @@ def day_mean_6h_accum(temp_data,variable):
 
     elif has_min:
         return temp_day_min.mn2t6.to_dataset()
-  
+    
 def week_mean(ds):
     #"calculate weekly mean"
     if int(len(np.atleast_1d(ds.step.values))/7)<1:
@@ -1596,3 +1597,83 @@ def ensemble_plots_quiver(ds_to_plot,m_climate,var,u_name,v_name,save_path,count
         meteogram_double(ds_to_plot,m_climate,lat=latf,lon=lonf,var=var,cityname=major_cities[country][2][i])
         plt.savefig(f'{save_path}/meteogram_{major_cities[country][2][i]}_{var}.png',bbox_inches='tight')
         plt.close()
+
+def clip_by_overlap(ds, regions_gdf, region_name, threshold=0.5, lat_dim='latitude', lon_dim='longitude'):
+    """
+    Clip a dataset to a region, keeping only grid cells with overlap fraction above threshold.
+    
+    Parameters
+    ----------
+    ds : xarray.Dataset or DataArray
+    regions_gdf : GeoDataFrame with region geometries (dissolved, region name as index)
+    region_name : str
+    threshold : float, fraction of cell area that must be inside region (default 0.5)
+    lat_dim, lon_dim : str, dimension names in ds
+    """
+    import numpy as np
+    import xarray as xr
+    from shapely.geometry import box
+
+    region_geom = regions_gdf.loc[[region_name]].geometry.union_all()
+
+    lats = ds[lat_dim].values
+    lons = ds[lon_dim].values
+
+    dlat = float(ds[lat_dim].diff(lat_dim).mean())
+    dlon = float(ds[lon_dim].diff(lon_dim).mean())
+
+    frac = np.zeros((len(lats), len(lons)))
+
+    for i, lat in enumerate(lats):
+        for j, lon in enumerate(lons):
+            cell = box(lon - dlon/2, lat - dlat/2, lon + dlon/2, lat + dlat/2)
+            if region_geom.intersects(cell):
+                frac[i, j] = region_geom.intersection(cell).area / cell.area
+
+    frac_da = xr.DataArray(
+        frac,
+        coords={lat_dim: lats, lon_dim: lons},
+        dims=[lat_dim, lon_dim]
+    )
+
+    return ds.where(frac_da > threshold, drop=True)
+
+def zone_stats_per_step(da_zone):
+    """da_zone: xarray DataArray with dims (step, lat, lon) or similar, already masked to zone"""
+    results = []
+    for step in da_zone.step.values:
+        step_data = da_zone.sel(step=step)
+        flat = step_data.values.flatten()
+        flat = flat[~np.isnan(flat)]
+        total = len(flat)
+        entry = {
+            "efi_pct_above_05": round(float(100 * (flat > 0.5).sum() / total), 1),
+            "efi_pct_above_08": round(float(100 * (flat > 0.8).sum() / total), 1),
+            "efi_max": round(float(flat.max()), 2),
+        }
+        results.append(entry)
+    return results
+
+SKILL = {
+    "week1": "Usually high skill",
+    "week2": "Usually high skill",
+    "week3": "Medium to low skill",
+    "week4": "low skill",
+    "week5": "Climatology almost always better",
+    "week6": "Climatology almost always better",
+}
+
+def format_prompt_data(data: dict) -> str:
+    lines = []
+    for zone, weeks in data.items():
+        lines.append(f"\n{zone}:")
+        for week, stats in weeks.items():
+            lines.append(
+                f"  {week} ({SKILL[week]}): "
+                f"anom={stats['anom_prct']:+.0f}% ({stats['anom']:+.1f}mm), "
+                f"p66={stats['p66']:.0f}%, p33={stats['p33']:.0f}%, "
+                f"EFI>0.5={stats['efi_pct_above_05']:.0f}%, "
+                f"EFI>0.8={stats['efi_pct_above_08']:.0f}%, "
+                f"max_EFI={stats['efi_max']:.2f}"
+            )
+    return "\n".join(lines)

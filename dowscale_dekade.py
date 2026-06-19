@@ -18,7 +18,7 @@ data_dekade=xr.open_dataset(f'data/{date_str}/data_dekade.nc')
 month=int(data_dekade.time.dt.month.values)
 day=int(data_dekade.time.dt.day.values)
 
-districts=gpd.read_file("downscale_data/ken_admin2.shp")
+districts=gpd.read_file("Kenya_shapes/ken_admin2.shp")
 
 
 forecast_files = {
