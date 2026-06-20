@@ -1,0 +1,26 @@
+Forecast summary for 18 June 2026:
+
+Persistent dry conditions across western and northwestern Kenya contrast with a developing wet signal in the eastern highlands and coastal regions heading into the second week.
+
+HIGHLANDS WEST OF THE RIFT VALLEY AND RIFT VALLEY AND LAKE VICTORIA BASIN:
+These regions face a significant dry start to the forecast period. In week 1, both zones show high ensemble agreement for below-normal rainfall, with the Lake Victoria Basin exhibiting particularly strong anomalies (p33=79%, p50anom=-70%, -10.3mm). This dry signal remains consistent through week 2, gradually moderating thereafter but failing to reach climatological norms through the six-week period.
+
+NORTHWESTERN KENYA:
+This region shows the most intense dry signal in the country, with ensemble members firmly locked into below-normal rainfall (p33=93%, p50anom=-79%, -7.0mm) in week 1. This dry trend is projected to persist with high conviction throughout the entire six-week outlook, consistently showing max_EFI values below -0.25.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+After a near-normal week 1, the region shifts toward a wet signal in week 2 (p50anom=+59%, +5.0mm), where 33% of grid cells exceed EFI 0.5. A moderate wet tendency persists from week 3 through week 6, with anomalies becoming more pronounced in the final weeks.
+
+SOUTHEASTERN LOWLANDS:
+Conditions are markedly dry in weeks 1–2 (p33=64% and 65% respectively) before transitioning to neutral conditions in week 3. A weak wet tendency emerges from week 5, though this remains low-skill.
+
+NORTHEASTERN KENYA AND COAST:
+Northeastern Kenya sees a brief, localized wet pulse in week 1 (max_EFI=0.60, 15% of cells exceeding EFI 0.5) before swinging dry in week 2. The Coast region transitions from a dry week 2 to a sustained wet tendency from week 3 through week 6 (p50anom=+40%, +2.9mm by week 6).
+
+Overall, the six-week evolution points to a persistent moisture deficit in the west and northwest, while the eastern and coastal sectors gradually shift toward wetter-than-normal conditions starting from the second week.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
