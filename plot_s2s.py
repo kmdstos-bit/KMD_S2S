@@ -145,7 +145,7 @@ for country in bboxes.keys():
     plt.close()
 
     #plot weekly precip from medium range forecast
-    ds_to_plot_medium=data_weekly_medium.sel(longitude=slice(gef.lon1, gef.lon2),latitude=slice(gef.lat1, gef.lat2))
+    ds_to_plot_medium=gef.ensemble_mean(data_weekly_medium.sel(longitude=slice(gef.lon1, gef.lon2),latitude=slice(gef.lat1, gef.lat2)))
     fig=gef.panel_plot_variable(ds_to_plot_medium,variable='tp',forecast_timestep=ds_to_plot_medium.step.values,cmap=gef.cmap,fontsize=fs,vmin=0,vmax=int(ds_to_plot_medium.quantile(0.99).tp.values))
     plt.savefig(f'{weekly_path}/weekly_medium_range_precip.png',bbox_inches='tight')
     plt.close()

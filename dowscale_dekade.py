@@ -37,7 +37,9 @@ forecast_files = {
     (6, 21): ["ECMWF_tp_forecasts_06-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_18_Great_Horn.nc","June_Dekad3"],
     (7, 1): ["ECMWF_tp_forecasts_07-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_19_Great_Horn.nc","July_Dekad1"],
     (7, 11): ["ECMWF_tp_forecasts_07-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_20_Great_Horn.nc","July_Dekad2"],
-    (7, 21): ["ECMWF_tp_forecasts_07-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_21_Great_Horn.nc","July_Dekad3"]
+    (7, 21): ["ECMWF_tp_forecasts_07-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_21_Great_Horn.nc","July_Dekad3"],
+    (8, 1): ["ECMWF_tp_forecasts_08-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_22_Great_Horn.nc","August_Dekad1"],
+    (8, 11): ["ECMWF_tp_forecasts_08-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_23_Great_Horn.nc","August_Dekad2"],
 }
 
 try:
