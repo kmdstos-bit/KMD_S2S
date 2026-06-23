@@ -1,0 +1,20 @@
+Forecast summary for 20 June 2026:
+
+A distinct dipole pattern dominates the outlook, with significant dryness expected across the western and northern sectors contrasted by consistent moisture anomalies over the eastern highlands.
+
+HIGHLANDS WEST OF THE RIFT VALLEY, RIFT VALLEY AND LAKE VICTORIA BASIN, AND NORTHWESTERN KENYA:
+These regions face a pronounced dry spell. Northwestern Kenya shows the most persistent signal with high ensemble agreement (p33=86%, p50anom=-70%, -6.2mm in week 1). The Rift Valley and western highlands also show strong dry anomalies through the first two weeks, with the Rift Valley seeing p50anom=-61%, -6.9mm in week 2. While signals weaken in later weeks, the overall dry tendency remains firmly established through week 6 across these western and northern zones.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+This region is the primary area for potential moisture, displaying a consistent above-normal rainfall trend throughout the forecast. In weeks 1 and 2, 33% of grid cells exceed an EFI of 0.5 (max_EFI=0.62), indicating unusual conditions for this season. The anomaly strengthens over time, reaching p50anom=+91%, +6.5mm by week 4, and continuing with a wet tendency through the remainder of the period.
+
+SOUTHEASTERN LOWLANDS, NORTHEASTERN KENYA, AND COAST:
+Conditions are mixed. Southeastern lowlands and the coast start with a dry signal in weeks 1 and 2 (p33=68% and 58% respectively). Northeastern Kenya experiences a brief, minor wet pulse in week 1 (max_EFI=0.59) before shifting dry in week 2. From week 3 onwards, these regions generally trend toward near-normal or slightly above-normal rainfall, with the coast showing the most consistent wet tendency (p50anom=+54%, +3.9mm by week 5).
+
+The six-week outlook indicates a persistent east-west gradient where the eastern highlands receive the brunt of anomalous moisture while the rest of the country remains characteristically dry, particularly in the west and north.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index

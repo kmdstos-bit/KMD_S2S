@@ -1,0 +1,32 @@
+Forecast summary for 19 June 2026:
+
+A distinct dipole in expected precipitation characterizes the coming weeks, with significant dry conditions forecast for the west and a persistent wet signal emerging across the Highlands East of the Rift Valley.
+
+HIGHLANDS WEST OF THE RIFT VALLEY:
+Persistent dry conditions are expected. The region shows a strong dry signal with high ensemble agreement in week 1 (p33=66%, p50anom=-45%, -9.6mm) and week 2 (p33=62%, p50anom=-33%, -6.8mm). While the intensity fluctuates, the dry tendency persists through week 6.
+
+RIFT VALLEY AND LAKE VICTORIA BASIN:
+This region faces the most significant dry deficit in the short term. In week 1, ensemble agreement for dry conditions is high (p33=75%, p50anom=-66%, -9.4mm), with the anomaly remaining pronounced through week 2 (p33=70%, p50anom=-60%, -6.8mm). The dry signal is expected to continue with moderate confidence through the entire six-week period.
+
+NORTHWESTERN KENYA:
+A severe and sustained dry signal dominates. Week 1 shows p33=83% (p50anom=-62%, -5.5mm), and the dry trend remains consistent through week 6, with max EFI values consistently negative, peaking at -0.32 in week 5.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+This region stands out as the only area with a sustained wet signal. Forecasts indicate above-normal rainfall starting immediately, with week 2 showing strong agreement (p50anom=+93%, +7.5mm). Significant EFI values (max EFI=0.66, 33% of grid cells above 0.5) in week 2 warrant monitoring for potential heavy rainfall events.
+
+NORTHEASTERN KENYA:
+Conditions are volatile, shifting from a wet pulse in week 1 (max EFI=0.57) to a sharp dry reversal in week 2 (p33=76%, p50anom=-52%, -1.1mm). Beyond week 2, the signal remains weak and oscillates near climatology.
+
+SOUTHEASTERN LOWLANDS:
+A dry start characterizes the first two weeks (p33=67-71%, p50anom=-52% to -54%), with the signal moderating significantly by week 3 and trending toward near-neutral conditions through the remainder of the period.
+
+COAST:
+The coast transitions from a dry week 2 (p33=69%, p50anom=-33%, -2.8mm) to a consistent wet tendency from week 3 through week 6, with the most notable wet anomaly appearing in week 5 (p50anom=+50%, +3.6mm).
+
+Overall, the six-week outlook suggests a persistent intensification of dry conditions across western and northwestern Kenya, contrasting with a potential multi-week wet phase across the Highlands East of the Rift Valley.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
