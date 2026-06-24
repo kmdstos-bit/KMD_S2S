@@ -1,0 +1,23 @@
+Forecast summary for 22 June 2026:
+
+A distinct spatial divide characterizes this outlook, with a persistent dry signal dominating the western half of the country, while the Highlands East of the Rift Valley and the coast exhibit a tendency toward wetter-than-normal conditions.
+
+HIGHLANDS WEST OF THE RIFT VALLEY, RIFT VALLEY AND LAKE VICTORIA BASIN, AND NORTHWESTERN KENYA:
+These regions face a significant dry signal. Northwestern Kenya is particularly impacted, with high ensemble agreement in week 1 (p33=80%, p50anom=-60%, -4.8mm) through week 2 (p33=89%, p50anom=-68%, -6.7mm). The western highlands and Rift Valley show similar dry tendencies in weeks 1 and 2, with conditions in the Rift Valley reaching p50anom=-55% (-5.8mm) by the second week. These dry conditions are expected to linger throughout the six-week period.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+This region stands out with a wet anomaly in week 1 (p50anom=+74%, +5.8mm), where 33% of grid cells exceed an EFI of 0.5 (max EFI=0.79). While week 2 returns to near-normal levels, a wet signal re-emerges and strengthens from week 3 through week 6.
+
+COAST:
+After a drier-than-normal week 1 (p33=60%, p50anom=-21%, -2.0mm), the region transitions to a consistent wet tendency from week 2 onward. By week 4, the p50anom reaches +47% (+3.6mm), with this wet bias persisting through the end of the forecast window.
+
+NORTHEASTERN KENYA AND SOUTHEASTERN LOWLANDS:
+Both regions exhibit generally dry conditions in the first two weeks. Following this, the signals become muted and oscillate near climatological norms with no strong leanings for the remainder of the forecast period.
+
+Overall, the six-week outlook indicates a persistent moisture deficit across the western and northwestern sectors of the country, contrasted by a developing wet trend for the eastern highlands and the coastal strip.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
