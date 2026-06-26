@@ -1,0 +1,23 @@
+Forecast summary for 24 June 2026:
+
+Highlands east of the Rift Valley face an unusually wet week 1 with significant extreme potential, sharply contrasting with persistent dry conditions prevailing across the western and northwestern sectors of the country.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+This region shows a strong wet signal in week 1 (p50anom=+152%, +10.9mm) with 33% of grid cells exceeding an EFI of 0.8, indicating a risk of extreme rainfall. The wet trend remains elevated throughout the six-week period, with further pulses of above-average precipitation suggested in week 3 (p50anom=+109%, +7.4mm).
+
+HIGHLANDS WEST OF THE RIFT VALLEY, RIFT VALLEY AND LAKE VICTORIA BASIN, AND NORTHWESTERN KENYA:
+These western and northwestern zones are dominated by consistent below-normal rainfall signals. The most significant dryness is in Northwestern Kenya, where high ensemble agreement (p33=82% in week 2) points to sustained precipitation deficits (week 4 p50anom=-55%, -5.7mm). The western highlands and Rift Valley show similar dry tendencies in weeks 1 and 2, though these signals weaken and become more variable by week 3.
+
+NORTHEASTERN KENYA AND SOUTHEASTERN LOWLANDS:
+These areas exhibit near-normal conditions in the short term, with subtle shifts toward weak above-normal tendencies emerging in the latter half of the forecast period.
+
+COAST:
+After a dry week 1 (p50anom=-28%, -2.4mm), the region transitions to a persistent wet tendency from week 2 through week 6, with rainfall anomalies gradually climbing to +50% (+3.7mm) by week 4.
+
+Overall, the six-week outlook depicts a stark moisture split between an anomalously wet eastern highland corridor and an extensively dry western half of the country, with coastal areas trending toward wetter conditions after an initial dry start.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
