@@ -1,0 +1,20 @@
+AI generated Forecast summary for 26 June 2026:
+
+Highlands east of the Rift Valley show a consistent wet signal across the six-week period, contrasting with persistent dryness over northwestern Kenya and the western regions.
+
+HIGHLANDS WEST OF THE RIFT VALLEY, RIFT VALLEY AND LAKE VICTORIA BASIN, NORTHEASTERN KENYA, NORTHWESTERN KENYA, AND SOUTHEASTERN LOWLANDS:
+These regions are characterized by a pronounced dry signal in week 1, with the Rift Valley and Lake Victoria Basin seeing the most significant deficit (p50anom=-77%, -8.0mm, p33=80%). While the west and northwest remain largely dry throughout the forecast, northeastern and southeastern regions trend toward near-normal conditions by week 2.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+This region shows a sustained above-normal rainfall trend. Week 1 begins with a wet signal (p50anom=+43%, +2.9mm) with 33% of grid cells exceeding an EFI of 0.5. This pattern intensifies by week 3 (p50anom=+114%, +7.7mm) and remains elevated through week 6.
+
+COAST:
+After a dry start in week 1 (p50anom=-34%, -2.7mm), the region transitions to above-normal rainfall from week 2 onward (p50anom=+47%, +3.5mm), with moderate ensemble agreement for wetter-than-average conditions persisting through the remainder of the outlook.
+
+Overall, the six-week outlook suggests a persistent north-south split, with the western and northwestern sectors experiencing sustained dry conditions while the eastern highlands and coast lean toward a wetter-than-average season.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
