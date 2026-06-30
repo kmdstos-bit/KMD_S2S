@@ -1,0 +1,23 @@
+Forecast summary for 28 June 2026:
+
+A persistent and intense dry signal dominates northwestern Kenya throughout the outlook, while the eastern highlands show a promising transition toward wetter conditions starting in week 2.
+
+HIGHLANDS WEST OF THE RIFT VALLEY, RIFT VALLEY AND LAKE VICTORIA BASIN:
+These regions face a dry start in week 1, with Northwestern Kenya seeing the most significant deficit (p33=86%, p50anom=-61%, -4.6mm). While the Rift and Lake Victoria Basin show a brief recovery in week 2, the western areas generally trend back toward below-normal rainfall from week 3 through week 5.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+After a near-neutral week 1, this region consistently shifts toward above-normal rainfall from week 2 (p50anom=+71%, +5.0mm) through week 6 (p50anom=+98%, +7.4mm). The ensemble indicates a steady increase in wetter conditions over the next month and a half.
+
+NORTHEASTERN KENYA, SOUTHEASTERN LOWLANDS, COAST:
+These areas exhibit a dry week 1, followed by a noticeable shift toward wetter-than-normal conditions in week 2. The Coast region shows a particularly high potential for a wet pulse in week 2 (p50anom=+73%, +5.4mm, max_EFI=0.52). While the Southeastern Lowlands sustain a mild wet tendency through week 4, the Northeastern region returns to near-normal conditions after its week 2 wet signal.
+
+NORTHWESTERN KENYA:
+This region remains the driest across the country, with very high ensemble agreement (p33=80% to 86%) indicating significant rainfall deficits relative to climatology persisting well into week 4 (p50anom=-59%, -6.4mm).
+
+Overall, the six-week outlook indicates a sharp west-to-east split, with sustained dryness in the northwest and western regions contrasting with a strengthening wet signal across the eastern highlands and coastal areas.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
