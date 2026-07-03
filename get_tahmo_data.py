@@ -94,7 +94,7 @@ if __name__ == "__main__":
                 ds = ds.set_index("time")
 
                 # Resample by day
-                ds = ds.resample("D").agg({
+                ds = ds.resample("24h", offset=pd.Timedelta(hours=6)).agg({
                     "precipitation_1_tahmo": "sum",
                     "precipitation_1_sensor_id_tahmo": "first",
                     "humidity_tahmo": "mean",
