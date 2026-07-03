@@ -1,0 +1,32 @@
+Forecast summary for 01 July 2026:
+
+A pronounced dry-to-wet spatial shift is expected, with persistent deficits in the northwest and west contrasting with a developing wet signal across the eastern and coastal regions from week 2 onwards.
+
+HIGHLANDS WEST OF THE RIFT VALLEY:
+Conditions are markedly dry in week 1 (p33=79%, p50anom=-51%, -8.6mm). While this eases significantly in week 2, a return to dry conditions is indicated for week 3 (p33=69%, p50anom=-34%, -6.4mm) before signals stabilize toward near-normal thereafter.
+
+RIFT VALLEY AND LAKE VICTORIA BASIN:
+A dry start in week 1 (p33=57%, p50anom=-19%, -1.7mm) is followed by a brief period of near-normal conditions, but ensemble agreement points toward a return to dry conditions from week 3 through week 6.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+Following a dry week 1, a shift to above-normal rainfall emerges in week 2 (p66=66%, p50anom=+75%, +5.0mm, max_EFI=0.55). This wet tendency persists intermittently through the forecast, with a notable increase in magnitude in weeks 5 and 6 (p50anom=+103%, +7.5mm).
+
+NORTHEASTERN KENYA:
+A generally dry week 1 (p33=60%, p50anom=-30%, -0.5mm) is expected, transitioning to near-normal conditions from week 2 through the remainder of the period, with only minor variations in ensemble tendencies.
+
+SOUTHEASTERN LOWLANDS:
+A dry week 1 (p33=57%, p50anom=-38%, -0.9mm) is interrupted by a wet pulse in week 2 (p66=51%, p50anom=+66%, +1.6mm, max_EFI=0.59), after which rainfall totals remain close to climatology.
+
+COAST:
+The region shows a consistent trend toward above-normal rainfall starting in week 2 (p50anom=+55%, +4.4mm), with this wet signal sustained through the end of the six-week outlook.
+
+NORTHWESTERN KENYA:
+This region faces the most persistent dry signal, with high ensemble agreement for below-normal rainfall from week 1 (p33=89%, p50anom=-74%, -5.7mm) through week 4, before the intensity of the deficit begins to modulate in the final two weeks.
+
+Overall, the six-week outlook depicts a clear transition where western and northwestern zones experience sustained dry anomalies, while eastern and coastal areas move toward wetter conditions as the forecast progresses into August.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
