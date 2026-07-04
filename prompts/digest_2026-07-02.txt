@@ -1,0 +1,23 @@
+AI generated Forecast summary for 02 July 2026:
+
+A distinct dipole in rainfall anomalies is evident, with dry conditions prevailing across the west and northwest while a strengthening wet signal emerges across the Highlands East of the Rift Valley.
+
+HIGHLANDS WEST OF THE RIFT VALLEY AND RIFT VALLEY AND LAKE VICTORIA BASIN:
+These regions are characterized by a significant dry signal in week 1 (p33=87% and p33=60% respectively). While a temporary, modest recovery is projected for week 2, both areas transition back into a dry phase from week 3 through week 4, with high ensemble agreement in the Northwestern Rift Valley (p33=67%).
+
+NORTHWESTERN KENYA:
+This region faces the most persistent dry conditions, with week 1 showing strong ensemble agreement (p33=91%, p50anom=-69%, -5.6mm). This dry signal remains consistent through week 4 before beginning to moderate in the final two weeks of the forecast period.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+After a relatively dry start, this zone shows a marked transition to above-normal rainfall from week 2 (p50anom=+131%, +8.6mm). The signal persists and strengthens through week 6, with 33% of grid cells exceeding an EFI of 0.5 in both week 2 and week 6, indicating potential for higher than average rainfall for the season.
+
+SOUTHEASTERN LOWLANDS, COAST, AND NORTHEASTERN KENYA:
+These regions show generally near-normal to slightly wet conditions. The Coast shows a sustained wet trend from week 3 through week 6 (p50anom reaching +42%, +3.0mm), while the Southeastern Lowlands experience a minor wet pulse in week 1 (max EFI=0.57) before settling into near-neutral conditions.
+
+The six-week outlook suggests a persistent dry pattern over western and northwestern Kenya, countered by a strengthening wet tendency for the Highlands East of the Rift Valley and the Coast as the forecast progresses toward August.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
