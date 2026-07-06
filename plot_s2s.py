@@ -6,16 +6,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime, timedelta
-# from google import genai
-# from google.genai import types
+from google import genai
+from google.genai import types
 import geopandas as gpd
 
 today = datetime.today()
 two_days_earlier = today - timedelta(days=2)
 date_str = two_days_earlier.strftime("%Y-%m-%d")
 
-prefix = "C:\\Users\\alecj\\Bureaublad\\ECMWF-S2S4AFRICA\\" 
-# prefix=os.environ["MAIN_PATH"]
+# prefix = "C:\\Users\\alecj\\Bureaublad\\ECMWF-S2S4AFRICA\\" 
+prefix=os.environ["MAIN_PATH"]
 data_path=f'{prefix}/data/{date_str}'
 
 #-----precip extended range---------------------------------------------------------------------------------------#
