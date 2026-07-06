@@ -6,16 +6,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime, timedelta
-from google import genai
-from google.genai import types
+# from google import genai
+# from google.genai import types
 import geopandas as gpd
 
 today = datetime.today()
 two_days_earlier = today - timedelta(days=2)
 date_str = two_days_earlier.strftime("%Y-%m-%d")
 
-#prefix = "C:\\Users\\alecj\\Bureaublad\\ECMWF-S2S4AFRICA\\" 
-prefix=os.environ["MAIN_PATH"]
+prefix = "C:\\Users\\alecj\\Bureaublad\\ECMWF-S2S4AFRICA\\" 
+# prefix=os.environ["MAIN_PATH"]
 data_path=f'{prefix}/data/{date_str}'
 
 #-----precip extended range---------------------------------------------------------------------------------------#
@@ -86,6 +86,8 @@ bboxes = {
     "Senegal": {"lat1": 17, "lon1": -17.5, "lat2": 12, "lon2": -11},
     "Ethiopia": {"lat1": 16, "lon1": 32, "lat2": 2, "lon2": 49},
     "Great_Horn":{"lat1": 25.5, "lon1": 19.5, "lat2": -8, "lon2": 57},
+    "Zimbabwe": {"lat1": -15.5, "lon1": 25, "lat2": -22.5, "lon2": 33.5},
+    "Malawi": {"lat1": -9, "lon1": 31.5, "lat2": -17.2, "lon2": 37},
 }
 
 major_cities = {
@@ -99,6 +101,8 @@ major_cities = {
     "Senegal":     [(14.6937, -17.4441), (12.3500, -16.7167), ('Dakar', 'Ziguinchor')],
     "Ethiopia":    [(9.0272, 38.7369),   (11.1400, 42.8000),  ('Addis Ababa', 'Dire Dawa')],
     "Great_Horn":  [(9.0272, 38.7369),   (2.02000, 45.2000),  ('Addis Ababa', 'Mogadishu')],
+    "Zimbabwe":    [(-17.8292, 31.0522), (-20.1500, 28.5833), ('Harare', 'Bulawayo')],
+    "Malawi":      [(-13.9626, 33.7741), (-15.7861, 35.0058), ('Lilongwe', 'Blantyre')],
 }
 
 for country in bboxes.keys():
@@ -110,6 +114,8 @@ for country in bboxes.keys():
     m_climate=m_climate_big.sel(longitude=slice(gef.lon1, gef.lon2),latitude=slice(gef.lat1, gef.lat2))
     m_climate_celcius=m_climate.sel(longitude=slice(gef.lon1, gef.lon2),latitude=slice(gef.lat1, gef.lat2))
     if country=='Madagascar':
+        fs=12
+    if country=='Malawi':
         fs=12
     else:
         fs=16

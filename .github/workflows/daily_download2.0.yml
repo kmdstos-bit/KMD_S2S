@@ -220,7 +220,7 @@ jobs:
                   if country and email:
                       country_emails[country].add(email)
 
-          KNOWN_COUNTRIES = ["Kenya", "Ghana", "Senegal", "Ethiopia"]
+          KNOWN_COUNTRIES = ["Namibia", "Botswana", "Kenya", "Zambia", "Madagascar", "Angola", "Ghana", "Senegal", "Ethiopia", "Zimbabwe", "Malawi"]
           matrix = [
               {"country": c, "emails": ",".join(sorted(country_emails[c]))}
               for c in KNOWN_COUNTRIES
