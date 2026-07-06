@@ -116,7 +116,7 @@ for country in bboxes.keys():
     if country=='Madagascar':
         fs=12
     if country=='Malawi':
-        fs=12
+        fs=14
     else:
         fs=16
 

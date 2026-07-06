@@ -14,6 +14,8 @@ today = datetime.today()
 two_days_earlier = today - timedelta(days=2)
 date_str = two_days_earlier.strftime("%Y-%m-%d")
 
+date_str = '2026-07-01'
+
 data_dekade=xr.open_dataset(f'data/{date_str}/data_dekade.nc')
 month=int(data_dekade.time.dt.month.values)
 day=int(data_dekade.time.dt.day.values)
@@ -35,11 +37,14 @@ forecast_files = {
     (6, 1): ["ECMWF_tp_forecasts_06-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_16_Great_Horn.nc","June_Dekad1"],
     (6, 11): ["ECMWF_tp_forecasts_06-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_17_Great_Horn.nc","June_Dekad2"],
     (6, 21): ["ECMWF_tp_forecasts_06-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_18_Great_Horn.nc","June_Dekad3"],
-    (7, 1): ["ECMWF_tp_forecasts_07-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_19_Great_Horn.nc","July_Dekad1"],
-    (7, 11): ["ECMWF_tp_forecasts_07-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_20_Great_Horn.nc","July_Dekad2"],
-    (7, 21): ["ECMWF_tp_forecasts_07-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_21_Great_Horn.nc","July_Dekad3"],
-    (8, 1): ["ECMWF_tp_forecasts_08-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_22_Great_Horn.nc","August_Dekad1"],
-    (8, 11): ["ECMWF_tp_forecasts_08-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_23_Great_Horn.nc","August_Dekad2"],
+    (7, 1): ["ECMWF_tp_forecasts_07-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_19_Great_Horn.nc","July_Dekad1"],
+    (7, 11): ["ECMWF_tp_forecasts_07-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_20_Great_Horn.nc","July_Dekad2"],
+    (7, 21): ["ECMWF_tp_forecasts_07-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_21_Great_Horn.nc","July_Dekad3"],
+    (8, 1): ["ECMWF_tp_forecasts_08-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_22_Great_Horn.nc","August_Dekad1"],
+    (8, 11): ["ECMWF_tp_forecasts_08-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_23_Great_Horn.nc","August_Dekad2"],
+    (8, 21): ["ECMWF_tp_forecasts_08-21-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_24_Great_Horn.nc","August_Dekad3"],
+    (9, 1): ["ECMWF_tp_forecasts_09-01-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_25_Great_Horn.nc","September_Dekad1"],
+    (9, 11): ["ECMWF_tp_forecasts_09-11-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_26_Great_Horn.nc","September_Dekad2"],
 }
 
 try:
@@ -65,7 +70,7 @@ try:
                 
     chirps_dekades=[]
     for i,file in enumerate(fclim_chirps[1]):
-        chirps=xr.open_dataset('downscale_data/'+file)
+        chirps=gef.sort_by_rank(xr.open_dataset('downscale_data/'+file))
         chirps_dekades.append(chirps.assign_coords({'step':data_dekade.step.values[i]}))
     chirps_dekades_ds=xr.concat(chirps_dekades,dim='step').sel(longitude=slice(bboxes[country]['lon1'],bboxes[country]['lon2']),latitude=slice(bboxes[country]['lat1'],bboxes[country]['lat2']))
     
@@ -130,7 +135,7 @@ try:
                 # Convert to dataframe with step as index, add district column
                 records[i]=ds_mean.tp.values
 
-            dekade_names=[f'ire2026{i[33:35]}' for i in fclim_chirps[1]]
+            dekade_names=[f'ire2026{i[26:28]}' for i in fclim_chirps[1]]
             districts_names=df.index
 
             dff=pd.DataFrame(data=records, index=districts_names, columns=dekade_names)

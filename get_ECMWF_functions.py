@@ -1677,3 +1677,20 @@ def format_prompt_data(data: dict) -> str:
                 f"max_EFI={stats['efi_max']:.2f}"
             )
     return "\n".join(lines)
+
+
+def sort_by_rank(ds, dim="year"):
+    n = ds.sizes[dim]
+
+    sorted_ds = xr.apply_ufunc(
+        np.sort,
+        ds,
+        input_core_dims=[[dim]],
+        output_core_dims=[["rank"]],
+        exclude_dims={dim},          # dim is being replaced, not broadcast
+        kwargs={"axis": -1},
+        output_dtypes=[ds.dtype] if isinstance(ds, xr.DataArray) else None,
+    )
+
+    sorted_ds = sorted_ds.assign_coords(rank=np.arange(n ))
+    return sorted_ds
