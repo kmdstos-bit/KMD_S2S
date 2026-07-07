@@ -14,8 +14,6 @@ today = datetime.today()
 two_days_earlier = today - timedelta(days=2)
 date_str = two_days_earlier.strftime("%Y-%m-%d")
 
-date_str = '2026-07-01'
-
 data_dekade=xr.open_dataset(f'data/{date_str}/data_dekade.nc')
 month=int(data_dekade.time.dt.month.values)
 day=int(data_dekade.time.dt.day.values)
