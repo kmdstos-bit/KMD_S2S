@@ -1,0 +1,20 @@
+AI generated Forecast summary for 05 July 2026:
+
+A pronounced dry signal persists across northwestern and southwestern Kenya in weeks 1 and 2, while the southeastern sectors experience a brief wet pulse in the first week.
+
+NORTHWESTERN KENYA:
+This region faces the most significant dry anomaly, with high ensemble agreement (p33=96% in week 1, p33=97% in week 2) and strong negative anomalies (p50anom=-83%, -6.8mm in week 1; p50anom=-85%, -8.7mm in week 2). This intense dryness is expected to subside toward near-normal conditions by week 4.
+
+HIGHLANDS WEST OF THE RIFT VALLEY AND RIFT VALLEY AND LAKE VICTORIA BASIN:
+Both regions show a consistent dry trend in the short term. The Highlands West of the Rift Valley remain notably dry through week 2 (p33=82%, p50anom=-53%, -8.8mm). The Rift Valley and Lake Victoria Basin will see similar dry conditions emerge by week 3 (p33=63%, p50anom=-40%, -3.8mm) following a relatively neutral start.
+
+HIGHLANDS EAST OF THE RIFT VALLEY, NORTHEASTERN KENYA, SOUTHEASTERN LOWLANDS, AND COAST:
+These regions share a pattern of wet anomalies in week 1, particularly in the Southeastern Lowlands (p50anom=+98%, +2.2mm, max_EFI=0.72) and Coast (p50anom=+95%, +7.0mm). A temporary dry spell is expected in week 2 across all four, before a transition toward wetter-than-normal conditions begins from week 3 onwards, most prominently in the Highlands East of the Rift Valley and the Coast.
+
+The six-week outlook indicates an early-period dry intensity over the western half of the country, while the eastern and coastal areas show an emerging tendency for above-normal rainfall during the latter half of the forecast period.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
