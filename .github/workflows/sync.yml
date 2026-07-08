@@ -11,14 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           # token: ${{ secrets.SYNC_PAT }}  # see note below
 
       - name: Add upstream remote
         run: git remote add upstream https://github.com/alecjong-lab/ECMWF-S2S4AFRICA
 
       - name: Fetch upstream
-        run: git fetch upstream
+        run: git fetch upstream --depth=1 upstream main
 
       - name: Configure git identity
         run: |
