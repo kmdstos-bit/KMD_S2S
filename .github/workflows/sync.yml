@@ -27,10 +27,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-      - name: Configure merge driver to protect workflows
+      - name: Configure merge driver to protect workflows and plots
         run: |
           git config merge.ours.driver true
-          echo ".github/workflows/* merge=ours" >> .gitattributes
+          echo ".github/workflows/** merge=ours" >> .gitattributes
+          echo "plots/** merge=ours" >> .gitattributes
           git add .gitattributes
           git commit -m "Protect workflows from sync" --allow-empty
 
