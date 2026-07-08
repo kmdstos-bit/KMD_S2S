@@ -17,10 +17,10 @@ jobs:
       DATA_DIR: website_data
       OUTPUT_DIR: ncdf_data
       CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
-      # TAHMO_API_PASSWORD: ${{ secrets.TAHMO_API_PASSWORD }}
-      # TAHMO_API_USERNAME: ${{ secrets.TAHMO_API_USERNAME }}
-      # EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
-      # EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
+      TAHMO_API_PASSWORD: ${{ secrets.TAHMO_API_PASSWORD }}
+      TAHMO_API_USERNAME: ${{ secrets.TAHMO_API_USERNAME }}
+      EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
+      EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
 
     steps:
       - name: Checkout repo
@@ -59,7 +59,8 @@ jobs:
         env:
           MAIN_PATH: ${{ github.workspace }}/main_repo/
           WEBSITE_PATH: ${{ github.workspace }}/website_branch/
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY}}
+          COUNTRIES: "Kenya,Great_Horn"
+          AI_ACTIVE: 'False'
 
       - name: Perform downscaling
         continue-on-error: true
@@ -118,69 +119,69 @@ jobs:
       - name: Remove website worktree
         run: rm -rf website_branch
 
-      # # ── Sheerwater / TAHMO / satellite data ──────────────────────
-      # - name: Install sheerwater dependencies
-      #   working-directory: main_repo
-      #   run: |
-      #     pip install -r requirements_sheerwater.txt
+  #     # ── Sheerwater / TAHMO / satellite data ──────────────────────
+  #     - name: Install sheerwater dependencies
+  #       working-directory: main_repo
+  #       run: |
+  #         pip install -r requirements_sheerwater.txt
 
-      # - name: Cache nuthatch data
-      #   uses: actions/cache/restore@v4
-      #   with:
-      #     path: main_repo/.nuthatch/caches
-      #     key: nuthatch-
+  #     - name: Cache nuthatch data
+  #       uses: actions/cache/restore@v4
+  #       with:
+  #         path: main_repo/.nuthatch/caches
+  #         key: nuthatch-
 
-      # - name: Download TAHMO data
-      #   uses: nick-fields/retry@v3
-      #   continue-on-error: true
-      #   with:
-      #     timeout_minutes: 60
-      #     max_attempts: 2
-      #     command: |
-      #       cd main_repo
-      #       yes | python get_tahmo_data.py --country Kenya,Ghana,Senegal,Ethiopia
+  #     - name: Download TAHMO data
+  #       uses: nick-fields/retry@v3
+  #       continue-on-error: true
+  #       with:
+  #         timeout_minutes: 60
+  #         max_attempts: 2
+  #         command: |
+  #           cd main_repo
+  #           yes | python get_tahmo_data.py --country Kenya,Ghana,Senegal,Ethiopia
 
-      # - name: Download IMERG satellite data
-      #   uses: nick-fields/retry@v3
-      #   continue-on-error: true
-      #   with:
-      #     timeout_minutes: 20
-      #     max_attempts: 2
-      #     command: |
-      #       cd main_repo
-      #       yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite imerg
+  #     - name: Download IMERG satellite data
+  #       uses: nick-fields/retry@v3
+  #       continue-on-error: true
+  #       with:
+  #         timeout_minutes: 20
+  #         max_attempts: 2
+  #         command: |
+  #           cd main_repo
+  #           yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite imerg
 
-      # - name: Download CHIRPS satellite data
-      #   uses: nick-fields/retry@v3
-      #   continue-on-error: true
-      #   with:
-      #     timeout_minutes: 20
-      #     max_attempts: 2
-      #     command: |
-      #       cd main_repo
-      #       yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite chirps
+  #     - name: Download CHIRPS satellite data
+  #       uses: nick-fields/retry@v3
+  #       continue-on-error: true
+  #       with:
+  #         timeout_minutes: 20
+  #         max_attempts: 2
+  #         command: |
+  #           cd main_repo
+  #           yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite chirps
 
-      # - name: Cache nuthatch data
-      #   uses: actions/cache/save@v4
-      #   with:
-      #     path: main_repo/.nuthatch/caches
-      #     key: nuthatch-${{ github.run_id }}
+  #     - name: Cache nuthatch data
+  #       uses: actions/cache/save@v4
+  #       with:
+  #         path: main_repo/.nuthatch/caches
+  #         key: nuthatch-${{ github.run_id }}
 
-      # - name: Generate satellite vs station plots
-      #   working-directory: main_repo
-      #   continue-on-error: true
-      #   run: |
-      #     yes | python plot_sat_vs_stations.py --country Kenya,Ghana,Senegal,Ethiopia
+  #     - name: Generate satellite vs station plots
+  #       working-directory: main_repo
+  #       continue-on-error: true
+  #       run: |
+  #         yes | python plot_sat_vs_stations.py --country Kenya,Ghana,Senegal,Ethiopia
 
-      # - name: Upload files as artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: s2s_data
-      #     path: |
-      #       main_repo/plots/**/*.png
-      #       main_repo/private_plots/**/*.png
-      #       main_repo/private_data/**/*.csv
-      #       main_repo/prompts/*.txt
+  #     - name: Upload files as artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: s2s_data
+  #         path: |
+  #           main_repo/plots/**/*.png
+  #           main_repo/private_plots/**/*.png
+  #           main_repo/private_data/**/*.csv
+  #           main_repo/prompts/*.txt
 
   # build-matrix:
   #   needs: download
@@ -231,7 +232,7 @@ jobs:
   #             f.write(f"matrix={json.dumps({'include': matrix})}\n")
   #         EOF
 
-  # # email:
+  # email:
   #   needs: build-matrix
   #   strategy:
   #     matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
