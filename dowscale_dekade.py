@@ -10,6 +10,17 @@ import os
 import pandas as pd
 import regionmask
 
+def set_lat_lon(ds):
+    lat1=ds.latitude.max().values
+    lat2=ds.latitude.min().values
+    lon2=ds.longitude.max().values
+    lon1=ds.longitude.min().values
+    gef.lat1=lat1
+    gef.lat2=lat2
+    gef.lon1=lon1
+    gef.lon2=lon2
+    return(lat1,lat2,lon1,lon2)
+
 today = datetime.today()
 two_days_earlier = today - timedelta(days=2)
 date_str = two_days_earlier.strftime("%Y-%m-%d")
@@ -19,7 +30,7 @@ month=int(data_dekade.time.dt.month.values)
 day=int(data_dekade.time.dt.day.values)
 
 districts=gpd.read_file("Kenya_shapes/ken_admin2.shp")
-
+states1=gpd.read_file("Kenya_shapes/ken_admin1.shp")
 
 forecast_files = {
     (2, 17): ["ECMWF_tp_forecasts_02-17-2025_day2_to_day11_Kenya.nc","chirpsv3_dekads_2005_2025_sorted_06_Kenya.nc","Febuary_Dekad3.tif"],
@@ -86,9 +97,50 @@ try:
     anomaly.tp.attrs['units']='mm'
     anomaly.tp.attrs['GRIB_name']='rainfall anomaly'
 
+    anomaly=rescaled_forecast-chirps_dekades_ds.mean('rank')
+    anomaly.tp.attrs['units']='mm'
+    anomaly.tp.attrs['GRIB_name']='rainfall anomaly'
+
+    rescaled_forecast=rescaled_forecast.rio.write_crs("EPSG:4326")
+    anomaly=anomaly.rio.write_crs("EPSG:4326")
+    
+    for i in states1['adm1_name']:
+        gdf=states1[states1['adm1_name']==i]
+        buffer_size = 0.05  # degrees, so roughly one extra pixel at 0.5° resolution
+        gdf_buffered = gdf.copy()
+        gdf_buffered["geometry"] = gdf.geometry.buffer(buffer_size)
+        
+        clip = rescaled_forecast.rio.clip(gdf_buffered.geometry, gdf_buffered.crs, drop=True,all_touched=True)
+        lat1,lat2,lon1,lon2=set_lat_lon(clip)
+        counties_path=f'plots/Kenya/{date_str}/dekadal/counties/{i}/'
+        os.makedirs(counties_path,exist_ok=True)
+        
+        fig=gef.panel_plot_variable(clip,variable='tp',forecast_timestep=clip.step.values,cmap=gef.cmap,fontsize=8+10*1/(lat1-lat2)*(lon2-lon1)+(lon2-lon1)/(lat1-lat2)*2,vmin=0,vmax=int(clip.quantile(0.99).tp.values))
+        for ax in fig.get_axes()[:-1]:
+            states1[states1['adm1_name']==i].boundary.plot(ax=ax,color='black')
+        plt.savefig(f'{counties_path}/dowscaled_forecast.png',bbox_inches='tight')
+        plt.close()
+
+        anomaly_clip=clip-chirps_dekades_ds.mean('rank')
+        anomaly_clip.tp.attrs['units']='mm'
+        anomaly_clip.tp.attrs['GRIB_name']='rainfall anomaly'
+
+        vmax=int(anomaly_clip.quantile(0.99).tp.values)
+        vmin=int(anomaly_clip.quantile(0.01).tp.values)
+        ranges=[np.abs(vmax),np.abs(vmin)]
+        limit_index=np.argmax(ranges)
+        vmax=ranges[limit_index]
+        vmin=-ranges[limit_index]
+        
+        fig=gef.panel_plot_variable(anomaly_clip,variable='tp',forecast_timestep=clip.step.values,cmap='BrBG',fontsize=8+10*1/(lat1-lat2)*(lon2-lon1)+(lon2-lon1)/(lat1-lat2)*2,vmin=vmin,vmax=vmax)
+        for ax in fig.get_axes()[:-1]:
+            states1[states1['adm1_name']==i].boundary.plot(ax=ax,color='black')
+        plt.savefig(f'{counties_path}/dowscaled_forecast_anomaly.png',bbox_inches='tight')
+        plt.close()
+     
+
     for country in ["Kenya","Great_Horn","Ethiopia"]:
         fs=12
-
         gef.lat1=bboxes[country]['lat1']
         gef.lat2=bboxes[country]['lat2']
         gef.lon1=bboxes[country]['lon1']
@@ -317,4 +369,39 @@ for country,upscale_factor in countries_to_downscale:
         for ax in fig.axes[:6]:
             districts.boundary.plot(ax=ax, color="black", linewidth=0.5)
         plt.savefig(f'plots/{country}/{date_str}/weekly/weekly_precip_downscaled_anomaly_clipped.png',bbox_inches='tight')
+    
+        for i in states1['adm1_name']:
+            gdf=states1[states1['adm1_name']==i]
+            buffer_size = 0.05  # degrees, so roughly one extra pixel at 0.5° resolution
+            gdf_buffered = gdf.copy()
+            gdf_buffered["geometry"] = gdf.geometry.buffer(buffer_size)
+            
+            clip = rescaled_forecast.transpose().rio.clip(gdf_buffered.geometry, gdf_buffered.crs, drop=True,all_touched=True)
+            lat1,lat2,lon1,lon2=set_lat_lon(clip)
+            counties_path=f'plots/Kenya/{date_str}/weekly/counties/{i}/'
+            os.makedirs(counties_path,exist_ok=True)
+            
+            fig=gef.panel_plot_variable(clip,variable='tp',forecast_timestep=clip.step.values,cmap=gef.cmap,fontsize=8+10*1/(lat1-lat2)*(lon2-lon1)+(lon2-lon1)/(lat1-lat2)*2,vmin=0,vmax=int(clip.quantile(0.99).tp.values))
+            for ax in fig.get_axes()[:-1]:
+                states1[states1['adm1_name']==i].boundary.plot(ax=ax,color='black')
+            plt.savefig(f'{counties_path}/dowscaled_forecast.png',bbox_inches='tight')
+            plt.close()
+
+            anomaly_clip=clip-chirps_weeks_ds.mean('rank')
+            anomaly_clip.tp.attrs['units']='mm'
+            anomaly_clip.tp.attrs['GRIB_name']='rainfall anomaly'
+
+            vmax=int(anomaly_clip.quantile(0.99).tp.values)
+            vmin=int(anomaly_clip.quantile(0.01).tp.values)
+            ranges=[np.abs(vmax),np.abs(vmin)]
+            limit_index=np.argmax(ranges)
+            vmax=ranges[limit_index]
+            vmin=-ranges[limit_index]
+            
+            fig=gef.panel_plot_variable(anomaly_clip,variable='tp',forecast_timestep=clip.step.values,cmap='BrBG',fontsize=8+10*1/(lat1-lat2)*(lon2-lon1)+(lon2-lon1)/(lat1-lat2)*2,vmin=vmin,vmax=vmax)
+            for ax in fig.get_axes()[:-1]:
+                states1[states1['adm1_name']==i].boundary.plot(ax=ax,color='black')
+            plt.savefig(f'{counties_path}/dowscaled_forecast_anomaly.png',bbox_inches='tight')
+            plt.close()
+        
 

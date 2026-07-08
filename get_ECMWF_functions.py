@@ -987,6 +987,8 @@ def plot_variable(ds,variable,forecast_timestep,vmax,vmin,cmap,cities=cities,ax=
     '''
     lines=None
     
+    plt.rcParams.update({'font.size': int(fontsize*0.7)})
+
     #get start and end time
     if forecast_timestep == np.atleast_1d(ds.step)[0]:
         start_time=ds.time
@@ -996,7 +998,7 @@ def plot_variable(ds,variable,forecast_timestep,vmax,vmin,cmap,cities=cities,ax=
         start_time=ds.time+forecast_timestep-dt
         end_time=ds.time+forecast_timestep
 
-    ax.set_title(f"{str(start_time.values)[:16]} until {str(end_time.values)[:16]}", fontsize=int(fontsize*0.8))
+    ax.set_title(f"{str(start_time.values)[:10]} until {str(end_time.values)[:10]}", fontsize=int(fontsize*0.8))
         
     ds = ds.sel(step=forecast_timestep)
 

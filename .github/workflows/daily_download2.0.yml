@@ -60,6 +60,8 @@ jobs:
           MAIN_PATH: ${{ github.workspace }}/main_repo/
           WEBSITE_PATH: ${{ github.workspace }}/website_branch/
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY}}
+          COUNTRIES: "Namibia,Botswana,Kenya,Zambia,Madagascar,Angola,Ghana,Senegal,Ethiopia,Zimbabwe,Malawi,Great_Horn"
+          AI_ACTIVE: 'True'
 
       - name: Perform downscaling
         continue-on-error: true
