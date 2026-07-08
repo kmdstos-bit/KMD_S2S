@@ -17,10 +17,10 @@ jobs:
       DATA_DIR: website_data
       OUTPUT_DIR: ncdf_data
       CDSAPI_KEY: ${{ secrets.CDSAPI_KEY }}
-      TAHMO_API_PASSWORD: ${{ secrets.TAHMO_API_PASSWORD }}
-      TAHMO_API_USERNAME: ${{ secrets.TAHMO_API_USERNAME }}
-      EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
-      EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
+      # TAHMO_API_PASSWORD: ${{ secrets.TAHMO_API_PASSWORD }}
+      # TAHMO_API_USERNAME: ${{ secrets.TAHMO_API_USERNAME }}
+      # EARTHDATA_PASSWORD: ${{ secrets.EARTHDATA_PASSWORD }}
+      # EARTHDATA_USERNAME: ${{ secrets.EARTHDATA_USERNAME }}
 
     steps:
       - name: Checkout repo
@@ -118,177 +118,177 @@ jobs:
       - name: Remove website worktree
         run: rm -rf website_branch
 
-      # ── Sheerwater / TAHMO / satellite data ──────────────────────
-      - name: Install sheerwater dependencies
-        working-directory: main_repo
-        run: |
-          pip install -r requirements_sheerwater.txt
+      # # ── Sheerwater / TAHMO / satellite data ──────────────────────
+      # - name: Install sheerwater dependencies
+      #   working-directory: main_repo
+      #   run: |
+      #     pip install -r requirements_sheerwater.txt
 
-      - name: Cache nuthatch data
-        uses: actions/cache/restore@v4
-        with:
-          path: main_repo/.nuthatch/caches
-          key: nuthatch-
+      # - name: Cache nuthatch data
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: main_repo/.nuthatch/caches
+      #     key: nuthatch-
 
-      - name: Download TAHMO data
-        uses: nick-fields/retry@v3
-        continue-on-error: true
-        with:
-          timeout_minutes: 60
-          max_attempts: 2
-          command: |
-            cd main_repo
-            yes | python get_tahmo_data.py --country Kenya,Ghana,Senegal,Ethiopia
+      # - name: Download TAHMO data
+      #   uses: nick-fields/retry@v3
+      #   continue-on-error: true
+      #   with:
+      #     timeout_minutes: 60
+      #     max_attempts: 2
+      #     command: |
+      #       cd main_repo
+      #       yes | python get_tahmo_data.py --country Kenya,Ghana,Senegal,Ethiopia
 
-      - name: Download IMERG satellite data
-        uses: nick-fields/retry@v3
-        continue-on-error: true
-        with:
-          timeout_minutes: 20
-          max_attempts: 2
-          command: |
-            cd main_repo
-            yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite imerg
+      # - name: Download IMERG satellite data
+      #   uses: nick-fields/retry@v3
+      #   continue-on-error: true
+      #   with:
+      #     timeout_minutes: 20
+      #     max_attempts: 2
+      #     command: |
+      #       cd main_repo
+      #       yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite imerg
 
-      - name: Download CHIRPS satellite data
-        uses: nick-fields/retry@v3
-        continue-on-error: true
-        with:
-          timeout_minutes: 20
-          max_attempts: 2
-          command: |
-            cd main_repo
-            yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite chirps
+      # - name: Download CHIRPS satellite data
+      #   uses: nick-fields/retry@v3
+      #   continue-on-error: true
+      #   with:
+      #     timeout_minutes: 20
+      #     max_attempts: 2
+      #     command: |
+      #       cd main_repo
+      #       yes | python get_sat_data.py --country Kenya,Ghana,Senegal,Ethiopia --satellite chirps
 
-      - name: Cache nuthatch data
-        uses: actions/cache/save@v4
-        with:
-          path: main_repo/.nuthatch/caches
-          key: nuthatch-${{ github.run_id }}
+      # - name: Cache nuthatch data
+      #   uses: actions/cache/save@v4
+      #   with:
+      #     path: main_repo/.nuthatch/caches
+      #     key: nuthatch-${{ github.run_id }}
 
-      - name: Generate satellite vs station plots
-        working-directory: main_repo
-        continue-on-error: true
-        run: |
-          yes | python plot_sat_vs_stations.py --country Kenya,Ghana,Senegal,Ethiopia
+      # - name: Generate satellite vs station plots
+      #   working-directory: main_repo
+      #   continue-on-error: true
+      #   run: |
+      #     yes | python plot_sat_vs_stations.py --country Kenya,Ghana,Senegal,Ethiopia
 
-      - name: Upload files as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: s2s_data
-          path: |
-            main_repo/plots/**/*.png
-            main_repo/private_plots/**/*.png
-            main_repo/private_data/**/*.csv
-            main_repo/prompts/*.txt
+      # - name: Upload files as artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: s2s_data
+      #     path: |
+      #       main_repo/plots/**/*.png
+      #       main_repo/private_plots/**/*.png
+      #       main_repo/private_data/**/*.csv
+      #       main_repo/prompts/*.txt
 
-  build-matrix:
-    needs: download
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.sheet.outputs.matrix }}
-    steps:
-      - name: Install rclone
-        run: curl https://rclone.org/install.sh | sudo bash
+  # build-matrix:
+  #   needs: download
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     matrix: ${{ steps.sheet.outputs.matrix }}
+  #   steps:
+  #     - name: Install rclone
+  #       run: curl https://rclone.org/install.sh | sudo bash
 
-      - name: Configure rclone
-        run: |
-          mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONFIG }}" | base64 -d > ~/.config/rclone/rclone.conf
+  #     - name: Configure rclone
+  #       run: |
+  #         mkdir -p ~/.config/rclone
+  #         echo "${{ secrets.RCLONE_CONFIG }}" | base64 -d > ~/.config/rclone/rclone.conf
 
-      - name: Fetch subscriber sheet via rclone
-        id: sheet
-        run: |
-          pip install openpyxl -q
-          rclone copy "gdrive:s2s-emails.xlsx" .
-          python3 - <<'EOF'
-          import json, os, collections
-          import openpyxl
+  #     - name: Fetch subscriber sheet via rclone
+  #       id: sheet
+  #       run: |
+  #         pip install openpyxl -q
+  #         rclone copy "gdrive:s2s-emails.xlsx" .
+  #         python3 - <<'EOF'
+  #         import json, os, collections
+  #         import openpyxl
 
-          wb = openpyxl.load_workbook("s2s-emails.xlsx")
-          ws = wb.active
-          rows = list(ws.iter_rows(values_only=True))
-          header, *data = rows
+  #         wb = openpyxl.load_workbook("s2s-emails.xlsx")
+  #         ws = wb.active
+  #         rows = list(ws.iter_rows(values_only=True))
+  #         header, *data = rows
 
-          country_emails = collections.defaultdict(set)
-          for row in data:
-              if not row[1]:
-                  continue
-              email = str(row[1]).strip()
-              for country in str(row[2]).split(","):
-                  country = country.strip()
-                  if country and email:
-                      country_emails[country].add(email)
+  #         country_emails = collections.defaultdict(set)
+  #         for row in data:
+  #             if not row[1]:
+  #                 continue
+  #             email = str(row[1]).strip()
+  #             for country in str(row[2]).split(","):
+  #                 country = country.strip()
+  #                 if country and email:
+  #                     country_emails[country].add(email)
 
-          KNOWN_COUNTRIES = ["Namibia", "Botswana", "Kenya", "Zambia", "Madagascar", "Angola", "Ghana", "Senegal", "Ethiopia", "Zimbabwe", "Malawi","Great_Horn"]
-          matrix = [
-              {"country": c, "emails": ",".join(sorted(country_emails[c]))}
-              for c in KNOWN_COUNTRIES
-              if country_emails[c]
-          ]
+  #         KNOWN_COUNTRIES = ["Namibia", "Botswana", "Kenya", "Zambia", "Madagascar", "Angola", "Ghana", "Senegal", "Ethiopia", "Zimbabwe", "Malawi","Great_Horn"]
+  #         matrix = [
+  #             {"country": c, "emails": ",".join(sorted(country_emails[c]))}
+  #             for c in KNOWN_COUNTRIES
+  #             if country_emails[c]
+  #         ]
 
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"matrix={json.dumps({'include': matrix})}\n")
-          EOF
+  #         with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+  #             f.write(f"matrix={json.dumps({'include': matrix})}\n")
+  #         EOF
 
-  email:
-    needs: build-matrix
-    strategy:
-      matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+  # # email:
+  #   needs: build-matrix
+  #   strategy:
+  #     matrix: ${{ fromJson(needs.build-matrix.outputs.matrix) }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Get current date
+  #       id: date
+  #       run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Get ECMWF lagged date
-        id: ecmwf_date
-        run: echo "date=$(date -d '2 days ago' +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+  #     - name: Get ECMWF lagged date
+  #       id: ecmwf_date
+  #       run: echo "date=$(date -d '2 days ago' +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Download files as artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: s2s_data
+  #     - name: Download files as artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: s2s_data
 
-      - name: Read forecast summary
-        id: summary
-        if: matrix.country == 'Kenya'
-        run: |
-            python3 -c "
-            import os
-            with open('prompts/digest_${{ steps.ecmwf_date.outputs.date }}.txt') as f:
-              text = f.read()
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-              out.write('body<<FORECAST_END\n')
-              out.write(text)
-              out.write('\nFORECAST_END\n')
-            "
+  #     - name: Read forecast summary
+  #       id: summary
+  #       if: matrix.country == 'Kenya'
+  #       run: |
+  #           python3 -c "
+  #           import os
+  #           with open('prompts/digest_${{ steps.ecmwf_date.outputs.date }}.txt') as f:
+  #             text = f.read()
+  #           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+  #             out.write('body<<FORECAST_END\n')
+  #             out.write(text)
+  #             out.write('\nFORECAST_END\n')
+  #           "
 
-      - name: Email out generated plots for ${{ matrix.country }}
-        uses: dawidd6/action-send-mail@v16
-        with:
-          server_address: smtp.resend.com
-          server_port: 587
-          username: resend
-          password: ${{ secrets.RESEND_API_KEY }}
-          subject: Daily S2S Outlook
-          to: ${{ matrix.emails }}
-          from: "${{ matrix.country }} Data Share <info@dashboards.rhizaresearch.org>"
-          body: |
-            Attached are dekadal and weekly outlooks and historical station data related
-            to the subseasonal forecast. You can also view the data (except for the station
-            data) at ${{ github.server_url }}/${{ github.repository }}.
+  #     - name: Email out generated plots for ${{ matrix.country }}
+  #       uses: dawidd6/action-send-mail@v16
+  #       with:
+  #         server_address: smtp.resend.com
+  #         server_port: 587
+  #         username: resend
+  #         password: ${{ secrets.RESEND_API_KEY }}
+  #         subject: Daily S2S Outlook
+  #         to: ${{ matrix.emails }}
+  #         from: "${{ matrix.country }} Data Share <info@dashboards.rhizaresearch.org>"
+  #         body: |
+  #           Attached are dekadal and weekly outlooks and historical station data related
+  #           to the subseasonal forecast. You can also view the data (except for the station
+  #           data) at ${{ github.server_url }}/${{ github.repository }}.
 
-            ${{ steps.summary.outputs.body || '' }}
-          reply_to: genevieve@rhizaresearch.org
-          attachments: >
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/dekadal_precip.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_precip.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_precip_downscaled_clipped.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_medium_range_precip.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/imerg_Kenya_dekadal.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/imerg_Kenya_weekly.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/chirps_Kenya_dekadal.png,
-            plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/chirps_Kenya_weekly.png,
-            private_plots/${{ matrix.country }}/${{ steps.date.outputs.date }}/*.png,
-            private_data/station_data/${{ matrix.country }}/${{ steps.date.outputs.date }}/*.csv
+  #           ${{ steps.summary.outputs.body || '' }}
+  #         reply_to: genevieve@rhizaresearch.org
+  #         attachments: >
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/dekadal_precip.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_precip.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_precip_downscaled_clipped.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/weekly_medium_range_precip.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/imerg_Kenya_dekadal.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/imerg_Kenya_weekly.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/dekadal/chirps_Kenya_dekadal.png,
+  #           plots/${{ matrix.country }}/${{ steps.ecmwf_date.outputs.date }}/weekly/chirps_Kenya_weekly.png,
+  #           private_plots/${{ matrix.country }}/${{ steps.date.outputs.date }}/*.png,
+  #           private_data/station_data/${{ matrix.country }}/${{ steps.date.outputs.date }}/*.csv
