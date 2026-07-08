@@ -1,0 +1,34 @@
+name: Sync fork with upstream
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # daily at 1am
+  workflow_dispatch:  # manual trigger button
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # token: ${{ secrets.SYNC_PAT }}  # see note below
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/alecjong-lab/ECMWF-S2S4AFRICA
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Configure merge driver to protect workflows
+        run: |
+          git config merge.ours.driver true
+          echo ".github/workflows/* merge=ours" >> .gitattributes
+          git add .gitattributes
+          git commit -m "Protect workflows from sync" --allow-empty
+
+      - name: Merge upstream changes
+        run: git merge upstream/main --no-edit
+
+      - name: Push changes
+        run: git push origin main
