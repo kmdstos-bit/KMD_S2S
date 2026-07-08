@@ -1,0 +1,32 @@
+Forecast summary for 06 July 2026:
+
+A persistent and severe dry signal characterizes northwestern Kenya throughout the first three weeks, while a delayed wetting trend emerges across the eastern highlands and coast during the latter half of the forecast.
+
+HIGHLANDS WEST OF THE RIFT VALLEY:
+Dry conditions dominate early in the period with high ensemble agreement in weeks 1-3, where p33 reaches 79% by week 3 (p50anom=-49%, -9.9mm). Conditions return toward climatology by week 4.
+
+RIFT VALLEY AND LAKE VICTORIA BASIN:
+After near-neutral conditions in week 1, a significant drying trend develops in week 3 (p33=78%, p50anom=-59%, -5.7mm). Signals weaken thereafter, though a dry bias re-emerges in week 6.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+A brief wet start is followed by drying in week 2, before a strong, sustained wet signal emerges from week 4 through week 6. By week 5, p50anom reaches +142% (+10.5mm) with 33% of grid cells exceeding an EFI of 0.5.
+
+NORTHEASTERN KENYA:
+A brief wet pulse in week 1 (p50anom=+71%, +1.2mm, max EFI=0.62) may produce localized heavy rainfall, as indicated by 23% of grid cells exceeding EFI 0.5. The region transitions to near-normal conditions from week 2 onward.
+
+SOUTHEASTERN LOWLANDS:
+Week 1 shows a wet anomaly (p50anom=+70%, +1.6mm, max EFI=0.60) with potential for extreme rainfall in 14% of grid cells. Following a brief dry dip in week 2, a moderate wet tendency persists through week 5.
+
+COAST:
+Above-normal rainfall is likely in week 1 (p50anom=+70%, +5.2mm). After a neutral week 2, a persistent wet signal characterizes weeks 3 through 6, with week 3 showing a peak anomaly (p50anom=+78%, +5.6mm) and 25% of grid cells exceeding EFI 0.5.
+
+NORTHWESTERN KENYA:
+This region faces a severe and persistent dry signal through week 3 (p33 up to 94%, p50anom=-79%, -9.4mm). The dry tendency eases significantly from week 4 as the forecast approaches climatological norms.
+
+The six-week outlook indicates a sharp west-to-east divide, with a sustained drought risk in the northwest and western highlands early on, shifting toward an increasingly wet regime in the eastern and coastal sectors by mid-period.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+p66= Percentage of ensemble members above normal of model climate
+p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+efi= Extreme forecast index
