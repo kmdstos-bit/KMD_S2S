@@ -18,8 +18,9 @@ jobs:
         run: git remote add upstream https://github.com/alecjong-lab/ECMWF-S2S4AFRICA
 
       - name: Fetch upstream
-        run: git fetch --depth=1 upstream main
-        run: git fetch --depth=1 upstream website
+        run: |
+             git fetch --depth=1 upstream main
+             git fetch --depth=1 upstream website
 
       - name: Configure git identity
         run: |
