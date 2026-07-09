@@ -71,7 +71,7 @@ jobs:
           python dowscale_dekade.py
         env:
           DEKADE_COUNTRIES: "Kenya,Great_Horn"
-          WEEK_COUNTRIES: "Kenya,Great_Horn"
+          WEEK_COUNTRIES: "Kenya"
 
       # ── Convert NetCDF → JSON and update catalog ─────────────────
       - name: Convert NetCDF and update catalog
