@@ -1,3 +1,6 @@
 .github/workflows/* merge=ours
 .github/workflows/** merge=ours
 plots/** merge=ours
+.github/workflows/** merge=ours
+plots/** merge=ours
+data/** merge=ours
