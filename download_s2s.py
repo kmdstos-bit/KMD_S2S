@@ -14,7 +14,9 @@ print(f"Downloading data for: {date_str}")
 
 path=f'data/{date_str}/'
 os.makedirs(path, exist_ok=True)
+
 key=os.environ["CDSAPI_KEY"]
+bounding_box=list(map(float, os.environ["BOUNDING_BOX"].split(',')))
 
 client = cdsapi.Client(url="https://ecds.ecmwf.int/api", 
 key=key)
@@ -29,7 +31,7 @@ for ftype in ['perturbed_forecast','control_forecast']:
         "forecast_type": ftype,
         "time": "00:00",
         "data_format": "grib",
-        "area":[22.5,-21,-34.5,55.5]
+        "area":bounding_box
     }
     
     edit_request_precip={
@@ -90,7 +92,6 @@ for ftype in ['perturbed_forecast','control_forecast']:
 
     target= f"{path}/ECMWF_s2s_{ftype}_700wind_42days_7N-32E-6S-43E.grib"
 
-
     client.retrieve(dataset, base_request | edit_request_700wind_vars).download(target)
 
     edit_request_500wind_vars={
@@ -132,8 +133,8 @@ client.retrieve(
     target=filename2
 )
 
-data_medium_pf=xr.open_dataset(filename1,engine='cfgrib').sel(longitude=slice(-21,55.5),latitude=slice(22.5,-34.5))
-data_medium_cf=xr.open_dataset(filename2,engine='cfgrib').assign_coords({'number':0}).sel(longitude=slice(-21,55.5),latitude=slice(22.5,-34.5))
+data_medium_pf=xr.open_dataset(filename1,engine='cfgrib').sel(longitude=slice(bounding_box[1],bounding_box[3]),latitude=slice(bounding_box[0],bounding_box[2]))
+data_medium_cf=xr.open_dataset(filename2,engine='cfgrib').assign_coords({'number':0}).sel(longitude=slice(bounding_box[1],bounding_box[3]),latitude=slice(bounding_box[0],bounding_box[2]))
 data_medium=xr.concat([data_medium_pf,data_medium_cf],dim='number')
 data_weekly_medium=data_medium.diff('step')*1000
 data_weekly_medium.tp.attrs=data_medium_pf.tp.attrs
