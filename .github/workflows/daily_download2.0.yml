@@ -50,6 +50,8 @@ jobs:
         working-directory: main_repo
         run: |
           python download_s2s.py
+        env:
+          BOUNDING_BOX: "25.5,19.5,-9,57"
 
       - name: Generate plots
         continue-on-error: true
