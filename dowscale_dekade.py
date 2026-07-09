@@ -139,7 +139,7 @@ try:
         plt.close()
      
 
-    for country in ["Kenya","Great_Horn","Ethiopia"]:
+    for country in os.environ["DEKADE_COUNTRIES"].split(','):
         fs=12
         gef.lat1=bboxes[country]['lat1']
         gef.lat2=bboxes[country]['lat2']
@@ -253,9 +253,13 @@ bboxes = {
     "Ghana_plus": {"lat1": 12, "lon1": -4.5, "lat2": 4, "lon2": 3},
 }
 
-countries_to_downscale=[('Kenya',30),('Ghana',27)]
+countries_to_downscale= os.environ["WEEK_COUNTRIES"].split(',')
 
-for country,upscale_factor in countries_to_downscale:
+for country in countries_to_downscale:
+    if country=='Kenya':
+        upscale_factor=30
+    if country=='Ghana':
+        upscale_factor=27
     forecast_year = 2026
     all_dates = []
 

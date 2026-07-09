@@ -1315,7 +1315,7 @@ def get_exceedance_percentage(ds,variable, threshold, comparison='None', dim="nu
 
 def chance_to_exceed_mclimate(ds,quantile,m_climate,var='tp'):
     hold=[]    
-    for i,forecast_timestep in enumerate(ds.step.values):
+    for i,forecast_timestep in enumerate(np.atleast_1d(ds.step.values)):
         m_climate_interp = m_climate.isel(time=i).isel(quantile=quantile)
         comparison = ds[var].sel(step=forecast_timestep)>m_climate_interp[var]
         chance=comparison.sum(dim='number')/ ds.sizes['number']*100
@@ -1333,7 +1333,7 @@ def anomaly_from_mclimate(ds,quantile,m_climate,var='tp'):
     hold=[]
     units=ds[var].attrs['units']
     
-    for i,forecast_timestep in enumerate(ds.step.values):
+    for i,forecast_timestep in enumerate(np.atleast_1d(ds.step.values)):
         m_climate_interp = m_climate.isel(time=i).isel(quantile=quantile)
         difference = ensemble_mean(ds[var].sel(step=forecast_timestep))-m_climate_interp[var]
         hold.append(difference)
@@ -1350,7 +1350,7 @@ def anomaly_from_mclimate(ds,quantile,m_climate,var='tp'):
 def tercile_from_mclimate(ds,category_choice,m_climate,var='tp'):
     hold=[]
 
-    for i,forecast_timestep in enumerate(ds.step.values):
+    for i,forecast_timestep in enumerate(np.atleast_1d(ds.step.values)):
         
         lowerbound = m_climate.isel(time=i).isel(quantile=33)[var]
         higherbound = m_climate.isel(time=i).isel(quantile=67)[var]

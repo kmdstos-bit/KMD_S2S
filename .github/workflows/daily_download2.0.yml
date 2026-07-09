@@ -50,6 +50,8 @@ jobs:
         working-directory: main_repo
         run: |
           python download_s2s.py
+        env:
+          BOUNDING_BOX: "22.5,-21,-34.5,55.5"
 
       - name: Generate plots
         continue-on-error: true
@@ -68,6 +70,9 @@ jobs:
         working-directory: main_repo
         run: |
           python dowscale_dekade.py
+        env:
+          DEKADE_COUNTRIES: "Kenya,Great_Horn,Ethiopia"
+          WEEK_COUNTRIES: "Kenya,Great_Horn"
 
       # ── Convert NetCDF → JSON and update catalog ─────────────────
       - name: Convert NetCDF and update catalog
