@@ -2,7 +2,7 @@ name: Sync fork with upstream
 
 on:
   schedule:
-    - cron: '0 1 * * *'  # daily at 1am
+    - cron: '0 3 * * *' 
   workflow_dispatch:  # manual trigger button
 
 jobs:
@@ -32,6 +32,7 @@ jobs:
           git config merge.ours.driver true
           echo ".github/workflows/** merge=ours" >> .gitattributes
           echo "plots/** merge=ours" >> .gitattributes
+          echo "data/** merge=ours" >> .gitattributes
           git add .gitattributes
           git commit -m "Protect workflows from sync" --allow-empty
 
