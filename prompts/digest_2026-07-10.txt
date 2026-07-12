@@ -1,0 +1,32 @@
+Forecast summary for 10 July 2026:
+
+Persistent and widespread dry conditions characterize the initial two weeks of the forecast, particularly across the northwest and western highlands, before a gradual shift toward wetter conditions emerges over the eastern highlands in the second half of the period.
+
+HIGHLANDS WEST OF THE RIFT VALLEY:
+Strongly dry conditions dominate the first two weeks, with high ensemble agreement in week 2 (p33=92%, p50anom=-74%, -13.6mm). Conditions moderate to near-normal from week 3 onwards.
+
+RIFT VALLEY AND LAKE VICTORIA BASIN:
+The region experiences a delayed onset of dry conditions, with a significant shift in week 2 (p33=79%, p50anom=-60%, -5.1mm). A dry tendency persists with varying intensity through week 6.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+After an initial dry start, the region trends toward above-normal rainfall from week 3. A notable signal appears in weeks 4 and 5, where 33% of grid cells exceed EFI 0.5 (p50anom=+98%, +7.5mm in week 4), suggesting a shift toward wetter outcomes.
+
+NORTHEASTERN KENYA:
+A dry signal is evident in week 1 (p33=73%, p50anom=-63%, -1.1mm), transitioning to near-normal conditions in week 2, followed by a slight wet bias from week 4.
+
+SOUTHEASTERN LOWLANDS:
+Week 1 indicates a dry signal (p33=60%, p50anom=-38%, -0.9mm) with 14% of grid cells exceeding EFI 0.5 (max_EFI=0.55). The forecast remains near-normal to slightly wet for the remainder of the period.
+
+COAST:
+Week 1 is exceptionally dry (p33=90%, p50anom=-59%, -4.7mm, max_EFI=-0.50). This reverses sharply in week 2 (p50anom=+59%, +4.4mm), establishing a consistent wet tendency that persists through week 6.
+
+NORTHWESTERN KENYA:
+A sustained, intense dry signal is forecasted for the first three weeks, with near-total ensemble agreement (p33=99%, p50anom=-92%, -10.0mm in week 2). Conditions return closer to climatology by week 4, though a dry bias reappears in week 6.
+
+The six-week outlook shows a transition from widespread dryness to a more heterogeneous pattern, with the eastern highlands and coast trending toward above-normal rainfall while western regions maintain a drier-than-average tendency.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+    p66= Percentage of ensemble members above normal of model climate
+    p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+    efi= Extreme forecast index
