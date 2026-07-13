@@ -2,7 +2,7 @@ name: Sync fork with upstream
 
 on:
   schedule:
-    - cron: '0 3 * * *' 
+    - cron: '0 3 * * *'
   workflow_dispatch:  # manual trigger button
 
 jobs:
@@ -12,32 +12,43 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # token: ${{ secrets.SYNC_PAT }}  # see note below
+          # token: ${{ secrets.SYNC_PAT }}  # needed only if a push touches .github/workflows/*
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Add upstream remote
         run: git remote add upstream https://github.com/alecjong-lab/ECMWF-S2S4AFRICA
 
       - name: Fetch upstream
         run: |
-             git fetch  upstream main
-             git fetch  upstream website
+          git fetch upstream main
+          git fetch upstream website
 
-      - name: Configure git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-      - name: Configure merge driver to protect workflows and plots
-        run: |
-          git config merge.ours.driver true
-          echo ".github/workflows/** merge=ours" >> .gitattributes
-          echo "plots/** merge=ours" >> .gitattributes
-          echo "data/** merge=ours" >> .gitattributes
-          git add .gitattributes
-          git commit -m "Protect workflows from sync" --allow-empty
+      - name: Record pre-merge commit
+        id: pre_merge
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Merge upstream changes
         run: git merge upstream/main --no-edit
+
+      - name: Restore protected paths to fork's state
+        run: |
+          PRE_SHA="${{ steps.pre_merge.outputs.sha }}"
+
+          # Restore/delete any tracked files under protected paths back to pre-merge state
+          git checkout "$PRE_SHA" -- .github/workflows plots data 2>/dev/null || true
+
+          # Remove any brand-new untracked files/folders the merge introduced under these paths
+          git status --porcelain | awk '/^\?\?/{print $2}' | grep -E '^(\.github/workflows|plots|data)/' | xargs -r rm -rf
+
+          # Stage everything (restorations + deletions of new files)
+          git add -A
+
+          # Commit only if there's something to commit
+          git diff --cached --quiet || git commit -m "Restore protected paths after sync"
 
       - name: Push changes
         run: git push origin main
