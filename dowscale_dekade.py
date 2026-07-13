@@ -138,8 +138,8 @@ try:
         plt.savefig(f'{counties_path}/dowscaled_forecast_anomaly.png',bbox_inches='tight')
         plt.close()
      
-
-    for country in os.environ["DEKADE_COUNTRIES"].split(','):
+#   for country in os.environ["DEKADE_COUNTRIES"].split(','):
+    for country in ["Kenya","Great_Horn","Ethiopia"]:
         fs=12
         gef.lat1=bboxes[country]['lat1']
         gef.lat2=bboxes[country]['lat2']
@@ -253,7 +253,8 @@ bboxes = {
     "Ghana_plus": {"lat1": 12, "lon1": -4.5, "lat2": 4, "lon2": 3},
 }
 
-countries_to_downscale= os.environ["WEEK_COUNTRIES"].split(',')
+# countries_to_downscale= os.environ["WEEK_COUNTRIES"].split(',')
+countries_to_downscale= ["Kenya","Ghana"]
 
 for country in countries_to_downscale:
     if country=='Kenya':
