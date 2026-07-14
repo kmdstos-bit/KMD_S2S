@@ -32,7 +32,23 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Merge upstream changes
-        run: git merge upstream/main --no-edit
+        run: |
+          # Attempt the merge but don't auto-commit, and don't let git fail the step on conflicts
+          git merge upstream/main --no-commit --no-ff || true
+
+          # Resolve any conflicts inside protected paths by always keeping our version
+          git checkout --ours -- .github/workflows plots data 2>/dev/null || true
+          git add .github/workflows plots data 2>/dev/null || true
+
+          # Any conflicts left are outside protected paths -> needs human attention, fail loudly
+          remaining=$(git diff --name-only --diff-filter=U)
+          if [ -n "$remaining" ]; then
+            echo "::error::Unresolved merge conflicts outside protected paths:"
+            echo "$remaining"
+            exit 1
+          fi
+
+          git commit -m "Merge upstream/main (protected paths preserved)" --allow-empty
 
       - name: Restore protected paths to fork's state
         run: |
@@ -44,10 +60,7 @@ jobs:
           # Remove any brand-new untracked files/folders the merge introduced under these paths
           git status --porcelain | awk '/^\?\?/{print $2}' | grep -E '^(\.github/workflows|plots|data)/' | xargs -r rm -rf
 
-          # Stage everything (restorations + deletions of new files)
           git add -A
-
-          # Commit only if there's something to commit
           git diff --cached --quiet || git commit -m "Restore protected paths after sync"
 
       - name: Push changes
