@@ -1,0 +1,23 @@
+Forecast summary for 14 July 2026:
+
+A pronounced dry anomaly across most of the country characterizes the near-term forecast, with a notable shift toward wetter conditions emerging over the eastern highlands in weeks 4 and 5.
+
+HIGHLANDS WEST OF THE RIFT VALLEY, RIFT VALLEY AND LAKE VICTORIA BASIN, NORTHEASTERN KENYA, AND SOUTHEASTERN LOWLANDS:
+These regions are locked into a strong dry signal for weeks 1 and 2. The most severe conditions are expected in the Rift Valley and Lake Victoria Basin, where p33 reaches 86% in week 2 (p50anom=-67%, -6.7mm). The dry tendency generally persists or remains below-normal through week 3 before weakening.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+After a dry start, the region shows a significant turnaround. A wet trend emerges in week 3, peaking in weeks 4 and 5 (p50anom=+113%, +9.0mm in week 4). In these weeks, 33% of grid cells exceed an EFI of 0.5, signalling a potential for unusual precipitation that warrants close monitoring as the forecast matures.
+
+COAST:
+The region faces an abrupt transition. Week 1 is marked by an unusually dry pulse (p33=98%, p50anom=-71%, -5.3mm, max EFI=-0.59). From week 2 onwards, this pattern reverses, with a consistent above-normal rainfall signal persisting through the end of the six-week period.
+
+NORTHWESTERN KENYA:
+This region bears the brunt of the dry phase, with near-total ensemble agreement for below-average rainfall in weeks 1 and 2 (p33=101% and 98% respectively). While anomalies moderate slightly by week 3, the dry signal remains prevalent and returns in week 6.
+
+The six-week outlook depicts a country-wide dry start to the cool season that gives way to a localized, potentially impactful wet signal over the eastern highlands and a sustained wet recovery along the coast.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+    p66= Percentage of ensemble members above normal of model climate
+    p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+    efi= Extreme forecast index
