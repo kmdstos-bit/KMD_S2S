@@ -1,0 +1,38 @@
+<PAMDataset>
+  <Metadata>
+    <MDI key="GRIB_cfName">unknown</MDI>
+    <MDI key="GRIB_cfVarName">tp</MDI>
+    <MDI key="GRIB_dataType">pf</MDI>
+    <MDI key="GRIB_gridDefinitionDescription">Latitude/longitude</MDI>
+    <MDI key="GRIB_gridType">regular_ll</MDI>
+    <MDI key="GRIB_iDirectionIncrementInDegrees">1.5</MDI>
+    <MDI key="GRIB_iScansNegatively">0</MDI>
+    <MDI key="GRIB_jDirectionIncrementInDegrees">1.5</MDI>
+    <MDI key="GRIB_jPointsAreConsecutive">0</MDI>
+    <MDI key="GRIB_jScansPositively">0</MDI>
+    <MDI key="GRIB_latitudeOfFirstGridPointInDegrees">22.5</MDI>
+    <MDI key="GRIB_latitudeOfLastGridPointInDegrees">-34.5</MDI>
+    <MDI key="GRIB_longitudeOfFirstGridPointInDegrees">339.0</MDI>
+    <MDI key="GRIB_longitudeOfLastGridPointInDegrees">55.5</MDI>
+    <MDI key="GRIB_missingValue">3.4028234663852886e+38</MDI>
+    <MDI key="GRIB_name">Total Precipitation</MDI>
+    <MDI key="GRIB_numberOfPoints">2028</MDI>
+    <MDI key="GRIB_NV">0</MDI>
+    <MDI key="GRIB_Nx">52</MDI>
+    <MDI key="GRIB_Ny">39</MDI>
+    <MDI key="GRIB_paramId">228228</MDI>
+    <MDI key="GRIB_shortName">tp</MDI>
+    <MDI key="GRIB_stepType">accum</MDI>
+    <MDI key="GRIB_stepUnits">1</MDI>
+    <MDI key="GRIB_totalNumber">101</MDI>
+    <MDI key="GRIB_typeOfLevel">surface</MDI>
+    <MDI key="GRIB_units">kg m**-2</MDI>
+    <MDI key="GRIB_uvRelativeToGrid">0</MDI>
+    <MDI key="long_name">Total Precipitation</MDI>
+    <MDI key="standard_name">unknown</MDI>
+    <MDI key="units">kg m**-2</MDI>
+  </Metadata>
+  <PAMRasterBand band="1">
+    <Description>Total Precipitation</Description>
+  </PAMRasterBand>
+</PAMDataset>
