@@ -1,0 +1,26 @@
+Forecast summary for 17 July 2026:
+
+A persistent and intense dry signal dominates the northwestern and western sectors for the next two weeks, while the eastern highlands show a potential for intermittent wet pulses throughout the forecast period.
+
+NORTHWESTERN KENYA:
+This region faces the most significant dry conditions. In week 1, p33=87% with p50anom=-69% (-6.7mm), deepening in week 2 to p33=96% with p50anom=-83% (-11.2mm). The negative EFI of -0.56 in week 2 underscores the severity of this dry trend.
+
+HIGHLANDS WEST OF THE RIFT VALLEY and RIFT VALLEY AND LAKE VICTORIA BASIN:
+Both regions exhibit a strong dry signal. The western highlands show p33=54% in week 1, rising to p33=73% in week 2 (p50anom=-42%, -9.4mm). The Rift Valley and Lake Victoria Basin, after a near-neutral week 1, see a sharp decline in precipitation with p33=80% and p50anom=-55% (-6.0mm) in week 2.
+
+HIGHLANDS EAST OF THE RIFT VALLEY:
+A contrast to the west, this region shows an unusual wet start in week 1 (p50anom=+51%, +3.2mm, max_EFI=0.77). After a brief dry interruption in week 2, a wet trend re-emerges from week 3 through week 6, with anomalies reaching p50anom=+93% (+7.3mm) by week 4.
+
+NORTHEASTERN KENYA:
+A dry start in week 1 (p33=68%, p50anom=-55%, -1.0mm) transitions toward near-normal rainfall conditions from week 3 onwards.
+
+SOUTHEASTERN LOWLANDS and COAST:
+These regions show a shift from initial dry conditions to a wetter tendency. The coast is dry in week 1 (p33=50%, p50anom=-20%, -1.4mm) but shows a consistent wet signal from week 2 through week 6 (peaking at p50anom=+47%, +3.6mm in week 3). The southeastern lowlands follow a similar pattern, turning from dry in week 2 to slightly wetter in weeks 3 and 4.
+
+Overall, the six-week outlook shows a distinct split between the parched west and northwest and a more variable, potentially wetter pattern developing across the eastern and coastal regions.
+ 
+Legend:
+p33= Percentage of ensemble members below normal of model climate
+    p66= Percentage of ensemble members above normal of model climate
+    p50anom= Anomaly of the ensemble mean from the median of the model climate in % and mm
+    efi= Extreme forecast index
